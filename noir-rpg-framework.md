@@ -33,6 +33,18 @@ This structure makes grinding mathematically pointless, which addresses the clas
 
 Working rule from simulation (`tools/advancement_sim.py`, 10,000 characters per scenario): RAW BRP ticks — awarded only on *successful* use — are nearly invisible at video-game length (mean best-skill gain of about +11 over 8 cases, with only 14% of playthroughs ever seeing a skill jump 15+ points), and they starve low skills, which rarely succeed and therefore rarely tick. The working rule is therefore tick-on-use: exercising a skill under real stakes earns the tick whether the roll succeeded or failed — the improvement roll at case close still gates the gain, so high skills stay slow and grinding stays pointless. With tick-on-use plus downtime training, 71% of 8-case playthroughs (98% of 12-case) include an unambiguous 15+ point jump. This is a deliberate deviation from BRP RAW, adopted for the same reason as the clue rule: the tabletop math doesn't survive the medium transfer unaltered.
 
+### Advancement Philosophy: The Quiet Track and the Loud Tracks
+
+Limited advancement is a named design commitment, not a limitation to be apologized for. It is what makes the endgame writable — in a growth-curve game the final chapter needs bigger threats than the first, and a realistic modern setting has nowhere to go but bullet sponges or action-movie escalation, either of which breaks the noir contract. Flat lethality keeps the writing about judgment and leverage rather than stat checks the player has outgrown, and it protects the resolution texture: skills that plateaued short of 95% keep the success-grade system meaningful for the whole game.
+
+The consequence is accepted openly: the character sheet is the *quiet* progression track. Even with tick-on-use, a best skill moves perhaps fifteen points in a playthrough — mechanically real (a 65→80 Press succeeds noticeably more often) but never level-up loud. The psychological work that levels do in other games is deliberately reassigned to three loud tracks:
+
+1. **The player's own skill.** As in Return of the Obra Dinn and The Case of the Golden Idol, the player improves even when the character barely does — reading documents faster, spotting contradictions sooner, running interrogations smarter. The game is designed so this is the progression that wins cases.
+2. **Knowledge, access, and reputation.** Unlocked map nodes, contacts who take your calls, a rolodex that compounds across cases — the noir-native form of leveling. This is the primary advancement track; the skill list is secondary to it.
+3. **Character change over character growth.** Vices, obligations, and Composure/Corruption mean the detective at case ten is not a stronger version of case one but a different person — scarred, indebted, compromised. Arc, not curve.
+
+Presentation rule: raw percentile gains are granular and forgettable, so skill thresholds (crossing 75%, for instance) trigger diegetic changes — a new dialogue option, a described change ("your hands don't shake when you reload anymore"), a nickname on the street. Crossing marks convert invisible math into felt identity at near-zero authoring cost, and they make the case-closed improvement screen a ritual rather than a number readout.
+
 ## Combat, Lethality, and Failure
 
 Hit points derive from Constitution and Size and never increase with experience. Armor reduces damage rather than preventing hits. Guns are terrifying at every stage of the game. Experienced characters survive through better Dodge, better positioning, and better judgment — not thicker health bars.
