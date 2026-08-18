@@ -27,6 +27,6 @@ Every core clue needs **at least two `skill` doors with distinct skills, plus at
 
 ## Authoring guidelines (validator warns, doesn't fail)
 
-- **Door-skill coverage**: across a case's core clues, each background package's top three skills should open at least two doors. The v1 audit of `overpass` showed how a case can silently orphan a build (ex-soldier had almost no doors until Persuade/Research doors were added) — see `case-board-test.md`.
+- **Door-skill coverage**: across a case's core clues, each background package's top three skills should open at least two doors. The `overpass` audits showed how a case can silently orphan a build: v1 added Research/Persuade doors for desk builds, v2 added Intimidate/Spot doors for the ex-soldier — see `case-board-test.md`.
 - Every `evidence_out` must reference a declared evidence item; every evidence item must be reachable through some door or carry a `tag` explaining why it exists (red herrings and texture are legitimate, orphans are bugs).
 - `wrong_paths` must reference real suspects: every authored dead end is still authored story.

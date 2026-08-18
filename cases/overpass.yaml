@@ -146,6 +146,12 @@ core_clues:
           texture: "the attendant saw the truck parked in the dark under the span" }
       - { type: skill, skill: Persuade, min_rating: 40, location: gas-station, evidence_out: cctv-still,
           note: "added after build audit v1 — desk builds had no door to the physical world here" }
+      - { type: skill, skill: Intimidate, min_rating: 40, location: tow-lot, evidence_out: towlot-statement,
+          texture: "the attendant talks fast when leaned on; margin decides whether he mentions the second visit",
+          note: "added after build audit v2 — ex-soldier remedy" }
+      - { type: skill, skill: Spot, min_rating: 40, location: overpass-scene, evidence_out: cctv-still,
+          texture: "casing the span, you clock that the gas station's camera covers the pull-off",
+          note: "added after build audit v2 — ex-soldier remedy" }
       - { type: fallback, trigger: "cc1-staged pinned + one in-game day", evidence_out: phone-records,
           cost: "time — the police file catches up to a homicide ruling" }
 

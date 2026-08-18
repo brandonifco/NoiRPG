@@ -50,13 +50,13 @@ Run at minimum: one session with the ex-cop build, one with the ex-accountant, o
 | cc1 staged suicide | First Aid 45, coroner | Research 65, coroner | First Aid 50, coroner |
 | cc2 the skim | Petra's record | Accounting 70, depot | Petra's record |
 | cc3 Voss owns shell | Streetwise 65, pawn row | Accounting 70, depot | **fallback** (decay: Petra's fear) |
-| cc4 Hartney at scene | Streetwise 65, tow lot | Persuade 50, gas station | **fallback** (time: police file) |
+| cc4 Hartney at scene | Streetwise 65, tow lot | Persuade 50, gas station | Intimidate 50, tow lot |
 | cc5 the cut | Voss's record | Accounting 70, depot | Voss's record |
 
 **Findings:**
 
 1. **The rule held, and the audit already improved the case.** Audit v1 caught two build holes that were fixed in the data: cc1's original doors were both forensic/physical (Photography, First Aid) — a desk build had no route until a Research door was added at the coroner's office; cc4 had no door for non-street, non-photo builds until the Persuade door at the gas station was added. This is the authoring loop working as designed: audit → hole → new door → re-audit.
-2. **Open finding — the ex-soldier is fallback-heavy** (2 of 5 core clues, flagged by the validator as a warning). Playable — that's what fallbacks are for — but a soldier playthrough of this case is slower and pays decay costs others don't. Two remedies to choose between, deliberately not auto-applied: add doors for soldier skills (an Intimidate door on the tow-lot attendant, a Spot door casing the overpass for the camera), or bump Streetwise in the soldier package so ex-military reads as street-capable. **Recommendation:** decide at the live table — if the soldier session still feels like detective work, fallback-heavy is a legitimate texture ("the blunt instrument waits for the file to catch up"); if it feels like waiting, add the doors.
+2. **Resolved (audit v2) — the ex-soldier was fallback-heavy** (2 of 5 core clues, flagged by the validator). Fixed by adding two doors to cc4: an Intimidate door on the tow-lot attendant and a Spot door casing the overpass for the gas-station camera angle. The soldier now runs one fallback (cc3, the paper-trail clue) — which reads as intended texture: the blunt instrument has no route into shell-company forensics and waits for the anonymous printout. The validator warning is clear.
 3. **Codified into SCHEMA.md as a guideline:** each background package's top three skills should open at least two doors per case. The validator warns on fallback-heavy builds automatically, so this check runs on every future case for free.
 
 ## What This Test Does Not Cover
