@@ -18,6 +18,10 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [development-plan.md](development-plan.md) | Risk-sequenced development plan — phases, gates, and risk register. |
 | [interrogation-design.md](interrogation-design.md) | Design doc for the interrogation minigame, with paper-prototype rules and go/no-go criteria. |
 | [tools/advancement_sim.py](tools/advancement_sim.py) | Advancement math simulation — validates that skills move perceptibly at video-game length. |
+| [case-board-test.md](case-board-test.md) | Paper test kit for the case-board deduction loop, with the machine-run Three Doors build audit results. |
+| [cases/SCHEMA.md](cases/SCHEMA.md) | Case data schema v0.1 — the production case format. |
+| [cases/overpass.yaml](cases/overpass.yaml) | Case 01 "The Overpass" — the first case authored as pure data. |
+| [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
 
 ## Status
 

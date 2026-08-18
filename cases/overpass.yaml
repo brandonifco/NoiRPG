@@ -1,0 +1,209 @@
+# Case 01 — The Overpass
+# First case authored as pure data (development-plan.md, Phase 1 item 4).
+# This file IS the schema draft: see cases/SCHEMA.md for field reference.
+
+schema_version: "0.1"
+
+case:
+  id: overpass
+  title: "The Overpass"
+  logline: >
+    Payroll manager Daniel Reyes is found shot dead in his own sedan beneath
+    the Route 9 overpass, ruled probable suicide. His sister hires you:
+    two days earlier he told her "it's bigger than one invoice."
+  victim:
+    name: "Daniel Reyes"
+    role: "Payroll manager, Corvid Logistics"
+  truth: >
+    Reyes found a fake-vendor skim ("Kestrel Facilities Group") run by CFO
+    Marla Voss, who had cut in security contractor Gil Hartney to keep the
+    depot's gate logs and cameras clean. When Reyes confronted Voss, Hartney
+    lured him to the overpass and staged the suicide with a pawn-shop
+    revolver. Junior accountant Petra Okafor tipped Reyes off and is
+    terrified. The estranged wife's insurance policy is noise.
+
+locations:
+  - { id: desk,           name: "Your desk" }
+  - { id: overpass-scene, name: "Route 9 overpass" }
+  - { id: coroner-office, name: "County coroner's office" }
+  - { id: corvid-depot,   name: "Corvid Logistics depot" }
+  - { id: voss-office,    name: "Executive floor, Corvid HQ" }
+  - { id: reyes-apartment, name: "Reyes's apartment" }
+  - { id: gas-station,    name: "Route 9 gas station" }
+  - { id: tow-lot,        name: "Mercer Street tow lot" }
+  - { id: pawn-row,       name: "Pawn row, lower Fourth" }
+  - { id: lawyer-office,  name: "Kessler & Roan, attorneys" }
+
+suspects:
+  - id: voss
+    name: "Marla Voss"
+    role: "CFO, Corvid Logistics"
+    archetype: professional
+    composure: 75
+    stonewall: 70
+    guilty_of: "Architect of the Kestrel skim; ordered Reyes handled."
+    break_behavior: >
+      Lawyers up mid-sentence — but deflects everything onto Hartney first,
+      on the record.
+  - id: hartney
+    name: "Gil Hartney"
+    role: "Security contractor, Corvid depot"
+    archetype: hard-case
+    composure: 65
+    stonewall: 60
+    guilty_of: "Staged the killing; paid through Kestrel."
+    break_behavior: >
+      Goes silent and cold — no confession, but his roster alibi collapses
+      on the record, and he stops accounting for the 11 PM hour.
+  - id: dana
+    name: "Dana Reyes"
+    role: "Estranged wife"
+    archetype: nervous-witness
+    composure: 45
+    stonewall: 30
+    guilty_of: nothing
+    break_behavior: >
+      Grief, then fury. Accusing her is the case's authored wrong path.
+  - id: petra
+    name: "Petra Okafor"
+    role: "Junior accountant, Corvid Logistics"
+    archetype: scared-witness
+    composure: 40
+    stonewall: 35
+    guilty_of: nothing
+    break_behavior: >
+      Tells everything she knows — then flees town unless protected.
+
+evidence:
+  - { id: photo-annotations,   name: "Annotated scene photos",        type: photo,      treatment: photocopy-grain }
+  - { id: coroner-prelim,      name: "Coroner's preliminary (PDF printout)", type: document, treatment: coffee-ring-scan }
+  - { id: autopsy-final,       name: "Final autopsy report",          type: document,   treatment: laser-toner-banding }
+  - { id: revolver-trace,      name: "Revolver serial trace",         type: document,   treatment: photocopy-grain, tag: texture }
+  - { id: vendor-ledger,       name: "Kestrel vendor ledger printouts", type: document, treatment: laser-toner-banding }
+  - { id: reyes-cloud-notes,   name: "Reyes's cloud-drive notes",     type: document,   treatment: screen-capture-artifacts }
+  - { id: safe-deposit-envelope, name: "Reyes's safe-deposit envelope", type: document, treatment: photocopy-grain }
+  - { id: kestrel-filings,     name: "Kestrel state filings",         type: document,   treatment: scan-lines }
+  - { id: fixer-tip,           name: "Fixer's tip (recorded call)",   type: statement,  treatment: voice-memo }
+  - { id: anon-printout,       name: "Anonymous printout under the door", type: document, treatment: photocopy-grain }
+  - { id: cctv-still,          name: "Gas-station CCTV still, 11:40 PM", type: photo,   treatment: compression-artifacts }
+  - { id: towlot-statement,    name: "Tow-lot attendant statement",   type: statement,  treatment: voice-memo }
+  - { id: phone-records,       name: "Phone-record subpoena copy",    type: document,   treatment: scan-lines }
+  - { id: kestrel-payment-line, name: "Kestrel 'security consulting' payments", type: document, treatment: laser-toner-banding }
+  - { id: hartney-llc-records, name: "Hartney LLC bank records",      type: document,   treatment: scan-lines }
+  - { id: voss-deflection,     name: "Voss interview transcript",     type: statement,  treatment: transcript }
+  - { id: petra-statement,     name: "Petra's statement",             type: statement,  treatment: transcript }
+  - { id: petra-ledger-page,   name: "Ledger page, mailed anonymously", type: document, treatment: photocopy-grain }
+  - { id: duty-roster,         name: "Hartney's duty roster",         type: document,   treatment: photocopy-grain, tag: falsifiable-alibi }
+  - { id: insurance-policy,    name: "Life insurance policy",         type: document,   treatment: scan-lines, tag: red-herring }
+
+# Three Doors rule: every core clue has >=2 skill doors (distinct skills)
+# plus >=1 skill-free fallback. min_rating 40 is the working threshold for
+# "having the right skill" — at or above it, the door always opens; the d100
+# roll grades texture and margin only.
+core_clues:
+  - id: cc1-staged
+    statement: "The suicide was staged; Reyes was murdered."
+    doors:
+      - { type: skill, skill: Photography, min_rating: 40, location: overpass-scene, evidence_out: photo-annotations,
+          texture: "margin sets how many staging details you clock (wrong hand, spatter angle)" }
+      - { type: skill, skill: First Aid, min_rating: 40, location: coroner-office, evidence_out: coroner-prelim,
+          texture: "residue absent; ligature bruising on the wrist" }
+      - { type: skill, skill: Research, min_rating: 40, location: coroner-office, evidence_out: coroner-prelim,
+          note: "added after build audit v1 — both original doors were forensic/physical" }
+      - { type: fallback, trigger: "two in-game days pass", evidence_out: autopsy-final,
+          cost: "time — Hartney's guard rises (interrogation composure +10)" }
+
+  - id: cc2-the-skim
+    statement: "Reyes had found a fake-vendor skim at Corvid."
+    doors:
+      - { type: skill, skill: Accounting, min_rating: 40, location: corvid-depot, evidence_out: vendor-ledger,
+          texture: "margin sets how many Kestrel invoices you can prove are for work never done" }
+      - { type: skill, skill: Research, min_rating: 40, location: reyes-apartment, evidence_out: reyes-cloud-notes,
+          texture: "his sister supplies the password hint either way; margin finds the hidden folder faster" }
+      - { type: interrogation, suspect: petra, evidence_out: petra-statement,
+          note: "statement lands on the record per interrogation-design.md regardless of rolls" }
+      - { type: fallback, trigger: "sister signs release at Kessler & Roan", evidence_out: safe-deposit-envelope,
+          cost: "obligation — the lawyer will call in a favor in a later case" }
+
+  - id: cc3-voss-owns-shell
+    statement: "The Kestrel skim routes to Voss."
+    doors:
+      - { type: skill, skill: Accounting, min_rating: 40, location: corvid-depot, evidence_out: kestrel-payment-line,
+          texture: "endorsement stamps match Voss's signature stamp" }
+      - { type: skill, skill: Research, min_rating: 40, location: desk, evidence_out: kestrel-filings,
+          texture: "registered agent is Voss's ex-husband's firm" }
+      - { type: skill, skill: Streetwise, min_rating: 40, location: pawn-row, evidence_out: fixer-tip,
+          texture: "a fixer knows who launders for Corvid's executive floor" }
+      - { type: fallback, trigger: "second visit to Corvid premises", evidence_out: anon-printout,
+          cost: "Hartney learns a PI is inside — decay step: Petra's fear escalates" }
+
+  - id: cc4-hartney-at-scene
+    statement: "Hartney was at the overpass the night Reyes died."
+    doors:
+      - { type: skill, skill: Photography, min_rating: 40, location: gas-station, evidence_out: cctv-still,
+          texture: "margin determines whether the plate or only the truck profile resolves" }
+      - { type: skill, skill: Streetwise, min_rating: 40, location: tow-lot, evidence_out: towlot-statement,
+          texture: "the attendant saw the truck parked in the dark under the span" }
+      - { type: skill, skill: Persuade, min_rating: 40, location: gas-station, evidence_out: cctv-still,
+          note: "added after build audit v1 — desk builds had no door to the physical world here" }
+      - { type: fallback, trigger: "cc1-staged pinned + one in-game day", evidence_out: phone-records,
+          cost: "time — the police file catches up to a homicide ruling" }
+
+  - id: cc5-the-cut
+    statement: "Hartney was being paid through the skim."
+    doors:
+      - { type: skill, skill: Accounting, min_rating: 40, location: corvid-depot, evidence_out: kestrel-payment-line,
+          texture: "monthly 'site security consulting' line to Hartney's LLC" }
+      - { type: skill, skill: Law, min_rating: 40, location: lawyer-office, evidence_out: hartney-llc-records,
+          texture: "subpoena drafted right, the bank records arrive clean" }
+      - { type: interrogation, suspect: voss, evidence_out: voss-deflection,
+          note: "present cc3 evidence: she deflects onto Hartney, on the record — her break behavior" }
+      - { type: fallback, trigger: "Petra's fear reaches step 2 (she flees)", evidence_out: petra-ledger-page,
+          cost: "Petra unavailable as accusation testimony" }
+
+accusation:
+  form: [killer, orchestrator, proof-of-staging, motive]
+  solution:
+    killer: hartney
+    orchestrator: voss
+    proof-of-staging: cc1-staged
+    motive: cc5-the-cut
+  required_clues: [cc1-staged, cc4-hartney-at-scene, cc5-the-cut]
+  full_clear_clues: [cc2-the-skim, cc3-voss-owns-shell]
+  wrong_paths:
+    - accused: dana
+      lure: [insurance-policy]
+      consequence: >
+        Case closes wrong. Dana's life is wrecked, Voss promotes Hartney,
+        and the truth resurfaces only through a junction in a later case.
+        A branch, not a wall — but a heavy one.
+    - accused: voss
+      note: "accusing Voss as the killer (not orchestrator)"
+      consequence: >
+        Her alibi holds; she walks and hardens (composure +15 permanently).
+        Hartney remains chargeable if cc4/cc5 are later completed.
+
+# Junction-point rule: this case may read other cases' outcomes at no more
+# than three defined junctions. Two are used; ids reference future cases.
+junctions:
+  - id: j1-pawn-fence
+    reads_case: pawnshop
+    condition: "closed with the fence arrested"
+    effect: >
+      Pawn-row door context shifts: revolver-trace unavailable (texture
+      only); Streetwise there yields a scared runner instead.
+  - id: j2-corvid-exposed
+    reads_case: harbor
+    condition: "closed exposing Corvid's manifest fraud"
+    effect: >
+      Voss starts any interrogation at composure -15; kestrel-filings are
+      pre-seized and auto-granted at the desk.
+
+decay:
+  model: junction-only
+  hooks:
+    - trigger: "any other case closes while overpass is open"
+      effect: >
+        Petra's fear escalates one step. Step 1: meetings move to phone
+        only. Step 2: she flees town — her in-person doors close and the
+        cc5 fallback (petra-ledger-page) mails automatically.
