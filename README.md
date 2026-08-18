@@ -23,6 +23,7 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [cases/overpass.yaml](cases/overpass.yaml) | Case 01 "The Overpass" — the first case authored as pure data. |
 | [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
 | [interrogation-cards-overpass.md](interrogation-cards-overpass.md) | Statement card decks for all four Overpass suspects — the interrogation paper-prototype materials. |
+| [paper-kit/overpass-cards.html](paper-kit/overpass-cards.html) | Print-ready paper test kit — open in a browser and print: statement decks, suspect dossiers with trackers, evidence cards, reference cards, build sheets. |
 
 ## Status
 
