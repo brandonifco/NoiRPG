@@ -1,0 +1,25 @@
+# NoiRPG
+
+A modern-day noir action/mystery RPG — no magic, no unrealistic technology, presented entirely in black and white. Built on Chaosium's *Basic Roleplaying: Universal Game Engine* under the ORC license, with deduction as the core gameplay: case boards, interrogations, and percentile skill checks where the roll shapes consequences but never stalls the mystery.
+
+## Design Pillars
+
+1. **Fun first, realism close behind** — believable systems that never stall play.
+2. **The player's mind is the content** — deduction and decision-making carry the game, not rendered spectacle.
+3. **Danger never retires** — a revolver is as lethal in the final chapter as in the first; hit points don't grow.
+4. **Failure is a branch, not a wall** — losing produces consequences and new story, not game-over screens.
+
+## Documents
+
+| Document | Purpose |
+|---|---|
+| [noir-rpg-framework.md](noir-rpg-framework.md) | The design framework (v0.1) — system foundation, resolution mechanics, advancement, investigation rules, art direction, and scope budget. |
+| [design-review-notes.md](design-review-notes.md) | Critical review of the framework — open design risks and recommended next steps. |
+
+## Status
+
+Early design phase. Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases. Platform and engine undecided.
+
+## Licensing
+
+The mechanical skeleton adapts ORC-licensed material from *Basic Roleplaying: Universal Game Engine* (Chaosium, 2023). Setting, story, characters, writing, art, and code are reserved material. An ORC Notice will be included as the project formalizes.
