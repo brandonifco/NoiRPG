@@ -1,5 +1,5 @@
 # Noir RPG — Design Framework
-*Working document, v0.1 — compiled from design discussions, August 2026*
+*Working document, v0.2 — compiled from design discussions, August 2026. v0.2 adds the Phase 0 structural decisions: time pressure model, roll integrity, the Three Doors rule, the junction-point rule, and distribution intent.*
 
 ## Overview
 
@@ -23,11 +23,15 @@ Rolls at or under one-fifth of skill are special successes; at or under one-twen
 
 The working skill list is period-flavored and investigation-forward: Streetwise, Shadow (tailing), Insight, Fast Talk, Intimidate, Persuade, Law, Accounting, Photography, Locksmith, Research, First Aid, Firearms, Brawl, Dodge, Drive, Stealth, Spot.
 
+Roll integrity: all d100 outcomes are pre-seeded at scene entry. Reloading a save and retrying the same check replays the same result, so save-scumming buys nothing, while players keep full freedom to save and experiment with *different* choices. The system is invisible to players who never reload, and it is what makes "rolls create consequence" enforceable rather than aspirational. Every precedent this game cites is deterministic; pre-seeding is how a dice game earns the same trust.
+
 ## Advancement
 
 Advancement uses BRP's experience-check system, which a computer runs better than any table can. During a case, a skill that succeeds under real stakes gets ticked — once per case maximum, and only in scenes that carry consequences, never in free-roam spam. When the case closes, an improvement roll is made for each ticked skill: d100 rolled *above* the current rating raises the skill a few points. Low skills improve almost every time; a 90% skill almost never budges. Diminishing returns and learn-by-doing in a single elegant roll, shown on the case-closed screen as a small moment of drama.
 
 This structure makes grinding mathematically pointless, which addresses the classic failure mode of use-based advancement in video games. Between cases, a downtime layer lets the player train one or two chosen skills (the range, the law library, drying out), providing the deliberate-growth valve that pure use-based systems lack. A small pool of milestone points for characteristics and perks covers the remaining blind spot.
+
+Working rule from simulation (`tools/advancement_sim.py`, 10,000 characters per scenario): RAW BRP ticks — awarded only on *successful* use — are nearly invisible at video-game length (mean best-skill gain of about +11 over 8 cases, with only 14% of playthroughs ever seeing a skill jump 15+ points), and they starve low skills, which rarely succeed and therefore rarely tick. The working rule is therefore tick-on-use: exercising a skill under real stakes earns the tick whether the roll succeeded or failed — the improvement roll at case close still gates the gain, so high skills stay slow and grinding stays pointless. With tick-on-use plus downtime training, 71% of 8-case playthroughs (98% of 12-case) include an unambiguous 15+ point jump. This is a deliberate deviation from BRP RAW, adopted for the same reason as the clue rule: the tabletop math doesn't survive the medium transfer unaltered.
 
 ## Combat, Lethality, and Failure
 
@@ -38,6 +42,8 @@ Because lethality plus save-scumming is a dull loop, defeat is designed as narra
 ## Investigation and the Clue Rule
 
 One deliberate deviation from pure BRP, borrowed from GUMSHOE's design philosophy: a mandatory core clue is never gated behind a failable roll. Having the right skill in the right place always yields the clue needed to keep the case moving. The d100 roll instead determines texture and margin — the extra lead, the witness who volunteers more, the clean exit versus the noisy one. Rolls create consequence; they never stall the plot. This eliminates the reload-scumming and stalled-mystery failure modes in one rule.
+
+The Three Doors rule: because the protagonist is a point-buy build, a given character may simply lack "the right skill in the right place" — the guarantee GUMSHOE makes only works because every GUMSHOE investigator has every investigative ability. So every core clue must be authored with at least three doors: two distinct skill routes (the ex-accountant finds it in the ledger, the ex-cop shakes it out of a contact) plus one skill-free fallback path that any build can walk (a witness who eventually comes forward, a document that surfaces at a cost in time or obligation). Texture and margin still ride on the roll; reachability never does. This is a real per-clue authoring cost, counted in the scope budget, and every case is checked against it before it ships.
 
 Deduction itself is mechanical, not narrated. The player pins suspects and evidence to a case board, draws connections, and commits to accusations, in the tradition of Return of the Obra Dinn and The Case of the Golden Idol. Skill checks determine the quality of evidence extracted; the player's reasoning does the rest.
 
@@ -54,6 +60,10 @@ The protagonist is player-created. Character creation is built directly from BRP
 The game is an open city containing multiple cases. The city is presented as the stylized map — a hub of unlockable locations, not simulated streets — and several cases can be open at once, each with its own board, suspects, and evidence set. Cases can intersect: a witness in one is a suspect in another, and evidence pinned on one board can connect to a second. The player chooses which threads to pull, and time spent on one case can let another develop or decay. Skill improvement rolls run when a case closes; downtime training is woven into city life (locations that train skills) rather than sequestered in interludes.
 
 Scope discipline is the critical risk of this structure: the open city must remain a map of nodes and cases-as-data, never a demand for modeled streets and ambient population. The city feels big through documents, radio, phone calls, and cross-case connections — not through rendered geography.
+
+The same discipline applies to narrative state. The junction-point rule: a case may read other cases' outcomes at no more than three defined junction points, and cross-case intersections exist only at those points. This caps the multiplicative write-and-QA state space before any case is authored; a junction is a named, testable thing, not an ambient possibility.
+
+Time pressure uses junction-only decay: inactive cases advance or decay only at defined junctions — chiefly when another case closes — never on a running clock. The player feels the city moving without them (close one case, and a witness in another has skipped town), but every decayed state is an authored branch at a known point, and the player is never punished for reading slowly. Decay is real pressure with an authorable bill.
 
 Interrogations are turn-based gameplay — statement by statement, with Insight and Fast Talk checks against a suspect-composure meter — rather than scrolling dialogue trees. Play alternates constantly between modes (read a document, make a check, pin evidence, place a call, drive the map, interrogate) so no single mode fatigues.
 
@@ -79,6 +89,8 @@ The complete bespoke art scope, as currently designed: the desk interface and it
 
 Era: genuinely modern day — modern documents, phones, and forensics, with the noir carried by lighting, black and white treatment, and tone rather than period props. Protagonist: player-created via BRP point-buy with background packages; narrator voice is build-agnostic or unvoiced. Structure: open city with multiple concurrent, intersecting cases, built as map nodes and cases-as-data.
 
+Added in v0.2: Time pressure: junction-only decay — cases evolve only at defined junction points, never on a running clock. Roll integrity: pre-seeded rolls resolved at scene entry; reloading replays the same result. Clue authoring: the Three Doors rule — every core clue has two skill routes plus a skill-free fallback. Narrative state: the junction-point rule — a case reads other cases' outcomes at no more than three defined junctions. Distribution: aiming for commercial release — the ORC Notice and licensing review are handled formally from the start, and audio/VO budgets are treated as real line items.
+
 ## Open Questions
 
-Accent color: pure black and white versus one reserved signal color. Distribution: personal project versus commercial release, which sets how formally the ORC Notice and licensing review need to be handled. Platform and engine: undecided. Time pressure model: whether neglected cases decay in real gameplay consequences or simply wait — this tunes how much pressure the open structure applies.
+Accent color: pure black and white versus one reserved signal color. Platform and engine: undecided until the vertical slice phase, informed by the paper prototypes.

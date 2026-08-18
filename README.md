@@ -13,12 +13,15 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 
 | Document | Purpose |
 |---|---|
-| [noir-rpg-framework.md](noir-rpg-framework.md) | The design framework (v0.1) — system foundation, resolution mechanics, advancement, investigation rules, art direction, and scope budget. |
-| [design-review-notes.md](design-review-notes.md) | Critical review of the framework — open design risks and recommended next steps. |
+| [noir-rpg-framework.md](noir-rpg-framework.md) | The design framework (v0.2) — system foundation, resolution mechanics, advancement, investigation rules, art direction, and scope budget. |
+| [design-review-notes.md](design-review-notes.md) | Critical review of framework v0.1 — open design risks and recommended next steps. |
+| [development-plan.md](development-plan.md) | Risk-sequenced development plan — phases, gates, and risk register. |
+| [interrogation-design.md](interrogation-design.md) | Design doc for the interrogation minigame, with paper-prototype rules and go/no-go criteria. |
+| [tools/advancement_sim.py](tools/advancement_sim.py) | Advancement math simulation — validates that skills move perceptibly at video-game length. |
 
 ## Status
 
-Early design phase. Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases. Platform and engine undecided.
+Early design phase (Phase 0 decisions locked; Phase 1 validation underway — see the development plan). Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases, junction-only case decay, pre-seeded rolls, tick-on-use advancement, commercial release intent. Platform and engine undecided until the vertical slice.
 
 ## Licensing
 
