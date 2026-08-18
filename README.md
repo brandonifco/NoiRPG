@@ -22,6 +22,7 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [cases/SCHEMA.md](cases/SCHEMA.md) | Case data schema v0.1 — the production case format. |
 | [cases/overpass.yaml](cases/overpass.yaml) | Case 01 "The Overpass" — the first case authored as pure data. |
 | [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
+| [interrogation-cards-overpass.md](interrogation-cards-overpass.md) | Statement card decks for all four Overpass suspects — the interrogation paper-prototype materials. |
 
 ## Status
 
