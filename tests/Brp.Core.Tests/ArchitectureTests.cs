@@ -1,5 +1,5 @@
 using System.Reflection;
-using Brp.Core;
+using Brp.Core.Randomness;
 
 namespace Brp.Core.Tests;
 
@@ -10,7 +10,7 @@ namespace Brp.Core.Tests;
 /// </summary>
 public class ArchitectureTests
 {
-    private static readonly Assembly Core = typeof(AssemblyMarker).Assembly;
+    private static readonly Assembly Core = typeof(IEntropySource).Assembly;
 
     [Theory]
     [InlineData("UnityEngine")]
