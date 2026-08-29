@@ -70,6 +70,38 @@ Issue (ready)
 For non-rules work — tooling, CLI, docs, case data — stop after `scope-warden`. The
 expensive verification layers exist for one specific risk and buy nothing elsewhere.
 
+## Briefing agents efficiently
+
+Routing to the right model is only half the saving. The other half is not making the
+agent spend its context rediscovering things you already know.
+
+Measured on #9, where `scope-warden` spent ~52k tokens on a diff worth ~12k. The
+remaining ~40k went to *locating* the change across 28 tool calls and re-reading its
+own contract — not to reading the code.
+
+**Hand the agent the diff. Do not make it assemble one.** Put the output of
+`git diff` (or the file list) directly in the prompt. Discovery turns are the single
+largest avoidable cost in a review agent.
+
+**Use `-U1` for review diffs.** It is free and it trims four lines of context per
+hunk on edit-heavy changes. Do not expect much on commits that are mostly new files —
+git prints added files in full regardless of the context setting, so `-U1` saved
+0.24% on #9 and would have saved far more on a scattered refactor. Reach for `-U0`
+only when the agent is pattern-matching rather than reading for meaning.
+
+**For a pure pattern checklist, skip the diff entirely.** `scope-warden` answers
+questions of the form "does this banned token appear". `git grep` over the changed
+paths answers those far more cheaply than reading any diff, and without the risk of a
+hunk boundary hiding a match.
+
+**Scope what the agent must read.** Name the files it needs. An agent told to "check
+the change" will read the contract, the scope filter, the plan, and then go looking;
+an agent given the diff and one checklist reads two things.
+
+**Say what is already done.** Listing the completed pieces of an Issue, and stating
+plainly not to restructure them, prevents the agent from re-deriving decisions that
+are already settled — and from politely rewriting working code.
+
 ## What this is expected to save
 
 The guide this workflow follows estimates 35-60% token reduction per completed task
@@ -81,3 +113,13 @@ would allow.
 Measure it rather than assuming it. Track, over ten tasks: agent turns from task
 selection to merged PR, clarification questions asked, and tasks reopened because
 acceptance criteria were incomplete.
+
+### Datapoints so far
+
+| Task | Agents | Subagent tokens | Outcome |
+|---|---|---:|---|
+| #9 entropy and dice | `engine-dev` (Sonnet), `scope-warden` (Haiku) | ~128k + ~52k | Merged first try; 144 tests; no rework |
+
+Both would otherwise have run at Opus in the main loop. Note the `scope-warden` cost
+is inflated by the briefing problem described above and should fall substantially
+once the diff is passed in rather than discovered.

@@ -10,7 +10,8 @@
 #
 # Usage:
 #   tools/codex-agent.sh conformance "Verify the Skill Results Table implementation"
-#   tools/codex-agent.sh review
+#   tools/codex-agent.sh review                       # diff vs origin/main
+#   BASE=origin/main tools/codex-agent.sh review      # override the base
 #   tools/codex-agent.sh simcheck "Re-derive the advancement math independently"
 #   DRY_RUN=1 tools/codex-agent.sh conformance "..."   # print the command, run nothing
 #
@@ -58,12 +59,23 @@ Task: ${PROMPT}"
   review)
     EFFORT=high
     SANDBOX=read-only
-    TASK="Review the current branch diff with fresh context. Focus on core rules
-correctness, determinism (no unseeded randomness, no ambient time), and scope
-violations. Ignore style. Report only defects you can demonstrate with a concrete
-failing input.
+    # Pass the diff in rather than making the agent hunt for it. Discovery turns are
+    # the largest avoidable cost in a review agent -- see docs/agent-team.md.
+    # -U1 trims context on edit-heavy diffs and costs nothing on new-file diffs.
+    BASE="${BASE:-origin/main}"
+    DIFF="$(git diff -U1 "${BASE}"...HEAD)"
+    if [[ -z "$DIFF" ]]; then
+      echo "no diff against ${BASE}; nothing to review" >&2
+      exit 0
+    fi
+    TASK="Review the diff below with fresh context. Focus on core rules correctness,
+determinism (no unseeded randomness, no ambient time), and scope violations. Ignore
+style. Report only defects you can demonstrate with a concrete failing input.
 
-${PROMPT}"
+${PROMPT}
+
+--- diff against ${BASE} (-U1) ---
+${DIFF}"
     ;;
   simcheck)
     EFFORT=high
