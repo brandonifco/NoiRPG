@@ -1,0 +1,40 @@
+{
+  "characteristics": [
+    { "id": "STR", "displayName": "Strength", "minimum": 3, "maximum": 21, "rollName": "Effort" },
+    { "id": "CON", "displayName": "Constitution", "minimum": 3, "maximum": 21, "rollName": "Stamina" },
+    { "id": "SIZ", "displayName": "Size", "minimum": 8, "maximum": 21, "rollName": null },
+    { "id": "INT", "displayName": "Intelligence", "minimum": 8, "maximum": null, "rollName": "Idea" },
+    { "id": "POW", "displayName": "Power", "minimum": 3, "maximum": null, "rollName": "Luck" },
+    { "id": "DEX", "displayName": "Dexterity", "minimum": 3, "maximum": 21, "rollName": "Agility" },
+    { "id": "CHA", "displayName": "Charisma", "minimum": 3, "maximum": 21, "rollName": "Charm" },
+    { "id": "EDU", "displayName": "Education", "minimum": 3, "maximum": null, "rollName": "Know" }
+  ],
+  "damageModifierBands": [
+    { "minimum": 2, "maximum": 12, "modifier": "-1D6" },
+    { "minimum": 13, "maximum": 16, "modifier": "-1D4" },
+    { "minimum": 17, "maximum": 24, "modifier": null },
+    { "minimum": 25, "maximum": 32, "modifier": "1D4" },
+    { "minimum": 33, "maximum": 40, "modifier": "1D6" },
+    { "minimum": 41, "maximum": 56, "modifier": "2D6" },
+    { "minimum": 57, "maximum": 72, "modifier": "3D6" },
+    { "minimum": 73, "maximum": 88, "modifier": "4D6" },
+    { "minimum": 89, "maximum": 104, "modifier": "5D6" },
+    { "minimum": 105, "maximum": 120, "modifier": "6D6" },
+    { "minimum": 121, "maximum": 136, "modifier": "7D6" },
+    { "minimum": 137, "maximum": 152, "modifier": "8D6" },
+    { "minimum": 153, "maximum": 168, "modifier": "9D6" },
+    {
+      "minimum": 169,
+      "maximum": null,
+      "modifier": null,
+      "continuation": { "step": 16, "startingDiceCount": 10, "diceSides": 6, "diceCountIncrease": 1 }
+    }
+  ],
+  "startingMovement": 10,
+  "minimumCharacteristicRollMultiplier": 1,
+  "maximumCharacteristicRollMultiplier": 10,
+  "standardCharacteristicRollMultiplier": 5,
+  "hitPointDivisor": 2,
+  "majorWoundDivisor": 2,
+  "experienceBonusDivisor": 2
+}
