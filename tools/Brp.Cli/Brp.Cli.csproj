@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <IsPackable>false</IsPackable>
+    <!-- The invocation in engine-implementation-plan.md §5 is `brp roll ...`, so the
+         executable is named for the command, not for the project. -->
+    <AssemblyName>brp</AssemblyName>
+    <RootNamespace>Brp.Cli</RootNamespace>
+    <!-- Output must not vary with the machine's locale: ADR 0003's determinism promise is
+         about the roll, but a tool whose job is to be diffed and pasted into an Issue has
+         to render the same bytes everywhere too. -->
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\..\src\Brp.Core\Brp.Core.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Brp.Cli.Tests" />
+  </ItemGroup>
+
+</Project>

@@ -83,8 +83,11 @@ If you discover unrelated work, file a separate Issue. Do not enlarge the curren
 
 `Brp.Core` holds Layer 0, complete: seeded dice (`Dice/`, `Randomness/`), the five-grade
 resolution kernel (`Resolution/`), the modifier pipeline (`Modifiers/`), and resistance
-and opposed rolls (`Contests/`). Roughly 890 tests, most of them printed tables
+and opposed rolls (`Contests/`). Roughly 930 tests, most of them printed tables
 reproduced cell by cell.
+
+`tools/Brp.Cli` is the `brp` command line over that kernel — one command, `roll`, which
+resolves a check and prints its whole derivation. It has its own `AGENTS.md`.
 
 Nothing above Layer 0 exists yet. See `engine-implementation-plan.md` §3 for the layer
 map — the *structure* there is sound even though its formulas are not.

@@ -28,6 +28,7 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
 | [interrogation-cards-overpass.md](interrogation-cards-overpass.md) | Statement card decks for all four Overpass suspects — the interrogation paper-prototype materials. |
 | [paper-kit/overpass-cards.html](paper-kit/overpass-cards.html) | Print-ready paper test kit — open in a browser and print: statement decks, suspect dossiers with trackers, evidence cards, reference cards, build sheets. |
+| [tools/Brp.Cli/](tools/Brp.Cli/) | The `brp` command line — `brp roll` resolves a check and prints the full modifier chain, the outcome bands, and the grade. |
 | [docs/decisions/](docs/decisions/) | Architecture decision records. |
 | [docs/agent-team.md](docs/agent-team.md) | Agent roster and routing rules — which model does what, and why. |
 | [docs/source-handling.md](docs/source-handling.md) | How to extract from the source book, the verification discipline, and known errata in it. |
