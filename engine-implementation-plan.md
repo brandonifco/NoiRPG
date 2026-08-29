@@ -6,6 +6,31 @@
 
 ---
 
+> ## ⚠ Not authoritative for mechanics
+>
+> This document predates the source-text decision and **carries residue from the
+> superseded 2020 book**. It has been found wrong on three separate topics:
+>
+> | Topic | What happened |
+> |---|---|
+> | Modifier ordering (§1 D3) | Framed as an open binary; the book specifies a three-stage scheme neither option described. Cost two rewrites of ADR 0007. |
+> | Weapon range bands (§1 D3, §3 Layer 4) | Wrong multipliers, wrong thresholds, and a "beyond three times range is impossible" rule that does not exist. |
+> | Opposed-roll degrade (§3 Layer 1) | Cited a section number from the superseded book. The rules it described are not this book's rules. |
+>
+> **What is still good:** the architecture decisions (§1 D1–D7), the build-layer map (§3),
+> and the project layout (§4). Those are engineering judgments, not rules claims.
+>
+> **What §2 is:** its formulas were independently re-derived and verified against every
+> printed row during #10, and they hold. But take them from the tests, not from here —
+> `Brp.Core.Resolution` and its conformance fixture are the live record.
+>
+> **Rule of thumb:** if a line in this file states a game rule, verify it against the book
+> before acting on it. See `docs/source-handling.md`.
+
+---
+
+---
+
 ## 0. Source text — resolved
 
 The framework doc was right and my first pass was wrong. The repo now holds the **ORC Content Document** (BRP: Universal Game Engine, 2023), which is what `noir-rpg-framework.md` described all along. The 23-page `BRP SRD 1.0.2.pdf` is a different, much smaller 2020 document under a different license; it is not our source and should be treated as superseded reference only.
@@ -81,9 +106,11 @@ The SRD mixes four incompatible modifier kinds and never states an ordering:
 | Gate | Automatic (no roll, succeeds), Impossible (no roll, fails) |
 | Override | Shield parry vs missiles: flat 15% / 30% / 60% / 90% |
 | Additive | Armor `−20% to physical skills`, Firing into combat `−20%` |
-| Multiplicative | Easy `×2`, Difficult `×½`, range band 2× `×½`, range band 3× `×¼` |
+| Multiplicative | Easy `×2`, Difficult `×½`, and other rational factors |
 
-Note **`×¼` exists** (weapon range band 3), so `Difficulty` cannot be a closed enum — it must reduce to a rational multiplier. Canonical order must be a documented, configurable policy: `Gate → Override → Additive → Multiplicative → Clamp`. Also undefined by the SRD and therefore a policy decision: **do two Difficults stack to ×¼ or stay ×½?** (darkness + firing into combat, SRD 6.4 + 6.8).
+`Difficulty` cannot be a closed enum — factors outside the Easy/Difficult ladder exist, so it must reduce to a rational multiplier. The ordering must be a named, configurable policy rather than implicit in call order.
+
+**Both questions this section originally posed are now settled, and not as it guessed.** See `docs/decisions/0007-modifier-pipeline.md`: the book specifies the ordering (three stages, not two), and difficulty non-stacking is a house rule the book leaves open. The range-band claims that were here were wrong and have been removed; range bands are tracked in #21.
 
 **D4 — Determinism and a recorded roll log.**
 Seedable, serializable PRNG injected everywhere; no `Random` static, no `DateTime.Now`. Every roll appends to an event log with sequence number and context. This single decision buys four things at once:
@@ -153,7 +180,7 @@ Each layer depends only on the layers above it. Nothing in Layer *n* may referen
 - `CharacteristicRoll(characteristic, multiplier)` → `Percent`. Covers Effort/Stamina/Idea/Luck/Agility/Charisma at ×5 *and* the disease-recovery ladder at ×1..×5 with one type.
 - `DerivedCharacteristic` as recomputable formulas: `MOV`, `HP = RoundUp((CON+SIZ)/2)`, `PowerPoints = POW`, `DamageBonus = table(STR+SIZ)`. **Must recompute on characteristic loss** — disease and poison drain characteristics (SRD 6.5, 6.10), so these cannot be baked at creation.
 - `AbilityResolver` — *the single most-used API in the system.* `(ability, modifiers, entropy) → RollOutcome`.
-- `ResistanceRoll` and `OpposedRoll` (SRD 3.3 degrade rules: Special vs Special → two failures but experience checks still allowed; Special vs Success → Success vs Failure; ties → higher rating wins).
+- `ResistanceRoll` and `OpposedRoll`. **Built in #12; the rules originally described here came from the superseded book and were wrong** — ties resolve by the higher die roll, not the higher rating. See `src/Brp.Core/Contests/` and its tests.
 
 ### Layer 2 — Skills
 - `SkillDefinition`: id, name, base chance which may be a constant (`Spot 25`) **or a formula** (`Dodge DEX×2`, `Language(Own) INT×5`, `Gaming INT+POW`, `Fly DEX×½ | DEX×4`) **or era-conditional** (`First Aid 30 | INT×1`, `Drive 20 | 01`) **or weapon-derived** (`Firearm var`).
@@ -169,7 +196,7 @@ Each layer depends only on the layers above it. Nothing in Layer *n* may referen
   - The "nothing at stake" gate must be enforced mechanically — there is no gamemaster to adjudicate it.
 
 ### Layer 4 — Combat, gear, spot rules
-- Weapon/armor/shield definitions as data, including range bands (`≤R` normal, `≤2R` ×½, `≤3R` ×¼, `>3R` impossible) and armor's skill penalties by skill *category* (SRD names the physical and perception sets explicitly).
+- Weapon/armor/shield definitions as data, and armor's skill penalties by category. **Range bands are tracked in #21**; the values previously stated here were wrong in every particular and have been removed rather than corrected.
 - `CombatRound`: four phases (Intent → Movement → Actions → Resolution); DEX-rank ordering with the weapon-type tiebreak (missile → long → medium → short/unarmed); movement tiers (6–15 m = ½ DEX rank, 16–29 m = ¼ DEX rank); draw weapon = −5 DEX ranks.
 - `AttackDefenseMatrix` — the 7-row table as data, not an `if` chain.
 - Damage: armor subtraction, special success = `weaponMax + normalRoll + db`, unconscious at ≤2 HP, dead at 0 at end of round, negative HP tracked, knockout rule (Difficult attack, damage > ½ *total* HP).
@@ -200,7 +227,9 @@ tools/
 
 ---
 
-## 5. Milestone 1 — the first thing to build
+## 5. Milestone 1 — complete
+
+*Delivered across #8, #9, #10, #11, #12. Retained as a record of the acceptance criteria that were actually met.*
 
 **Scope:** `Brp.Core` Layer 0 + `AbilityResolver` + `ResistanceRoll` + `OpposedRoll`.
 

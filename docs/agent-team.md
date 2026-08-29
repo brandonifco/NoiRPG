@@ -56,6 +56,14 @@ agent will find them.
 **Verification agents get read-only tools.** An agent that can edit what it is checking
 will eventually make the check pass instead of making the code right.
 
+## What verification passes should look for
+
+`docs/source-handling.md` lists the defect classes that have actually bitten this
+project — unchecked assertions, misattributed citations, contaminated inheritance,
+implementing prose over a printed table, and silently matching a misprint. Every one has
+occurred at least once. Brief verification agents against that list rather than leaving
+them to invent their own.
+
 ## The pipeline for a rules-engine change
 
 ```
