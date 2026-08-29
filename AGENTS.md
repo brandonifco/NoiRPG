@@ -1,0 +1,76 @@
+# NoiRPG — Agent Operating Contract
+
+Modern-day noir detective RPG. A C#/.NET rules engine implementing Chaosium's
+Basic Roleplaying (BRP), plus a game and gamemaster-tooling layer on top.
+
+Read this file, then the one Issue you are working. Do not read the whole repo.
+
+## Source-of-truth documents, in order
+
+| Document | Authority over |
+|---|---|
+| `BasicRoleplaying-ORC-Content-Document.pdf` | **The rules.** The only valid source for mechanics. |
+| `orc-scope-filter.md` | **What we implement and what we cut.** ~60% of the book is out of scope. |
+| `engine-implementation-plan.md` | Architecture, build layers, resolution kernel formulas. |
+| `noir-rpg-framework.md` | Game design: setting, tone, structure, art direction. |
+| `design-review-notes.md` | Known open design risks. |
+| `docs/decisions/` | Durable architectural decisions. Linked from Issues, not copied. |
+| GitHub Issues | Current and future work. **The only work queue.** |
+
+If two of these conflict, the higher row wins, and the conflict is a bug — file an Issue.
+
+## Safety-critical invariants
+
+1. **`BRP SRD 1.0.2.pdf` is not our source.** It is a different, superseded 2020
+   document with a different resolution table and only four success grades. It is
+   gitignored. If you find a copy, do not read it for mechanics.
+2. **The scope filter is binding.** No magic, sorcery, psychic powers, superpowers,
+   mutations, fantasy weapons, spacecraft, or monsters. If an Issue seems to require
+   out-of-scope content, stop and ask rather than implementing it.
+3. **Modern era baselines, not historical.** Several BRP skills carry two base
+   chances. Always take the modern value. See `orc-scope-filter.md`.
+4. **All randomness is injected and seeded.** No `System.Random` statics, no
+   `DateTime.Now` in the core. Same seed plus same call sequence must produce a
+   byte-identical roll log. This is load-bearing for tests, replay, and balance
+   simulation — not a style preference.
+5. **`Brp.Core` and `Brp.Rules` take no game-engine dependency.** No Unity, Godot,
+   or MonoGame references.
+6. **Rules values are data, not constants.** Numbers from the book belong in
+   ruleset JSON under `src/Brp.Data/`, not hardcoded in C#.
+
+## Rules-conformance rule
+
+Any change implementing a mechanic must cite the chapter and section it comes from,
+and where the book prints a table, the test suite must reproduce that table exactly
+rather than spot-checking it. Derived formulas are verified against every printed
+row, not a sample.
+
+## Work protocol
+
+One concern, one Issue, one branch, one pull request.
+
+1. Pick one Issue labelled `ready`.
+2. Branch from `main`.
+3. Implement only that Issue.
+4. Open a PR with `Closes #<n>`.
+5. Automated checks and review.
+6. Merge; the Issue closes automatically.
+
+If you discover unrelated work, file a separate Issue. Do not enlarge the current one.
+
+## Commands
+
+No solution exists yet — Issue #1 creates it. Once it does, these are the contract:
+
+```
+dotnet build
+dotnet test
+dotnet format --verify-no-changes
+```
+
+Target framework: `net8.0`. Update this section in the same PR that changes the commands.
+
+## Where deeper guidance lives
+
+Subsystem-specific instructions belong in `AGENTS.md` files next to the code they
+govern, not here. Keep this file short.

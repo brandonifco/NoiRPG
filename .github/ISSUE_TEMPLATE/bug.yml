@@ -1,0 +1,38 @@
+name: Bug
+description: Report incorrect behavior.
+labels: ["bug"]
+body:
+  - type: textarea
+    id: observed
+    attributes:
+      label: Observed behavior
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected behavior
+      description: >
+        For rules bugs, cite the source: chapter, section, and printed table or
+        worked example that establishes the correct result.
+    validations:
+      required: true
+
+  - type: textarea
+    id: repro
+    attributes:
+      label: Smallest reproduction
+      description: Include the seed if a dice roll is involved — all rolls are deterministic.
+    validations:
+      required: true
+
+  - type: input
+    id: environment
+    attributes:
+      label: Environment or commit
+
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Supporting evidence

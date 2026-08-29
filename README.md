@@ -15,6 +15,16 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 |---|---|
 | [noir-rpg-framework.md](noir-rpg-framework.md) | The design framework (v0.1) — system foundation, resolution mechanics, advancement, investigation rules, art direction, and scope budget. |
 | [design-review-notes.md](design-review-notes.md) | Critical review of the framework — open design risks and recommended next steps. |
+| [orc-scope-filter.md](orc-scope-filter.md) | What we implement from the ORC Content Document and what we cut. ~60% of the book is out of scope. Read before any engine work. |
+| [engine-implementation-plan.md](engine-implementation-plan.md) | Dependency-ordered plan for the C#/.NET rules engine — resolution kernel, architecture decisions, build layers, first milestone. |
+| [AGENTS.md](AGENTS.md) | Operating contract for coding agents — source-of-truth order, invariants, work protocol. Read this first. |
+| [docs/decisions/](docs/decisions/) | Architecture decision records. |
+
+## How work is tracked
+
+GitHub Issues are the only work queue. One concern, one Issue, one branch, one pull
+request. Durable decisions live in `docs/decisions/`; current and future work lives
+in Issues. Neither is duplicated in this README.
 
 ## Status
 
@@ -22,4 +32,4 @@ Early design phase. Decisions made so far: modern-day era, player-created protag
 
 ## Licensing
 
-The mechanical skeleton adapts ORC-licensed material from *Basic Roleplaying: Universal Game Engine* (Chaosium, 2023). Setting, story, characters, writing, art, and code are reserved material. An ORC Notice will be included as the project formalizes.
+The mechanical skeleton adapts ORC-licensed material from *Basic Roleplaying: Universal Game Engine* (Chaosium, 2023), from the freely published ORC Content Document. Setting, story, characters, writing, art, and code are reserved material. An ORC Notice and a "Powered by BRP" credit will be included as the project formalizes.
