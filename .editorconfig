@@ -1,0 +1,27 @@
+root = true
+
+[*]
+charset = utf-8
+end_of_line = lf
+insert_final_newline = true
+trim_trailing_whitespace = true
+indent_style = space
+
+[*.{cs,csproj,props,targets}]
+indent_size = 4
+
+[*.{json,yml,yaml,md}]
+indent_size = 2
+
+[*.cs]
+# File-scoped namespaces and modern C# idiom.
+csharp_style_namespace_declarations = file_scoped:warning
+dotnet_sort_system_directives_first = true
+csharp_using_directive_placement = outside_namespace:warning
+
+[tests/**/*.cs]
+# Underscored test names are the xUnit convention and read better than the
+# alternative. This is the only place underscores are allowed.
+dotnet_diagnostic.CA1707.severity = none
+# Test classes are instantiated by the runner, not by us.
+dotnet_diagnostic.CA1515.severity = none

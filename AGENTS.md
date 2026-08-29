@@ -68,7 +68,11 @@ dotnet test
 dotnet format --verify-no-changes
 ```
 
-Target framework: `net8.0`. Update this section in the same PR that changes the commands.
+Target framework: **`net10.0`** (current LTS). The SDK version is pinned in `global.json`
+and is the single source of truth for both local builds and CI. See
+`docs/decisions/0005-target-framework.md`.
+
+Update this section in the same PR that changes the commands.
 
 ## Locked decisions
 

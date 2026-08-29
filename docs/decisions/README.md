@@ -13,3 +13,4 @@ supersedes it — the original is not edited or deleted.
 | [0002](0002-scope-filter.md) | Cut ~60% of the source book | Accepted |
 | [0003](0003-deterministic-rolls.md) | All randomness seeded and logged | Accepted |
 | [0004](0004-agent-team.md) | Model-routed agent team with cross-vendor verification | Accepted |
+| [0005](0005-target-framework.md) | Target net10.0, pinned via global.json | Accepted |
