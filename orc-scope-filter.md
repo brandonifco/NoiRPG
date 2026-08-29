@@ -162,8 +162,10 @@ The book ships a checklist of every optional rule. This is architecturally impor
 ### OFF
 Nonhuman Characters, Higher Starting Characteristics, Cultural Modifiers, Projection, Allegiance (gods actively intervening — no), Fatigue Points *(defer — could serve noir exhaustion, but adds a tracked resource)*, Encumbrance, Miniatures/Maps/VTT, Dodging Missile Weapons, Attacks and Parries over 100%, Dying Blows *(defer — arguably good for a lethal noir climax)*, Aging and Inaction, Total Hit Points, Initiative Rolls.
 
+### Decided since
+- **Skill Category Bonuses vs. Simpler Skill Bonuses** — **decided: full Skill Category Bonuses**, applied by subtraction. See `docs/decisions/0006-skill-bonus-system.md` (Issue #1). The two are mutually exclusive by the book's own statement, and this changes how every skill's effective rating is computed, so it had to land before Layer 2 — it has.
+
 ### Undecided — needs a call
-- **Skill Category Bonuses vs. Simpler Skill Bonuses** — mutually exclusive; the book says so explicitly. Category bonuses add characteristic-derived modifiers per skill category. Pick one before Layer 2 is written, because it changes how a skill's effective rating is computed for every skill in the game.
 - **Fate Points** — needs re-basing off power points (see Ch 4 cut).
 - **Acting Without Skill** — a minor chance at untrained skills. Interacts directly with the framework's clue rule; the book warns it can break plausibility.
 
