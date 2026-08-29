@@ -24,6 +24,7 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [case-board-test.md](case-board-test.md) | Paper test kit for the case-board deduction loop, with the machine-run Three Doors build audit results. |
 | [cases/SCHEMA.md](cases/SCHEMA.md) | Case data schema v0.1 — the production case format. |
 | [cases/overpass.yaml](cases/overpass.yaml) | Case 01 "The Overpass" — the first case authored as pure data. |
+| [tools/skill_bonus.py](tools/skill_bonus.py) | Skill category bonuses — characteristics, category mapping, and the base-rating derivation. |
 | [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
 | [interrogation-cards-overpass.md](interrogation-cards-overpass.md) | Statement card decks for all four Overpass suspects — the interrogation paper-prototype materials. |
 | [paper-kit/overpass-cards.html](paper-kit/overpass-cards.html) | Print-ready paper test kit — open in a browser and print: statement decks, suspect dossiers with trackers, evidence cards, reference cards, build sheets. |

@@ -14,3 +14,4 @@ supersedes it — the original is not edited or deleted.
 | [0003](0003-deterministic-rolls.md) | All randomness seeded and logged | Accepted |
 | [0004](0004-agent-team.md) | Model-routed agent team with cross-vendor verification | Accepted |
 | [0005](0005-target-framework.md) | Target net10.0, pinned via global.json | Accepted |
+| [0006](0006-skill-bonus-system.md) | Full Skill Category Bonuses, applied by subtraction | Accepted |
