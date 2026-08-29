@@ -250,14 +250,23 @@ tools/
 
 **The live queue is GitHub Issues, not this list.** These are summarised for context only; each has an Issue, and the Issue is authoritative if they diverge.
 
-Already resolved: the source-text question and the Prohibited Content constraint (ADR 0001), the sub-5% ambiguity (§2.4), and — locked in framework v0.2, not open — the roll-integrity model (**pre-seeded at scene entry**) and advancement (**tick-on-use**).
+Already resolved: the source-text question and the Prohibited Content constraint (ADR 0001), the sub-5% ambiguity (§2.4), and advancement (**tick-on-use**, locked in framework v0.2).
 
-Still open:
+**Five of the seven questions this section originally posed have since been decided**, in most cases by a document that outranks this one. They are recorded below with what decided them; read the record rather than this summary, which is the shorter and the more likely to rot.
 
-1. **Skill Category Bonuses vs. Simpler Skill Bonuses** — mutually exclusive by the book's own statement, and this is the highest-priority call. It changes how *every* skill's effective rating is computed, so it must be settled before Layer 2 is written.
-2. **Difficulty stacking** — do two Difficult conditions compound, or floor at one step?
-3. **Modifier ordering** — confirm `Gate → Override → Additive → Multiplicative → Clamp`.
-4. **Hit locations on or off** — the framework's persistent visible injuries argue for on; it meaningfully enlarges Layer 4. Decide before combat is written.
-5. **Fate Points** — attractive for a video game, but built on the power-point economy the scope filter deletes. Needs re-basing on another currency or dropping.
-6. **Acting Without Skill** — interacts directly with the framework's clue rule; the book warns it can strain plausibility.
-7. ~~Roll-determinism policy~~ — **decided**: pre-seeded at scene entry (framework v0.2). The engine must implement this; it is no longer a question. ADR 0003's architecture supports it directly.
+| Question | Decision | Decided by | Issue |
+|---|---|---|---|
+| Skill Category Bonuses vs. Simpler Skill Bonuses | Full **Skill Category Bonuses**, applied by subtraction so that authored ratings stay final | `docs/decisions/0006-skill-bonus-system.md` | #1, closed |
+| Difficulty stacking | **Does not stack** — any number of Difficult sources produce one halving, and Easy and Difficult cancel. A house rule, marked as one in the record | `docs/decisions/0007-modifier-pipeline.md` | #2, closed |
+| Modifier ordering | `Gate → Override → PermanentAdditive → Multiplicative → SituationalAdditive → Clamp` — **not** the scheme guessed above; the book puts two additive stages either side of the multiplicative one | `docs/decisions/0007-modifier-pipeline.md` | #3, closed |
+| Hit locations on or off | **On**, with armor by hit location and Major Wounds. Total Hit Points is off, which is consistent with per-location HP | `orc-scope-filter.md`, "Optional rules — the toggle list" → *ON for NoiRPG* | #4, closed |
+| Roll-determinism policy | **Pre-seeded at scene entry** — reloading replays the same result | `noir-rpg-framework.md` v0.2, restated under *Locked decisions* in `AGENTS.md`; the engine mechanism that makes it implementable is `docs/decisions/0003-deterministic-rolls.md` | #7, closed |
+
+The hit-location row is worth dwelling on, because it was never this document's call to make. `orc-scope-filter.md` is binding (AGENTS.md invariant 3) and had already answered it. Listing it here as open was the defect, not the question — the same failure mode the banner at the top of this file describes.
+
+Still open — two, both of them genuine:
+
+1. **Fate Points** (#5) — attractive for a video game, but built on the power-point economy the scope filter deletes. Needs re-basing on another currency or dropping. The scope filter carries it as *defer; don't cut on principle*.
+2. **Acting Without Skill** (#6) — interacts directly with the framework's clue rule; the book warns it can strain plausibility.
+
+Both also sit under "Undecided — needs a call" in `orc-scope-filter.md`, and neither has an ADR.
