@@ -96,7 +96,7 @@ Seedable, serializable PRNG injected everywhere; no `Random` static, no `DateTim
 The SRD says "at the gamemaster's discretion" ~20 times (difficulty assignment, opposed-failure interpretation, cover penetration, disease conditions, antidote cross-effect, special success narrative result). An engine that hardcodes these silently is lying. Model them as `IAdjudicator` decision points with a named id. The video game supplies an authored policy; the GM tool prompts a human; tests supply a deterministic stub. **This is the concrete meaning of "everything accessible and quantified"** — quantify the discretion points rather than erasing them.
 
 **D6 — Pure core, zero engine dependency.**
-`net8.0`, no Unity/Godot/MonoGame references in `Brp.Core` or `Brp.Rules`. No reflection-heavy DI, `System.Text.Json` source generators — keeps IL2CPP/AOT viable if Unity is chosen later. Engine adapters are separate projects added when the platform decision is made.
+**`net10.0`** (current LTS — see `docs/decisions/0005-target-framework.md`), no Unity/Godot/MonoGame references in `Brp.Core` or `Brp.Rules`. No reflection-heavy DI, `System.Text.Json` source generators — keeps IL2CPP/AOT viable if Unity is chosen later. Engine adapters are separate projects added when the platform decision is made.
 
 **D7 — Centralize rounding.**
 The resolution kernel is all `ceil` (§2), but other rules round differently, and the superseded 2020 SRD rounded special success differently again. One `Rounding` policy type; every formula names which rule it uses. This is the classic source of silent divergence between an engine and its source book.

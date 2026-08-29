@@ -1,0 +1,6 @@
+T:System.Random;Use the injected IEntropySource. ADR 0003: all randomness must be seeded and reproducible.
+P:System.DateTime.Now;Ambient time breaks reproducibility. ADR 0003.
+P:System.DateTime.UtcNow;Ambient time breaks reproducibility. ADR 0003.
+P:System.DateTimeOffset.Now;Ambient time breaks reproducibility. ADR 0003.
+P:System.DateTimeOffset.UtcNow;Ambient time breaks reproducibility. ADR 0003.
+M:System.Guid.NewGuid;Nondeterministic. Pass identifiers in explicitly. ADR 0003.
