@@ -1,0 +1,512 @@
+<!-- NoiRPG paper-prototype print kit — "The Overpass"
+     Open in a browser and print (letter, portrait, default margins off / 0.35in).
+     Cards are fixed-size for cutting; facilitator keeps statement decks,
+     player gets evidence cards, build sheet, and the verb reference. -->
+<meta charset="utf-8">
+<title>The Overpass — Paper Kit</title>
+<style>
+  * { box-sizing: border-box; }
+  body { margin: 0; padding: 24px; font-family: Georgia, 'Times New Roman', serif; background: #f2f2f2; color: #111; }
+  .no-print { max-width: 7.4in; margin: 0 auto 20px; background: #fff; border: 1px solid #999; padding: 14px 18px; font-size: 10.5pt; }
+  .no-print h1 { font-size: 14pt; margin: 0 0 6px; }
+  .grid { display: grid; grid-template-columns: repeat(2, 3.65in); gap: 0.08in; justify-content: center; margin-bottom: 0.08in; }
+  h2.deck { text-align: center; font-family: 'Courier New', monospace; font-size: 12pt; letter-spacing: 2px; text-transform: uppercase;
+            margin: 10px 0 8px; break-before: page; page-break-before: always; }
+  h2.deck.first { break-before: auto; page-break-before: auto; }
+  .card { width: 3.65in; height: 2.95in; border: 1.5px solid #000; border-radius: 5px; padding: 0.1in 0.12in; background: #fff;
+          overflow: hidden; break-inside: avoid; page-break-inside: avoid; display: flex; flex-direction: column; }
+  .card.wide { width: 7.38in; grid-column: 1 / -1; }
+  .card.suspect { border: 3px double #000; }
+  .card.evidence { border-style: dashed; }
+  .head { display: flex; justify-content: space-between; align-items: baseline; border-bottom: 2px solid #000; padding-bottom: 2px; margin-bottom: 4px;
+          font-family: 'Courier New', monospace; font-size: 9pt; font-weight: bold; letter-spacing: 1px; }
+  .head .who { font-weight: normal; font-size: 8pt; letter-spacing: 0; }
+  .statement { font-style: italic; font-size: 10pt; line-height: 1.3; margin: 2px 0 4px; }
+  .fac { border-top: 1px dashed #555; padding-top: 3px; font-size: 7.8pt; line-height: 1.4; font-family: Verdana, sans-serif; }
+  .fac b { font-family: 'Courier New', monospace; font-size: 7.2pt; letter-spacing: .5px; }
+  .badge { font-family: 'Courier New', monospace; font-size: 7.5pt; padding: 0 5px; border: 1px solid #000; }
+  .badge.lie { background: #000; color: #fff; }
+  .badge.evasion { background: repeating-linear-gradient(45deg,#fff,#fff 3px,#ccc 3px,#ccc 6px); }
+  .badge.true { background: #fff; }
+  .boxes { letter-spacing: 1px; }
+  .bx { display: inline-block; width: 9px; height: 9px; border: 1px solid #000; margin: 0 2px 0 0; vertical-align: -1px; }
+  .bx.n5:nth-child(5n)::after { content: ''; }
+  .tiny { font-size: 7.2pt; color: #222; }
+  .ev-content { font-size: 9pt; line-height: 1.35; margin-top: 2px; }
+  .tag { float: right; font-family: 'Courier New', monospace; font-size: 7pt; border: 1px solid #000; padding: 0 3px; }
+  table.build { width: 100%; border-collapse: collapse; font-size: 8pt; font-family: Verdana, sans-serif; }
+  table.build td { border: 1px solid #999; padding: 1px 5px; }
+  table.build td.r { text-align: right; font-family: 'Courier New', monospace; font-weight: bold; }
+  .cols2 { column-count: 2; column-gap: 14px; }
+  @media print {
+    body { background: #fff; padding: 0; }
+    .no-print { display: none; }
+    @page { margin: 0.35in; }
+  }
+</style>
+
+<div class="no-print">
+  <h1>The Overpass — Paper Prototype Print Kit</h1>
+  <p><b>Print:</b> Letter, portrait, background graphics ON, margins default. ~12 pages. Cut along card borders.</p>
+  <p><b>Deal:</b> Facilitator keeps the four statement decks and the damage reference. Player gets the verb reference, one build sheet (their choice, dealt blind), and receives evidence cards as doors open during board play. Suspect dossier cards sit face-up at the table edge with pencil-tick trackers.</p>
+  <p><b>Rules:</b> interrogation-design.md · Full facilitator text: interrogation-cards-overpass.md · Case data: cases/overpass.yaml</p>
+</div>
+
+<h2 class="deck first">Table Kit — References &amp; Suspect Dossiers</h2>
+<div class="grid">
+  <div class="card">
+    <div class="head">PLAYER REFERENCE<span class="who">the four verbs</span></div>
+    <div class="fac" style="border-top:none;font-size:8.4pt">
+      <b>LISTEN</b> — free. Statement goes on the record (always pinnable). Suspect recovers a little composure.<br>
+      <b>PRESS</b> — pick Insight / Intimidate / Fast Talk vs their Stonewall. Success: −5 composure. Special: −10 + reveals a TELL. Failure: they harden (+5).<br>
+      <b>PRESENT EVIDENCE</b> — name the card and the contradiction. If it truly contradicts: it <i>always lands</i> (no roll) — roll only grades the reaction. If it doesn't: +5 to them, and they learn what you hold.<br>
+      <b>CHANGE TOPIC</b> — costs 1 Patience. Resets press momentum.<br>
+      <span class="tiny">Every turn ticks Patience. At 0 the room ends — lawyer, walkout, captain.</span>
+    </div>
+  </div>
+  <div class="card">
+    <div class="head">FACILITATOR REFERENCE<span class="who">damage &amp; flow</span></div>
+    <div class="fac" style="border-top:none;font-size:8.4pt">
+      Press success <b>−5</b> · Press special <b>−10</b> + tell · Landed contradiction <b>−10</b> · Alibi collapse <b>−15</b> · Failed press <b>+5</b> (repeat fail on same thread: +1 Patience cost) · Wrong evidence <b>+5</b> + they learn it.<br>
+      Thresholds unlock marked cards. Composure 0 = <b>break</b> — play the dossier card's break line exactly; breaking is not always winning.<br>
+      <span class="tiny">Read statements in order; branch notes override. Insight specials mark the card SHAKY on the transcript. Track per session: could the player state each contradiction before presenting? After a failed roll, can they say what changed?</span>
+    </div>
+  </div>
+
+  <div class="card suspect wide">
+    <div class="head">SUSPECT — PETRA OKAFOR<span class="who">junior accountant, Corvid Logistics · scared witness</span></div>
+    <div class="fac" style="border-top:none">
+      <b>COMPOSURE 40</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span> (×5) &nbsp;·&nbsp;
+      <b>STONEWALL 35</b> &nbsp;·&nbsp; <b>PATIENCE 12</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span><br>
+      <b>MODIFIERS:</b> Intimidate is poison — auto-succeeds for damage but costs 2 extra Patience and locks P10 for the session. Fast Talk / gentle Insight are the routes.
+      <b>CONCEALS:</b> she flagged Kestrel to Reyes; saw Voss sign a Kestrel check; fears Hartney.<br>
+      <b>BREAK (0):</b> tells everything — saw Voss sign a Kestrel check with her own stamp (cc3); photocopied a ledger page naming Hartney LLC and mailed it to herself (seeds petra-ledger-page). Then flees town unless protected (decay step 2).
+    </div>
+  </div>
+
+  <div class="card suspect wide">
+    <div class="head">SUSPECT — MARLA VOSS<span class="who">CFO, Corvid Logistics · professional</span></div>
+    <div class="fac" style="border-top:none">
+      <b>COMPOSURE 75</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span> (×5) &nbsp;·&nbsp;
+      <b>STONEWALL 70</b> &nbsp;·&nbsp; <b>PATIENCE 8</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span><br>
+      <b>MODIFIERS:</b> Intimidate hardens her (+5 on your success <i>or</i> failure). Fast Talk / Insight function. Paper is what moves her. After V4 collapses, her composure recovery stops permanently.
+      <b>CONCEALS:</b> the skim is hers; she ordered Reyes "handled"; the calls to Hartney.<br>
+      <b>BREAK (0, or present phone-records + kestrel-payment-line together):</b> on the record — <i>"If Gil Hartney interpreted a personnel concern as something else, that is his crime. Get out, and speak to my attorney."</i> Lands voss-deflection (cc5 door). Counsel arrives; session over.
+    </div>
+  </div>
+
+  <div class="card suspect wide">
+    <div class="head">SUSPECT — GIL HARTNEY<span class="who">security contractor, Corvid depot · hard case</span></div>
+    <div class="fac" style="border-top:none">
+      <b>COMPOSURE 65</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span> (×5) &nbsp;·&nbsp;
+      <b>STONEWALL 60</b> &nbsp;·&nbsp; <b>PATIENCE 10</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span><br>
+      <b>MODIFIERS:</b> Fast Talk barely functions. Insight reads little — the tells on his cards are all he has. Intimidate works, but a <i>failed</i> Intimidate press gives him +10 and he starts enjoying the room.
+      <b>CONCEALS:</b> he was at the overpass; the 9:50 PM lure call; the Kestrel cut.<br>
+      <b>BREAK (0):</b> no confession. Silent and cold — but the alibi is collapsed on the record and he stops accounting for the 11 PM hour entirely. That absence is pinnable. The record is the win, not the break.
+    </div>
+  </div>
+
+  <div class="card suspect wide">
+    <div class="head">SUSPECT — DANA REYES<span class="who">estranged wife · nervous witness · INNOCENT</span></div>
+    <div class="fac" style="border-top:none">
+      <b>COMPOSURE 45</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span> (×5) &nbsp;·&nbsp;
+      <b>STONEWALL 30</b> &nbsp;·&nbsp; <b>PATIENCE 6</b> <span class="boxes"><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span><span class="bx"></span></span><br>
+      <b>MODIFIERS:</b> every Press costs 1 extra Patience — she is grieving and the room knows it. Insight specials read <i>belief</i>: she believes every word she says.
+      <b>CONCEALS:</b> nothing about the murder — only shame (the divorce filing was hers; she kept paying his premiums).<br>
+      <b>BREAK (0):</b> grief, then fury. Nothing case-useful — she knows nothing. Play it in full. This deck teaches that breaking a suspect isn't winning; it's just breaking a person.
+    </div>
+  </div>
+</div>
+
+<h2 class="deck">Deck P — Petra Okafor</h2>
+<div class="grid">
+  <div class="card">
+    <div class="head">P1<span class="who">PETRA</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"I barely knew Daniel. Different floors."</div>
+    <div class="fac"><b>CONTRADICT:</b> reyes-cloud-notes ("P." credited with the catch); phone-records (six calls, his last two weeks).<br><b>TELL:</b> says his first name like a colleague, corrects to "Mr. Reyes."<br><b>COLLAPSE −10:</b> "We talked sometimes. About work. That's not a crime."</div>
+  </div>
+  <div class="card">
+    <div class="head">P2<span class="who">PETRA</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"Payroll and accounts payable don't even overlap."</div>
+    <div class="fac"><b>CONTRADICT:</b> vendor-ledger (her processing initials on Kestrel invoices).<br><b>TELL:</b> answers a question you didn't ask.</div>
+  </div>
+  <div class="card">
+    <div class="head">P3<span class="who">PETRA</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Kestrel? They do facilities maintenance, I think."</div>
+    <div class="fac"><b>CONTRADICT:</b> vendor-ledger (no work orders behind any Kestrel invoice).<br><b>TELL:</b> she won't say the name a second time.<br><b>COLLAPSE −10:</b> "I processed what was approved. Approved from upstairs." — first pointer at Voss.</div>
+  </div>
+  <div class="card">
+    <div class="head">P4<span class="who">PETRA</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"I never look at vendor invoices closely. Volume's too high."</div>
+    <div class="fac"><b>CONTRADICT:</b> reyes-cloud-notes ("P. caught it in the totals — third month running").</div>
+  </div>
+  <div class="card">
+    <div class="head">P5<span class="who">PETRA</span><span class="badge true">TRUE·partial</span></div>
+    <div class="statement">"Daniel seemed stressed lately. That's all I noticed."</div>
+    <div class="fac"><b>PRESS (Insight), success:</b> she glances at the door when you ask "stressed about what?"</div>
+  </div>
+  <div class="card">
+    <div class="head">P6<span class="who">PETRA</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"Nobody at Corvid would hurt anyone. It's a logistics company."</div>
+    <div class="fac"><b>TELL:</b> eyes to the door — she's not reassuring you, she's reassuring herself.</div>
+  </div>
+  <div class="card">
+    <div class="head">P7<span class="who">PETRA</span><span class="badge true">TRUE·loaded</span></div>
+    <div class="statement">"Ms. Voss is a good CFO. Thorough."</div>
+    <div class="fac"><b>TELL:</b> "thorough" lands like a warning, not praise.</div>
+  </div>
+  <div class="card">
+    <div class="head">P8<span class="who">PETRA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"I was home the night he died."</div>
+    <div class="fac">No tells. Corroborated if checked (building fob log). Wrong evidence here backfires (+5).</div>
+  </div>
+  <div class="card">
+    <div class="head">P9<span class="who">PETRA</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Mr. Hartney? He's just security. We don't talk."</div>
+    <div class="fac"><b>TELL:</b> hands go still.<br><b>PRESS (any), success:</b> "He started taking his breaks near my desk. After Daniel died." −5, self-inflicted.</div>
+  </div>
+  <div class="card">
+    <div class="head">P10 ★ THRESHOLD<span class="who">PETRA</span></div>
+    <div class="statement">"He asked me if the Kestrel invoices looked right. I said no. That's all I did. I swear that's all."</div>
+    <div class="fac"><b>UNLOCK:</b> composure ≤ 20, or after collapsing P1 + P3. Locked all session if Intimidate was used on her.<br><b>EFFECT:</b> lands petra-statement on the record → <b>cc2 door satisfied.</b></div>
+  </div>
+</div>
+
+<h2 class="deck">Deck V — Marla Voss</h2>
+<div class="grid">
+  <div class="card">
+    <div class="head">V1<span class="who">VOSS</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"Daniel's death is a tragedy. Payroll was that man's whole life."</div>
+    <div class="fac"><b>TELL:</b> condolence in the past tense, a beat too comfortable.</div>
+  </div>
+  <div class="card">
+    <div class="head">V2<span class="who">VOSS</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"He never raised any concerns with me. Not once."</div>
+    <div class="fac"><b>CONTRADICT:</b> reyes-cloud-notes ("Meeting w/ MV, 4:30 — bringing the Kestrel file"); safe-deposit-envelope (his memo of that meeting).<br><b>TELL:</b> micro-pause before "never."<br><b>COLLAPSE −10:</b> "We had a scheduling conversation. He was agitated. I referred him to HR."</div>
+  </div>
+  <div class="card">
+    <div class="head">V3<span class="who">VOSS</span><span class="badge lie">LIE/EVA</span></div>
+    <div class="statement">"Kestrel is a legitimate facilities vendor. I sign hundreds of contracts."</div>
+    <div class="fac"><b>CONTRADICT:</b> kestrel-filings (registered agent: her ex-husband's firm).<br><b>TELL:</b> "legitimate" arrives unprompted.<br><b>COLLAPSE −10:</b> "My ex-husband's firm registers half the LLCs in this county." — she recovers stance; needs V4 to stay down.</div>
+  </div>
+  <div class="card">
+    <div class="head">V4<span class="who">VOSS</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"I don't handle vendor payments personally. That's two levels below me."</div>
+    <div class="fac"><b>CONTRADICT:</b> kestrel-payment-line (endorsement stamps match her signature stamp).<br><b>COLLAPSE −15:</b> paper she thought was clean. <b>Her composure recovery stops for the rest of the session.</b></div>
+  </div>
+  <div class="card">
+    <div class="head">V5<span class="who">VOSS</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Our security contractor reports to operations. I doubt I'd recognize him."</div>
+    <div class="fac"><b>CONTRADICT:</b> hartney-llc-records or kestrel-payment-line (his LLC paid from her shell).</div>
+  </div>
+  <div class="card">
+    <div class="head">V6<span class="who">VOSS</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"I was at the Whitfield board dinner until midnight. Twenty witnesses."</div>
+    <div class="fac"><b>She did not pull the trigger.</b> Presenting scene evidence against this backfires (+5). The case against her is orchestration — the player must feel that distinction.</div>
+  </div>
+  <div class="card">
+    <div class="head">V7<span class="who">VOSS</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"If money were missing, our auditors would have found it years ago."</div>
+    <div class="fac"><b>TELL:</b> too smooth — a sentence said before, to a mirror.</div>
+  </div>
+  <div class="card">
+    <div class="head">V8<span class="who">VOSS</span><span class="badge evasion">DEFLECT</span></div>
+    <div class="statement">"Daniel had personal troubles. The marriage. Perhaps debts. Look there."</div>
+    <div class="fac"><b>Seeds the red herring.</b><br><b>PRESS (Insight special):</b> the concern is rehearsed — she is <i>steering</i>.<br>Player presenting insurance-policy as if agreeing = bait taken (note it).</div>
+  </div>
+  <div class="card">
+    <div class="head">V9<span class="who">VOSS</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"I have never spoken to Mr. Hartney outside contract renewals."</div>
+    <div class="fac"><b>CONTRADICT:</b> phone-records (three calls the night of the death, one at 12:20 AM).<br><b>COLLAPSE −15</b> → go to V10.</div>
+  </div>
+  <div class="card">
+    <div class="head">V10 ★ THRESHOLD<span class="who">VOSS</span></div>
+    <div class="statement">"Whatever Gil Hartney does with his evenings is his own business."</div>
+    <div class="fac"><b>UNLOCK:</b> composure ≤ 30.<br>First open crack — she is cutting him loose. One more landed contradiction → BREAK (see dossier).</div>
+  </div>
+</div>
+
+<h2 class="deck">Deck H — Gil Hartney</h2>
+<div class="grid">
+  <div class="card">
+    <div class="head">H1<span class="who">HARTNEY</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"I do gates, cameras, and rounds. That's the job."</div>
+    <div class="fac">Baseline. Let it sit on the record.</div>
+  </div>
+  <div class="card">
+    <div class="head">H2<span class="who">HARTNEY</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Night he died I was on shift at the depot till midnight. Check the roster."</div>
+    <div class="fac"><b>CONTRADICT:</b> cctv-still (his truck, Route 9 gas station, 11:40 PM) or towlot-statement.<br>duty-roster is his <i>own exhibit</i> — if pinned first, the contradiction is an alibi collapse: <b>−15</b>.<br><b>COLLAPSE:</b> "Rosters run late all the time. Maybe I stepped out." → H10 unlocked.</div>
+  </div>
+  <div class="card">
+    <div class="head">H3<span class="who">HARTNEY</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"My truck never left the depot lot."</div>
+    <div class="fac"><b>CONTRADICT:</b> cctv-still; towlot-statement.<br><b>TELL:</b> volunteers the truck before you asked about any vehicle.</div>
+  </div>
+  <div class="card">
+    <div class="head">H4<span class="who">HARTNEY</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"Never met Reyes outside a badge check at the gate."</div>
+    <div class="fac"><b>CONTRADICT:</b> phone-records (his call to Reyes, 9:50 PM, night of death — the lure).<br><b>COLLAPSE −10:</b> "Maybe I called about a parking thing." — the 9:50 call now sits on the record next to an 11:40 sighting.</div>
+  </div>
+  <div class="card">
+    <div class="head">H5<span class="who">HARTNEY</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Kestrel? Never heard of it."</div>
+    <div class="fac"><b>CONTRADICT:</b> kestrel-payment-line; hartney-llc-records.</div>
+  </div>
+  <div class="card">
+    <div class="head">H6<span class="who">HARTNEY</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"My LLC does side work. Weddings, warehouses. All aboveboard."</div>
+    <div class="fac"><b>CONTRADICT:</b> hartney-llc-records (identical monthly amounts, no invoices).<br><b>TELL:</b> "aboveboard" — a borrowed word, from someone who talks like V7.</div>
+  </div>
+  <div class="card">
+    <div class="head">H7<span class="who">HARTNEY</span><span class="badge evasion">EVASION</span></div>
+    <div class="statement">"Reyes was a sad little man. Suicide surprised nobody."</div>
+    <div class="fac"><b>TELL (Insight special):</b> <i>rehearsed</i> — near-verbatim to Voss's V8 framing. This explicitly links the two decks. Note if any playtester finds it.</div>
+  </div>
+  <div class="card">
+    <div class="head">H8<span class="who">HARTNEY</span><span class="badge true">TRUE·tech</span></div>
+    <div class="statement">"I don't own a handgun. Company policy, and I follow it."</div>
+    <div class="fac">The revolver was a pawn buy. Presenting revolver-trace ("big man, work jacket," no name) does <b>not</b> land (+5 backfire) — texture evidence isn't proof.</div>
+  </div>
+  <div class="card">
+    <div class="head">H9<span class="who">HARTNEY</span><span class="badge lie">LIE</span></div>
+    <div class="statement">"Ms. Voss and I talk contracts once a year, maybe."</div>
+    <div class="fac"><b>CONTRADICT:</b> phone-records (three calls that night).</div>
+  </div>
+  <div class="card">
+    <div class="head">H10 ★ THRESHOLD<span class="who">HARTNEY</span></div>
+    <div class="statement">"Maybe I drove out that way. Roads are public. You got nothing that says otherwise."</div>
+    <div class="fac"><b>UNLOCK:</b> composure ≤ 30, or after H2 collapse.<br>He places <i>himself</i> near the scene, on the record. Deliver it flat, as a dare.</div>
+  </div>
+</div>
+
+<h2 class="deck">Deck D — Dana Reyes</h2>
+<div class="grid">
+  <div class="card">
+    <div class="head">D1<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"We were separated. I hadn't seen him in a month."</div>
+    <div class="fac">No tells anywhere in this deck except D3. Insight reads belief.</div>
+  </div>
+  <div class="card">
+    <div class="head">D2<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"I don't know anything about his work. He stopped telling me years ago."</div>
+    <div class="fac">Mostly true — see D5.</div>
+  </div>
+  <div class="card">
+    <div class="head">D3<span class="who">DANA</span><span class="badge lie">LIE·small</span></div>
+    <div class="statement">"The insurance? I'd forgotten it existed."</div>
+    <div class="fac"><b>CONTRADICT:</b> insurance-policy (premium receipts — <i>she</i> paid last month's).<br><b>COLLAPSE −10, EXCULPATORY:</b> "He was falling apart. I filed the papers and then I kept paying his premiums. You explain that to me." — the lie protects shame, not guilt. Play it so the player feels the difference.</div>
+  </div>
+  <div class="card">
+    <div class="head">D4<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"Daniel wasn't suicidal. He was angry. Somebody did this to him."</div>
+    <div class="fac">Corroborates cc1. Pinnable.</div>
+  </div>
+  <div class="card">
+    <div class="head">D5<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"He said the job had gone rotten. He wouldn't say how. I stopped asking."</div>
+    <div class="fac">Texture for cc2.<br><b>PRESS (Insight special):</b> "He said it the way you'd talk about a person, not a company."</div>
+  </div>
+  <div class="card">
+    <div class="head">D6<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"I was at my sister's that night. We watched television. I can't tell you what."</div>
+    <div class="fac">The alibi of someone who never rehearsed one. Insight reads honest.</div>
+  </div>
+  <div class="card">
+    <div class="head">D7<span class="who">DANA</span><span class="badge true">TRUE</span></div>
+    <div class="statement">"He'd started locking his study. Him. The man lost his own keys twice a year."</div>
+    <div class="fac">Points at reyes-apartment (cc2 Research door).</div>
+  </div>
+  <div class="card">
+    <div class="head">D8<span class="who">DANA</span><span class="badge true">TRUE·instinct</span></div>
+    <div class="statement">"Ask that company. Ask the woman he worked for. He came home from that building smaller every day."</div>
+    <div class="fac">Pinnable as a lead, worthless as proof — the player should notice the difference.</div>
+  </div>
+</div>
+
+<h2 class="deck">Evidence Cards</h2>
+<div class="grid">
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">photo-annotations</span></div>
+    <b>Annotated scene photos</b> <span class="tag">PHOTO</span>
+    <div class="ev-content">Gun in the left hand — Reyes wrote right-handed. Spatter angle wrong for a seated shot. Driver's seat run back too far for his height.</div>
+    <div class="fac tiny">photocopy grain · door: Photography @ overpass</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">coroner-prelim</span></div>
+    <b>Coroner's preliminary (printout)</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">No gunshot residue on either hand. Faint ligature bruising, left wrist. Manner of death: pending.</div>
+    <div class="fac tiny">coffee-ring scan · door: First Aid / Research @ coroner</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">autopsy-final</span></div>
+    <b>Final autopsy report</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Manner of death: homicide. Staging indicators enumerated — wound path, residue absence, perimortem wrist restraint.</div>
+    <div class="fac tiny">laser-toner banding · cc1 fallback (two days; Hartney +10)</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">revolver-trace</span></div>
+    <b>Revolver serial trace</b> <span class="tag">TEXTURE</span>
+    <div class="ev-content">Serial acid-lifted: pawn purchase, two days before the death. Buyer: "big man, work jacket." No name on file.</div>
+    <div class="fac tiny">photocopy grain · suggestive, not proof — see H8</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">vendor-ledger</span></div>
+    <b>Kestrel vendor ledger printouts</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Kestrel Facilities Group: 26 invoices over 14 months. No work orders behind any of them. Processing initials: P.O.</div>
+    <div class="fac tiny">laser-toner banding · door: Accounting @ depot</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">reyes-cloud-notes</span></div>
+    <b>Reyes's cloud-drive notes</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">"P. caught it in the totals — third month running." · "Meeting w/ MV, 4:30 — bringing the Kestrel file."</div>
+    <div class="fac tiny">screen-capture artifacts · door: Research @ apartment</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">safe-deposit-envelope</span></div>
+    <b>Reyes's safe-deposit envelope</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">His own dossier: copied Kestrel invoices and a dated memo of his meeting with Voss. He knew what he was holding.</div>
+    <div class="fac tiny">photocopy grain · cc2 fallback (obligation to the lawyer)</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">kestrel-filings</span></div>
+    <b>Kestrel state filings</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Kestrel Facilities Group LLC. Registered agent: Roan &amp; Associates — Voss's ex-husband's firm.</div>
+    <div class="fac tiny">scan lines · door: Research @ desk</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">fixer-tip</span></div>
+    <b>Fixer's tip (recorded call)</b> <span class="tag">STATEMENT</span>
+    <div class="ev-content">"Executive-floor money moves through a maintenance shell. Ask who signs the checks."</div>
+    <div class="fac tiny">voice memo · door: Streetwise @ pawn row</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">anon-printout</span></div>
+    <b>Anonymous printout under the door</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">A Kestrel check copy. Signature stamp clearly legible: M. VOSS.</div>
+    <div class="fac tiny">photocopy grain · cc3 fallback (Hartney learns a PI is inside)</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">cctv-still</span></div>
+    <b>Gas-station CCTV still, 11:40 PM</b> <span class="tag">PHOTO</span>
+    <div class="ev-content">Route 9 gas station camera: Hartney's truck, plate readable, heading toward the overpass pull-off.</div>
+    <div class="fac tiny">compression artifacts · door: Photography / Persuade @ gas station, Spot @ overpass</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">towlot-statement</span></div>
+    <b>Tow-lot attendant statement</b> <span class="tag">STATEMENT</span>
+    <div class="ev-content">"Truck sat under the span with its lights off. Twenty minutes, maybe. Didn't like the look of it."</div>
+    <div class="fac tiny">voice memo · door: Streetwise / Intimidate @ tow lot</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">phone-records</span></div>
+    <b>Phone-record subpoena copy</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Night of death: Hartney → Reyes 9:50 PM (4 min). Hartney ↔ Voss 10:12 PM, 11:58 PM, 12:20 AM.</div>
+    <div class="fac tiny">scan lines · cc4 fallback (after cc1 pinned + one day)</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">kestrel-payment-line</span></div>
+    <b>Kestrel "security consulting" payments</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Monthly "site security consulting" line to Hartney LLC. Endorsement stamps match Voss's signature stamp.</div>
+    <div class="fac tiny">laser-toner banding · door: Accounting @ depot</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">hartney-llc-records</span></div>
+    <b>Hartney LLC bank records</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">Identical monthly deposits, 14 months. No invoices, no clients on file. The wedding-and-warehouse story has no paper.</div>
+    <div class="fac tiny">scan lines · door: Law @ Kessler &amp; Roan</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">voss-deflection</span></div>
+    <b>Voss interview transcript</b> <span class="tag">STATEMENT</span>
+    <div class="ev-content">"If Gil Hartney interpreted a personnel concern as something else, that is his crime."</div>
+    <div class="fac tiny">transcript · earned at Voss's break — cc5 door</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">petra-statement</span></div>
+    <b>Petra's statement</b> <span class="tag">STATEMENT</span>
+    <div class="ev-content">"He asked me if the Kestrel invoices looked right. I said no. That's all I did."</div>
+    <div class="fac tiny">transcript · earned at P10 — cc2 door</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">petra-ledger-page</span></div>
+    <b>Ledger page, mailed anonymously</b> <span class="tag">DOCUMENT</span>
+    <div class="ev-content">A Kestrel ledger page, no return address. The Hartney LLC line is highlighted in a shaking pen.</div>
+    <div class="fac tiny">photocopy grain · cc5 fallback (Petra has fled)</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">duty-roster</span></div>
+    <b>Hartney's duty roster</b> <span class="tag">FALSIFIABLE ALIBI</span>
+    <div class="ev-content">Depot roster, night of death: HARTNEY G. — on shift 1800–0000. Signed by Hartney himself.</div>
+    <div class="fac tiny">photocopy grain · pin before confronting H2 for the −15 collapse</div>
+  </div>
+  <div class="card evidence">
+    <div class="head">EVIDENCE<span class="who">insurance-policy</span></div>
+    <b>Life insurance policy</b> <span class="tag">RED HERRING</span>
+    <div class="ev-content">Term life, $400,000. Beneficiary: Dana Reyes. Last premium paid by D. Reyes — personally.</div>
+    <div class="fac tiny">scan lines · the second page is the exculpatory one</div>
+  </div>
+</div>
+
+<h2 class="deck">Build Sheets</h2>
+<div class="grid">
+  <div class="card wide">
+    <div class="head">BUILD — THE EX-COP<span class="who">"You know how the file gets made. You've been the file."</span></div>
+    <div class="cols2" style="margin-top:4px">
+      <table class="build">
+        <tr><td>Streetwise</td><td class="r">65</td></tr>
+        <tr><td>Intimidate</td><td class="r">65</td></tr>
+        <tr><td>Firearms</td><td class="r">60</td></tr>
+        <tr><td>Spot</td><td class="r">60</td></tr>
+        <tr><td>Insight</td><td class="r">55</td></tr>
+      </table>
+      <table class="build">
+        <tr><td>First Aid</td><td class="r">45</td></tr>
+        <tr><td>Fast Talk</td><td class="r">40</td></tr>
+        <tr><td>Law</td><td class="r">35</td></tr>
+        <tr><td>Photography</td><td class="r">30</td></tr>
+        <tr><td>Accounting</td><td class="r">15</td></tr>
+      </table>
+    </div>
+    <div class="fac tiny" style="margin-top:3px">Doors open at rating 40+. Rolls grade texture only.</div>
+  </div>
+  <div class="card wide">
+    <div class="head">BUILD — THE EX-ACCOUNTANT<span class="who">"Every crime is a ledger. Most people just can't read them."</span></div>
+    <div class="cols2" style="margin-top:4px">
+      <table class="build">
+        <tr><td>Accounting</td><td class="r">70</td></tr>
+        <tr><td>Research</td><td class="r">65</td></tr>
+        <tr><td>Law</td><td class="r">55</td></tr>
+        <tr><td>Insight</td><td class="r">50</td></tr>
+        <tr><td>Persuade</td><td class="r">50</td></tr>
+      </table>
+      <table class="build">
+        <tr><td>Fast Talk</td><td class="r">45</td></tr>
+        <tr><td>Photography</td><td class="r">25</td></tr>
+        <tr><td>First Aid</td><td class="r">25</td></tr>
+        <tr><td>Streetwise</td><td class="r">20</td></tr>
+      </table>
+    </div>
+    <div class="fac tiny" style="margin-top:3px">Doors open at rating 40+. Rolls grade texture only.</div>
+  </div>
+  <div class="card wide">
+    <div class="head">BUILD — THE EX-SOLDIER<span class="who">"You clear rooms. This city is just rooms."</span></div>
+    <div class="cols2" style="margin-top:4px">
+      <table class="build">
+        <tr><td>Firearms</td><td class="r">70</td></tr>
+        <tr><td>Dodge</td><td class="r">60</td></tr>
+        <tr><td>Brawl</td><td class="r">55</td></tr>
+        <tr><td>Spot</td><td class="r">55</td></tr>
+        <tr><td>First Aid</td><td class="r">50</td></tr>
+      </table>
+      <table class="build">
+        <tr><td>Intimidate</td><td class="r">50</td></tr>
+        <tr><td>Drive</td><td class="r">45</td></tr>
+        <tr><td>Stealth</td><td class="r">45</td></tr>
+        <tr><td>Streetwise</td><td class="r">35</td></tr>
+        <tr><td>Persuade</td><td class="r">25</td></tr>
+      </table>
+    </div>
+    <div class="fac tiny" style="margin-top:3px">Doors open at rating 40+. Rolls grade texture only. One clue (cc3) reaches you by fallback — that's the build, not a bug.</div>
+  </div>
+</div>

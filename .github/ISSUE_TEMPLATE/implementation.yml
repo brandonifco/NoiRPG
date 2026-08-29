@@ -1,0 +1,79 @@
+name: Scoped implementation
+description: Propose one bounded change.
+labels: ["needs-design"]
+body:
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Outcome
+      description: What exact behavior should become true?
+    validations:
+      required: true
+
+  - type: textarea
+    id: reason
+    attributes:
+      label: Problem or value
+      description: What failure, cost, or missing capability does this address?
+    validations:
+      required: true
+
+  - type: textarea
+    id: scope
+    attributes:
+      label: In scope and out of scope
+      description: Bound this to one branch and one pull request.
+    validations:
+      required: true
+
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      placeholder: |
+        - [ ] Observable condition one
+        - [ ] Observable condition two
+    validations:
+      required: true
+
+  - type: textarea
+    id: source
+    attributes:
+      label: Rules source
+      description: >
+        For rules-engine work: which chapter/section of the ORC Content Document,
+        and which printed table is the conformance check? Write "N/A" for tooling
+        or infrastructure work.
+      placeholder: "Ch 5 System — Skill Results Table, all 24 rows"
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Relevant context and decisions
+      description: Link documents, earlier Issues, PRs, or rejected approaches.
+      placeholder: "engine-implementation-plan.md §2, orc-scope-filter.md, docs/decisions/0001"
+
+  - type: textarea
+    id: files
+    attributes:
+      label: Likely files or subsystem
+
+  - type: textarea
+    id: verification
+    attributes:
+      label: Required verification
+      description: Name exact tests, commands, measurements, or visual evidence.
+    validations:
+      required: true
+
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies and blockers
+      description: Other Issues that must land first. State the build layer (see plan §3).
+
+  - type: textarea
+    id: deadends
+    attributes:
+      label: Known dead ends
+      description: Approaches already rejected, and why.

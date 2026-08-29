@@ -1,0 +1,24 @@
+# Superseded source text — NOT our rules source.
+# BRP SRD 1.0.2 (2020, BRP-OGL) has a different resolution table and only four
+# success grades. An agent that reads it will derive the wrong formulas.
+# See docs/decisions/0001-source-text.md
+BRP SRD 1.0.2.pdf
+
+# .NET
+bin/
+obj/
+*.user
+[Dd]ebug/
+[Rr]elease/
+artifacts/
+TestResults/
+*.trx
+
+# Editors
+.vs/
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db

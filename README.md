@@ -13,9 +13,12 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 
 | Document | Purpose |
 |---|---|
+| [AGENTS.md](AGENTS.md) | Operating contract for coding agents — source-of-truth order, invariants, work protocol. Read this first. |
 | [noir-rpg-framework.md](noir-rpg-framework.md) | The design framework (v0.2) — system foundation, resolution mechanics, advancement, investigation rules, art direction, and scope budget. |
 | [design-review-notes.md](design-review-notes.md) | Critical review of framework v0.1 — open design risks and recommended next steps. |
 | [development-plan.md](development-plan.md) | Risk-sequenced development plan — phases, gates, and risk register. |
+| [orc-scope-filter.md](orc-scope-filter.md) | What we implement from the ORC Content Document and what we cut. ~60% of the book is out of scope. |
+| [engine-implementation-plan.md](engine-implementation-plan.md) | C#/.NET rules engine plan — resolution kernel, architecture decisions, build layers. |
 | [interrogation-design.md](interrogation-design.md) | Design doc for the interrogation minigame, with paper-prototype rules and go/no-go criteria. |
 | [tools/advancement_sim.py](tools/advancement_sim.py) | Advancement math simulation — validates that skills move perceptibly at video-game length. |
 | [case-board-test.md](case-board-test.md) | Paper test kit for the case-board deduction loop, with the machine-run Three Doors build audit results. |
@@ -24,6 +27,14 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [tools/case_validator.py](tools/case_validator.py) | Case validator — enforces the Three Doors and junction-point rules, audits build coverage. |
 | [interrogation-cards-overpass.md](interrogation-cards-overpass.md) | Statement card decks for all four Overpass suspects — the interrogation paper-prototype materials. |
 | [paper-kit/overpass-cards.html](paper-kit/overpass-cards.html) | Print-ready paper test kit — open in a browser and print: statement decks, suspect dossiers with trackers, evidence cards, reference cards, build sheets. |
+| [docs/decisions/](docs/decisions/) | Architecture decision records. |
+| [docs/agent-team.md](docs/agent-team.md) | Agent roster and routing rules — which model does what, and why. |
+
+## How work is tracked
+
+GitHub Issues are the only work queue. One concern, one Issue, one branch, one pull
+request. Durable decisions live in `docs/decisions/`; current and future work lives
+in Issues. Neither is duplicated here.
 
 ## Status
 
@@ -31,4 +42,4 @@ Early design phase (Phase 0 decisions locked; Phase 1 validation underway — se
 
 ## Licensing
 
-The mechanical skeleton adapts ORC-licensed material from *Basic Roleplaying: Universal Game Engine* (Chaosium, 2023). Setting, story, characters, writing, art, and code are reserved material. An ORC Notice will be included as the project formalizes.
+The mechanical skeleton adapts ORC-licensed material from *Basic Roleplaying: Universal Game Engine* (Chaosium, 2023), via the freely published ORC Content Document committed to this repository. Setting, story, characters, writing, art, and code are reserved material. An ORC Notice and a "Powered by BRP" credit will be included as the project formalizes.

@@ -1,0 +1,36 @@
+name: Design decision
+description: A judgment that must be settled before implementation can proceed.
+labels: ["needs-design"]
+body:
+  - type: textarea
+    id: question
+    attributes:
+      label: The question
+    validations:
+      required: true
+
+  - type: textarea
+    id: blocks
+    attributes:
+      label: What this blocks
+      description: Which build layer or Issues cannot proceed until this is settled?
+    validations:
+      required: true
+
+  - type: textarea
+    id: options
+    attributes:
+      label: Options and tradeoffs
+    validations:
+      required: true
+
+  - type: textarea
+    id: recommendation
+    attributes:
+      label: Recommendation
+
+  - type: input
+    id: adr
+    attributes:
+      label: Decision record
+      description: Path under docs/decisions/ once resolved.
