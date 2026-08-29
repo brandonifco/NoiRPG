@@ -70,6 +70,28 @@ dotnet format --verify-no-changes
 
 Target framework: `net8.0`. Update this section in the same PR that changes the commands.
 
+## Locked decisions
+
+These are settled. Do not reopen them inside an implementation PR:
+
+- **Roll integrity: pre-seeded at scene entry.** Reloading replays the same result.
+- **Advancement: tick-on-use** — a deliberate deviation from BRP RAW, validated by
+  `tools/advancement_sim.py`. A skill ticks when exercised under real stakes whether
+  the roll succeeded or failed; the improvement roll at case close still gates the gain.
+- **Case decay: junction-only.** At most 3 junctions per case.
+- **Clue routing: the Three Doors rule**, machine-enforced by `tools/case_validator.py`.
+- **The canonical skill list is the framework's 18 names** (Streetwise, Shadow,
+  Intimidate, Locksmith, and so on), as hardcoded in `tools/case_validator.py`. Do not
+  rename them to the source book's names — existing tooling depends on these.
+
+## Agent team
+
+Work is routed to the smallest model that can do it correctly. See
+`docs/agent-team.md` for the roster and routing rules, and `docs/decisions/0004-agent-team.md`
+for why. In short: cheap gates before expensive ones, escalate on risk rather than
+diff size, verification agents get read-only tools, and Codex is a cross-vendor
+verification instrument rather than a second workhorse.
+
 ## Where deeper guidance lives
 
 Subsystem-specific instructions belong in `AGENTS.md` files next to the code they

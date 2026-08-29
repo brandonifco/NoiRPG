@@ -87,7 +87,9 @@ Per the user's direction: no superheroes, no cyborgs, no galactic knights, no so
 
 **CUT**: Artillery, Energy Weapon, Fly, Heavy Machine, Heavy Weapon, Missile Weapon (bows/crossbows), Pilot (aircraft/spacecraft), Projection, Ride, Shield, Literacy (universal in a modern setting — treat as automatic).
 
-**Note the framework's skill list needs revision.** `noir-rpg-framework.md` lists 18 skills including invented ones — *Shadow*, *Intimidate*, *Locksmith*, *Accounting*, *Photography*. Four of those five already exist in the book under different names:
+**Skill naming: the framework's names win.** `noir-rpg-framework.md` uses an
+18-skill list including *Streetwise, Shadow, Intimidate, Law, Accounting, Photography,
+Locksmith*. Four of those map onto existing book skills under different names:
 
 | Framework name | Book equivalent |
 |---|---|
@@ -95,9 +97,16 @@ Per the user's direction: no superheroes, no cyborgs, no galactic knights, no so
 | Locksmith | `Fine Manipulation` (the book names lockpicking explicitly) |
 | Accounting | `Knowledge (Accounting)` specialty |
 | Photography | `Art (Photography)` specialty |
-| Intimidate | *Genuinely absent* — either an original skill or `Persuade`/`Fast Talk` under duress |
+| Law | `Knowledge (Law)` specialty |
+| Intimidate | No direct equivalent — an original skill |
 
-Prefer the book's names in the engine and alias them for display. Inventing skills that duplicate existing ones fragments the experience-check and profession systems for no gain.
+An earlier draft of this document recommended adopting the book's names in the engine
+and aliasing the framework names for display. **That is wrong and is withdrawn.**
+`tools/case_validator.py` hardcodes the canonical 18 as the framework names, and
+`cases/overpass.yaml` and the paper-kit build sheets are authored against them. The
+engine must use the framework names as canonical and map *inward* to the book's skill
+definitions, not the reverse. Existing tooling and authored content win over
+nomenclatural tidiness.
 
 ---
 

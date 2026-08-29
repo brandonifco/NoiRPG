@@ -43,6 +43,28 @@ This is a large scope reduction: two subsystems move from "design from first pri
 
 The design risk has inverted. It is no longer "these mechanics don't exist"; it is **"too much exists, and scope discipline is the whole game."** Hence the scope filter.
 
+## 0.4 Sequencing against the development plan
+
+`development-plan.md` places engine and platform choice in **Phase 2**, informed by
+what the Phase 1 paper prototypes reveal, and gates expensive work behind the Phase 1
+go/no-go. This plan starts engine work now, which is a departure.
+
+**Resolution: Layer 0 proceeds in parallel with Phase 1; Layers 1 and above wait for
+the Phase 1 gate.**
+
+The rationale is that Layer 0 — seeded dice, the resolution kernel, the modifier
+pipeline — is the one part of the engine that is *independent of every open design
+question*. It does not care whether interrogations are fun, how clues route, or how
+much a skill improves. It is also what the paper prototypes increasingly need: the
+advancement simulation and the case validator are already re-implementing dice and
+grading logic in Python, and a shared kernel stops those from drifting apart from
+the engine before the engine exists.
+
+Everything above Layer 0 genuinely depends on Phase 1 outcomes and should not be
+built until the gate clears. Layer 5 in particular is already partly settled on the
+Python side (`cases/SCHEMA.md`, `tools/case_validator.py`) and must be reconciled
+with, not duplicated by, the C# work.
+
 ## 1. Architecture decisions (make these once, now)
 
 **D1 — Code holds procedures, data holds values.**
@@ -141,7 +163,10 @@ Each layer depends only on the layers above it. Nothing in Layer *n* may referen
 ### Layer 3 — Characters
 - `Character`: identity, characteristic set, skill set with per-skill experience flags, current/max HP, power points, wounds, equipment.
 - `CharacterBuilder`: SRD path (roll characteristics, ±3 point shift, profession = 300 pts across 10 skills, personal = INT×10, 75% soft cap) **and** the noir point-buy path with background packages. Both produce the same `Character`; validation rules are data.
-- `ExperienceSystem`: check eligibility gate (first success only, **not** when Easy, **not** when nothing is at stake — a gate the video game must enforce mechanically since there is no GM), improvement roll (`d100 > skill` → `+1D6`, 100 always improves), teaching (Teach roll capped at teacher's own skill, both must succeed), 4 free downtime checks.
+- `ExperienceSystem`. **NoiRPG deviates from BRP RAW here, and the deviation is locked** — see `noir-rpg-framework.md` v0.2. RAW awards a tick only on *successful* use; `tools/advancement_sim.py` showed across 10,000 characters per scenario that this is nearly invisible at video-game length and starves low skills, which rarely succeed and so rarely tick. The rule is **tick-on-use**: exercising a skill under real stakes earns the tick whether the roll succeeded or failed. The improvement roll at case close still gates the gain, so high skills stay slow and grinding stays pointless.
+  - Implement tick-on-use as the default policy, with RAW available as a ruleset toggle so the simulation stays re-runnable against both.
+  - Retained from RAW: the improvement roll (`d100 > skill` → gain), one tick per skill per case, no tick when the check was Easy or nothing was at stake, and teaching.
+  - The "nothing at stake" gate must be enforced mechanically — there is no gamemaster to adjudicate it.
 
 ### Layer 4 — Combat, gear, spot rules
 - Weapon/armor/shield definitions as data, including range bands (`≤R` normal, `≤2R` ×½, `≤3R` ×¼, `>3R` impossible) and armor's skill penalties by skill *category* (SRD names the physical and perception sets explicitly).
@@ -192,9 +217,11 @@ tools/
 
 ---
 
-## 6. Decisions required (not blocking Milestone 1)
+## 6. Decisions required
 
-Resolved by adopting the ORC document: the source-text question, the sub-5% ambiguity (now explicit — see §2.4), and the Prohibited Content constraint on Composure/Vices.
+**The live queue is GitHub Issues, not this list.** These are summarised for context only; each has an Issue, and the Issue is authoritative if they diverge.
+
+Already resolved: the source-text question and the Prohibited Content constraint (ADR 0001), the sub-5% ambiguity (§2.4), and — locked in framework v0.2, not open — the roll-integrity model (**pre-seeded at scene entry**) and advancement (**tick-on-use**).
 
 Still open:
 
@@ -204,4 +231,4 @@ Still open:
 4. **Hit locations on or off** — the framework's persistent visible injuries argue for on; it meaningfully enlarges Layer 4. Decide before combat is written.
 5. **Fate Points** — attractive for a video game, but built on the power-point economy the scope filter deletes. Needs re-basing on another currency or dropping.
 6. **Acting Without Skill** — interacts directly with the framework's clue rule; the book warns it can strain plausibility.
-7. **Roll-determinism policy** — pre-seeded, autosave-only, or scene-entry resolution (review note §4). The engine supports all three; the game must pick one.
+7. ~~Roll-determinism policy~~ — **decided**: pre-seeded at scene entry (framework v0.2). The engine must implement this; it is no longer a question. ADR 0003's architecture supports it directly.
