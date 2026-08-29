@@ -11,7 +11,8 @@ Read this file, then the one Issue you are working. Do not read the whole repo.
 |---|---|
 | `BasicRoleplaying-ORC-Content-Document.pdf` | **The rules.** The only valid source for mechanics. |
 | `orc-scope-filter.md` | **What we implement and what we cut.** ~60% of the book is out of scope. |
-| `engine-implementation-plan.md` | Architecture, build layers, resolution kernel formulas. |
+| `docs/source-handling.md` | How to extract from the book, the verification discipline, and known errata in it. |
+| `engine-implementation-plan.md` | Historical design context and the build-layer map. **Not authoritative for mechanics** — see the warning below. |
 | `noir-rpg-framework.md` | Game design: setting, tone, structure, art direction. |
 | `design-review-notes.md` | Known open design risks. |
 | `docs/decisions/` | Durable architectural decisions. Linked from Issues, not copied. |
@@ -24,18 +25,24 @@ If two of these conflict, the higher row wins, and the conflict is a bug — fil
 1. **`BRP SRD 1.0.2.pdf` is not our source.** It is a different, superseded 2020
    document with a different resolution table and only four success grades. It is
    gitignored. If you find a copy, do not read it for mechanics.
-2. **The scope filter is binding.** No magic, sorcery, psychic powers, superpowers,
+2. **`engine-implementation-plan.md` is not authoritative for mechanics.** It predates
+   the source-text decision and has been found wrong on three separate topics — the
+   modifier ordering, the weapon range bands (wrong in every particular, including a
+   rule that does not exist), and resistance rolls (one line cites a section number from
+   the superseded book). Its architecture and build-layer material is still useful. Its
+   formulas are not. Take mechanics from the book.
+3. **The scope filter is binding.** No magic, sorcery, psychic powers, superpowers,
    mutations, fantasy weapons, spacecraft, or monsters. If an Issue seems to require
    out-of-scope content, stop and ask rather than implementing it.
-3. **Modern era baselines, not historical.** Several BRP skills carry two base
+4. **Modern era baselines, not historical.** Several BRP skills carry two base
    chances. Always take the modern value. See `orc-scope-filter.md`.
-4. **All randomness is injected and seeded.** No `System.Random` statics, no
+5. **All randomness is injected and seeded.** No `System.Random` statics, no
    `DateTime.Now` in the core. Same seed plus same call sequence must produce a
    byte-identical roll log. This is load-bearing for tests, replay, and balance
    simulation — not a style preference.
-5. **`Brp.Core` and `Brp.Rules` take no game-engine dependency.** No Unity, Godot,
+6. **`Brp.Core` and `Brp.Rules` take no game-engine dependency.** No Unity, Godot,
    or MonoGame references.
-6. **Rules values are data, not constants.** Numbers from the book belong in
+7. **Rules values are data, not constants.** Numbers from the book belong in
    ruleset JSON under `src/Brp.Data/`, not hardcoded in C#.
 
 ## Rules-conformance rule
@@ -43,7 +50,21 @@ If two of these conflict, the higher row wins, and the conflict is a bug — fil
 Any change implementing a mechanic must cite the chapter and section it comes from,
 and where the book prints a table, the test suite must reproduce that table exactly
 rather than spot-checking it. Derived formulas are verified against every printed
-row, not a sample.
+row, not a sample. `docs/source-handling.md` has the extraction recipe, the known
+errata, and the defect classes that keep recurring — read it before touching rules code.
+
+Two conventions you will meet and should follow:
+
+**Sourced or house rule.** Every mechanical claim in a decision record either cites the
+chapter it was verified against, or says plainly that the book is silent and the choice
+is ours. An unmarked assertion is a defect regardless of whether it happens to be true —
+two rewrites on #11 came from one sitting unnoticed beside verified claims.
+
+**Pinning tests.** A few tests deliberately assert behaviour that is correct in one
+context and wrong in another, and say so in their name and comment. The test *continuing
+to pass* is the alarm: it means someone reused the narrow thing somewhere it does not
+belong. `ResolutionPolicyTests.Skill_rolls_fail_at_96_even_at_full_chance_which_is_why_resistance_is_a_separate_path`
+is the worked example. Do not "fix" one of these; understand why it exists first.
 
 ## Work protocol
 
@@ -58,9 +79,17 @@ One concern, one Issue, one branch, one pull request.
 
 If you discover unrelated work, file a separate Issue. Do not enlarge the current one.
 
-## Commands
+## State of the code
 
-No solution exists yet — Issue #1 creates it. Once it does, these are the contract:
+`Brp.Core` holds Layer 0, complete: seeded dice (`Dice/`, `Randomness/`), the five-grade
+resolution kernel (`Resolution/`), the modifier pipeline (`Modifiers/`), and resistance
+and opposed rolls (`Contests/`). Roughly 890 tests, most of them printed tables
+reproduced cell by cell.
+
+Nothing above Layer 0 exists yet. See `engine-implementation-plan.md` §3 for the layer
+map — the *structure* there is sound even though its formulas are not.
+
+## Commands
 
 ```
 dotnet build

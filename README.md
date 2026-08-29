@@ -30,6 +30,7 @@ A modern-day noir action/mystery RPG — no magic, no unrealistic technology, pr
 | [paper-kit/overpass-cards.html](paper-kit/overpass-cards.html) | Print-ready paper test kit — open in a browser and print: statement decks, suspect dossiers with trackers, evidence cards, reference cards, build sheets. |
 | [docs/decisions/](docs/decisions/) | Architecture decision records. |
 | [docs/agent-team.md](docs/agent-team.md) | Agent roster and routing rules — which model does what, and why. |
+| [docs/source-handling.md](docs/source-handling.md) | How to extract from the source book, the verification discipline, and known errata in it. |
 
 ## How work is tracked
 
@@ -39,7 +40,7 @@ in Issues. Neither is duplicated here.
 
 ## Status
 
-Early design phase (Phase 0 decisions locked; Phase 1 validation underway — see the development plan). Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases, junction-only case decay, pre-seeded rolls, tick-on-use advancement, commercial release intent. Platform and engine undecided until the vertical slice.
+Phase 1 validation underway alongside engine Layer 0, which is complete (dice, resolution kernel, modifier pipeline, resistance and opposed rolls; ~890 tests). Phase 0 decisions locked — see the development plan). Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases, junction-only case decay, pre-seeded rolls, tick-on-use advancement, commercial release intent. Platform and engine undecided until the vertical slice.
 
 ## Licensing
 
