@@ -200,24 +200,46 @@ are #40's stated follow-on work).
   its fumble band matches the book's general fumble rule exactly. A Success
   (or better — Ch 5 p.138 does not distinguish Special/Critical for
   teaching) grants `+1D6`, capped so training alone cannot carry the skill
-  past `trainingCapPercent` (75%, `Ch 5 p.138`: "No skill can be trained
-  above 75%, no matter how good the instructor. Any increase above this
-  must come through successful use of the skill"). **Corrected
-  2026-08-30:** the original implementation applied the die roll
-  uncapped, which could train a skill past 75% — a real defect, since that
-  cap is the book's explicit floor on what teaching alone can do. A plain
-  Failure grants nothing. A **fumble now applies the book's printed
-  penalty**: `CharacterSkill.Degrade` reduces the rating by `1D3`, floored
-  at zero (Ch 5 p.138: "a fumble is counterproductive, with the teacher
-  causing self-doubt and contradicting your character's prior learnings,
-  reducing the skill by -1D3"). This was previously left unmodeled with an
-  incorrect scope note calling it "a combat/injury effect, Layer 4" — a
-  teaching fumble is skill *degradation*, not a physical injury, and there
-  was no genuine scope reason to defer it. `Teach` returns the signed
-  change actually applied (positive for a capped gain, negative for a
-  floored fumble penalty, zero for a plain failure), not the raw uncapped
-  die roll, so a caller reading the return value never sees a number larger
-  than what the skill's rating actually moved by.
+  past a training cap (75% per Ch 5 p.139: "No skill can be trained above
+  75%, no matter how good the instructor. Any increase above this must come
+  through successful use of the skill"). **Corrected 2026-08-30:** the
+  original implementation applied the die roll uncapped, which could train a
+  skill past 75% — a real defect, since that cap is the book's explicit
+  floor on what teaching alone can do. A plain Failure grants nothing. A
+  **fumble now applies the book's printed penalty**: `CharacterSkill.Degrade`
+  reduces the rating by `1D3`, floored at zero (Ch 5 p.138: "a fumble is
+  counterproductive, with the teacher causing self-doubt and contradicting
+  your character's prior learnings, reducing the skill by -1D3"). This was
+  previously left unmodeled with an incorrect scope note calling it "a
+  combat/injury effect, Layer 4" — a teaching fumble is skill *degradation*,
+  not a physical injury, and there was no genuine scope reason to defer it.
+  `Teach` returns the signed change actually applied (positive for a capped
+  gain, negative for a floored fumble penalty, zero for a plain failure),
+  not the raw uncapped die roll, so a caller reading the return value never
+  sees a number larger than what the skill's rating actually moved by.
+- **Corrected 2026-08-30 (second conformance pass): the training cap is now
+  ruleset data, not a bare constant.** The first fix for the missing 75%
+  cap (above) initially landed it as a `Teach` method-parameter default
+  (`int trainingCapPercent = 75`) — itself a nick against invariant 7 (rules
+  values are data, not constants), just one step removed from the defect it
+  fixed. It now lives on a new `Brp.Rules.Advancement.ExperienceRuleset`
+  (one field, `TrainingCapPercent`), loaded from `Brp.Data`'s
+  `experience-ruleset.json` via `NoirExperienceRuleset.Load()`, following
+  the exact loader/JSON/validation pattern
+  `NoirCharacterCreationRuleset`/`character-creation-ruleset.json` already
+  established. `Teach` now takes an `ExperienceRuleset` as a required
+  parameter (no in-code default), so a caller must supply the sourced
+  value rather than silently getting one baked into the method signature.
+  **This is deliberately a separate ruleset field from
+  `Creation.CharacterCreationRuleset.StartingSkillCapPercent`, not a shared
+  read of the same number**, even though the book prints 75% for both at
+  Normal power level: one gates what a skill may start at during character
+  creation (Ch 2 p.8), the other gates what teaching alone may raise an
+  *existing* skill to during play (Ch 5 p.139) — two different rules the
+  book happens to pin at the same value, not one rule with two names. A test
+  proves the value is genuinely read from data by constructing an
+  `ExperienceRuleset` with a non-default cap (40) and confirming `Teach`
+  clamps to it instead of 75.
 
 Policy names (`TickOnUse`, `RawTickOnSuccess`), the mechanical gate
 (`CheckStakes`), and the improvement rule (`d100 > rating → +1D6`, with the
@@ -253,9 +275,9 @@ bonus an explicit opt-in parameter, documented on both sides.
 ## Consequences
 
 - `Brp.Rules` is the third tenant of `Brp.Data`'s loader pattern
-  (`NoirCharacterCreationRuleset`, `NoirBackgroundPackageRuleset`), mirroring
-  `NoirAbilityRuleset`/`NoirSkillRuleset`. `Brp.Data` now references
-  `Brp.Rules` in addition to `Brp.Core`.
+  (`NoirCharacterCreationRuleset`, `NoirBackgroundPackageRuleset`, and now
+  `NoirExperienceRuleset`), mirroring `NoirAbilityRuleset`/`NoirSkillRuleset`.
+  `Brp.Data` now references `Brp.Rules` in addition to `Brp.Core`.
 - Layer 5 can author the real noir background packages
   (`background-packages.json`) and the Composure/Vices/Passions layer
   directly against `Character`, `CharacterSkill`, and `BackgroundPackage`
@@ -281,3 +303,10 @@ bonus an explicit opt-in parameter, documented on both sides.
   tests (see the "Decision: `ExperienceSystem`" section above); a Teach
   fumble now applies the printed -1D3 skill degradation instead of being
   left unmodeled under an inaccurate Layer-4-injury scope note.
+- **Second post-implementation correction (2026-08-30, re-audit):** the
+  training-cap fix above initially landed as a hardcoded method-parameter
+  default rather than ruleset data — a smaller instance of the same
+  invariant-7 gap this ADR otherwise documents at length. Moved to
+  `ExperienceRuleset`/`experience-ruleset.json`, with a test proving a
+  non-default cap value changes `Teach`'s clamp. See the data-sourcing note
+  under "Teaching" above.

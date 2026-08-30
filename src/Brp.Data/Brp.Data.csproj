@@ -16,6 +16,7 @@
     <EmbeddedResource Include="skill-ruleset.json" />
     <EmbeddedResource Include="character-creation-ruleset.json" />
     <EmbeddedResource Include="background-packages.json" />
+    <EmbeddedResource Include="experience-ruleset.json" />
   </ItemGroup>
 
 </Project>

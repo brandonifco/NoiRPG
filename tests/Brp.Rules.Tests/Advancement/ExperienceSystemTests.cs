@@ -9,6 +9,8 @@ namespace Brp.Rules.Tests.Advancement;
 
 public class ExperienceSystemTests
 {
+    private static readonly ExperienceRuleset Ruleset = NoirExperienceRuleset.Load();
+
     private static CharacterSkill MakeSkill(int rating = 20) => new(
         new SkillDefinition(new SkillId("Test Skill"), "Test Skill", SkillCategory.Mental, new ConstantBaseChance(Percent.Of(5))),
         rating);
@@ -234,7 +236,7 @@ public class ExperienceSystemTests
         var student = MakeSkill(rating: 30);
         var entropy = new FixedEntropySource(50, 5); // teach roll 50: a Success at 60% chance, then +5
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy, Ruleset);
 
         Assert.Equal(5, gain);
         Assert.Equal(35, student.CurrentRating);
@@ -246,7 +248,7 @@ public class ExperienceSystemTests
         var student = MakeSkill(rating: 30);
         var entropy = new FixedEntropySource(70); // teach roll 70: a plain Failure at 60% chance
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy, Ruleset);
 
         Assert.Equal(0, gain);
         Assert.Equal(30, student.CurrentRating);
@@ -255,13 +257,13 @@ public class ExperienceSystemTests
     [Fact]
     public void Teach_caps_the_gain_so_training_alone_cannot_carry_a_skill_past_the_seventy_five_percent_ceiling()
     {
-        // Ch 5 p.138: "No skill can be trained above 75%, no matter how good the
+        // Ch 5 p.139: "No skill can be trained above 75%, no matter how good the
         // instructor. Any increase above this must come through successful use of the
         // skill." 74 + a full 1D6 gain of 6 would reach 80%; training must stop at 75%.
         var student = MakeSkill(rating: 74);
         var entropy = new FixedEntropySource(50, 6); // teach roll 50: a Success at 80% chance, then +6
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy, Ruleset);
 
         Assert.Equal(1, gain);
         Assert.Equal(75, student.CurrentRating);
@@ -273,10 +275,32 @@ public class ExperienceSystemTests
         var student = MakeSkill(rating: 75);
         var entropy = new FixedEntropySource(50, 6); // a Success that would otherwise grant +6
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy, Ruleset);
 
         Assert.Equal(0, gain);
         Assert.Equal(75, student.CurrentRating);
+    }
+
+    [Fact]
+    public void Shipped_experience_ruleset_data_reproduces_ch5_p139s_seventy_five_percent_training_cap()
+    {
+        Assert.Equal(75, Ruleset.TrainingCapPercent);
+    }
+
+    [Fact]
+    public void Teach_reads_the_training_cap_from_ruleset_data_not_a_hardcoded_constant()
+    {
+        // A ruleset with a different training cap must produce a different clamp -- proof
+        // the value is read from the injected ExperienceRuleset, not a bare constant inside
+        // ExperienceSystem.
+        var lowCapRuleset = new ExperienceRuleset(trainingCapPercent: 40);
+        var student = MakeSkill(rating: 35);
+        var entropy = new FixedEntropySource(50, 6); // teach roll 50: a Success at 80% chance, then +6
+
+        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy, lowCapRuleset);
+
+        Assert.Equal(5, gain);
+        Assert.Equal(40, student.CurrentRating);
     }
 
     [Fact]
@@ -289,7 +313,7 @@ public class ExperienceSystemTests
         var student = MakeSkill(rating: 30);
         var entropy = new FixedEntropySource(99, 2); // fumble roll, then a -1D3 of 2
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy, Ruleset);
 
         Assert.Equal(-2, gain);
         Assert.Equal(28, student.CurrentRating);
@@ -301,7 +325,7 @@ public class ExperienceSystemTests
         var student = MakeSkill(rating: 1);
         var entropy = new FixedEntropySource(99, 3); // fumble roll, then a -1D3 of 3
 
-        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy, Ruleset);
 
         // The rating can only fall from 1 to 0 -- the returned change reflects what was
         // actually applied, not the raw, unclamped -1D3 penalty.

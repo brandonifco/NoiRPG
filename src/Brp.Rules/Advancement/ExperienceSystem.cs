@@ -143,17 +143,18 @@ public static class ExperienceSystem
     }
 
     /// <summary>
-    /// Ch 5 p.138, "Skill Training and Research" / "Skill Training": a teacher attempts an
-    /// ordinary skill roll against <paramref name="teacherTeachChance"/>, graded through the
-    /// same five-grade resolution every other skill roll uses (Ch 5: System, "Evaluating
+    /// Ch 5 p.138-139, "Skill Training and Research" / "Skill Training": a teacher attempts
+    /// an ordinary skill roll against <paramref name="teacherTeachChance"/>, graded through
+    /// the same five-grade resolution every other skill roll uses (Ch 5: System, "Evaluating
     /// Success or Failure", pp.127-128). A success (Success, Special, or Critical -- the book
     /// does not distinguish between them for teaching) raises the student's skill by a die
     /// roll, capped so training alone can never carry it above
-    /// <paramref name="trainingCapPercent"/>: "No skill can be trained above 75%, no matter
-    /// how good the instructor. Any increase above this must come through successful use of
-    /// the skill." A plain failure grants nothing. A fumble is counterproductive: "the
-    /// teacher caus[es] self-doubt and contradict[s] your character's prior learnings,
-    /// reducing the skill by -1D3."
+    /// <paramref name="ruleset"/>'s <see cref="ExperienceRuleset.TrainingCapPercent"/>
+    /// (75% per Ch 5 p.139 -- see that property for why this is a ruleset field and not the
+    /// same number as <c>Creation.CharacterCreationRuleset.StartingSkillCapPercent</c>). A
+    /// plain failure grants nothing. A fumble is counterproductive: "the teacher caus[es]
+    /// self-doubt and contradict[s] your character's prior learnings, reducing the skill by
+    /// -1D3."
     /// <para>
     /// Returns the signed change actually applied to the student's rating: positive for a
     /// successful lesson (0 if the skill was already at or above the training cap), negative
@@ -164,12 +165,13 @@ public static class ExperienceSystem
         CharacterSkill studentSkill,
         Percent teacherTeachChance,
         IEntropySource entropy,
+        ExperienceRuleset ruleset,
         int gainDieSides = 6,
-        int trainingCapPercent = 75,
         int fumbleDieSides = 3)
     {
         ArgumentNullException.ThrowIfNull(studentSkill);
         ArgumentNullException.ThrowIfNull(entropy);
+        ArgumentNullException.ThrowIfNull(ruleset);
 
         var roll = entropy.NextD100();
         var outcome = SkillResolver.Resolve(teacherTeachChance, teacherTeachChance, roll);
@@ -188,7 +190,7 @@ public static class ExperienceSystem
         }
 
         var die = entropy.NextDie(gainDieSides);
-        var gain = Math.Clamp(trainingCapPercent - studentSkill.CurrentRating, 0, die);
+        var gain = Math.Clamp(ruleset.TrainingCapPercent - studentSkill.CurrentRating, 0, die);
         if (gain > 0)
         {
             studentSkill.Improve(gain);
