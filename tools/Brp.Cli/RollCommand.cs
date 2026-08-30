@@ -3,7 +3,6 @@ using System.Globalization;
 using Brp.Core.Modifiers;
 using Brp.Core.Primitives;
 using Brp.Core.Randomness;
-using Brp.Core.Resolution;
 
 namespace Brp.Cli;
 
@@ -48,21 +47,15 @@ internal static class RollCommand
         // same call sequence produce the same roll, which is the invariant the ADR does settle.
         var entropy = new Xoshiro256StarStar(options.Seed);
 
-        // A gate short-circuits the chain and consumes no entropy, and no option on this command
-        // produces a GateModifier. Stated as a throw rather than a null-forgiving operator so
-        // that adding such an option later fails loudly instead of rendering a blank report.
-        if (chain.IsGated)
-        {
-            throw new InvalidOperationException(
+        // Resolved through ModifierChain.Resolve, passing the printed base chance explicitly:
+        // the chain starts from the character's rating, while the 5% floor keys on the skill's
+        // printed base chance (Ch 5: System, "Skill Rolls"), and those are two different numbers
+        // -- which is what --base-chance is for (#27). A gate short-circuits the chain to null
+        // without drawing; no option on this command produces a GateModifier, so a null here means
+        // an impossible state, and the throw makes it fail loudly rather than render a blank report.
+        var outcome = chain.Resolve(options.BaseChance, entropy)
+            ?? throw new InvalidOperationException(
                 "The chain was gated, but the roll command exposes no gate modifiers.");
-        }
-
-        // Resolved through SkillResolver rather than ModifierChain.Resolve because the chain
-        // passes the rating it started from as the resolver's base chance, and those are two
-        // different numbers: the chain starts from the character's rating, while the 5% floor
-        // keys on the skill's printed base chance (Ch 5: System, "Skill Rolls"). They coincide
-        // only when the caller does not distinguish them, which is what --base-chance is for.
-        var outcome = SkillResolver.Resolve(options.BaseChance, chain.EffectiveChance!.Value, entropy);
 
         output.Write(RollReport.Render(options.Seed, chain, outcome));
         return ExitCode.Ok;

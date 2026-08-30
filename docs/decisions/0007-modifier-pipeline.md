@@ -130,5 +130,15 @@ happens to be true.
   depending on whether an impossible action was attempted.
 - The 5% floor from ADR 0006 keys on the *base* chance and survives arbitrary penalties.
   It is applied by the resolver, after this pipeline, not inside it.
+- **The chain does not own the printed base chance (#27).** `ModifierChain.BaseChance` is the
+  rating the chain started from — the character's current rating — not the skill's printed base.
+  For a trained character the two differ, and the 5% floor keys on the printed base. So
+  `ModifierChain.Resolve` takes the printed base chance as a **required argument**; it does not
+  read `BaseChance` for it. This keeps the chain arithmetic-only and makes the second number
+  impossible to forget, rather than silently conflating the two and wrongly rescuing a 01%-base
+  skill on 01–05. Where a `SkillDefinition` is in hand (Layer 2), `SkillRoll` supplies the printed
+  base from the skill's identity; the CLI passes it via `--base-chance`. **Sourced:** Ch 5: System,
+  "Skill Rolls", p.128 (the floor keys on base chance). **House shape:** making it a required
+  parameter of `Resolve` is an engineering choice, recorded here so the binding is not re-conflated.
 - The gamemaster's discretionary 1% on an Impossible action is not currently expressible,
   since gates short-circuit before overrides. Latent, not yet wrong.
