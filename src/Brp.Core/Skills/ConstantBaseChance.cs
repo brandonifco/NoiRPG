@@ -11,4 +11,11 @@ public sealed record ConstantBaseChance(Percent Value) : BaseChanceExpression
 {
     /// <inheritdoc />
     public override Percent Evaluate(AbilitySet abilities) => Value;
+
+    /// <inheritdoc />
+    public override bool TryEvaluateWithoutAbilities(out Percent value)
+    {
+        value = Value;
+        return true;
+    }
 }

@@ -24,4 +24,8 @@ public sealed record EraConditionalBaseChance(BaseChanceExpression Modern, BaseC
         ArgumentNullException.ThrowIfNull(abilities);
         return Modern.Evaluate(abilities);
     }
+
+    /// <inheritdoc />
+    public override bool TryEvaluateWithoutAbilities(out Percent value) =>
+        Modern.TryEvaluateWithoutAbilities(out value);
 }

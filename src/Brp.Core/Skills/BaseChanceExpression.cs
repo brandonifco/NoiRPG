@@ -18,4 +18,18 @@ public abstract record BaseChanceExpression
 {
     /// <summary>Evaluates this expression to a concrete base chance against a character's abilities.</summary>
     public abstract Percent Evaluate(AbilitySet abilities);
+
+    /// <summary>
+    /// Evaluates this expression when no <see cref="AbilitySet"/> is available, succeeding only
+    /// for a base chance that does not depend on one. A constant qualifies; an either/or pair
+    /// qualifies when the value it selects does. A characteristic formula and a weapon-derived
+    /// base do not -- they need data an abilities-less caller (such as <c>brp roll</c>, which has
+    /// no character sheet) cannot supply, and this returns <see langword="false"/> rather than
+    /// inventing it. The base implementation is the conservative default.
+    /// </summary>
+    public virtual bool TryEvaluateWithoutAbilities(out Percent value)
+    {
+        value = default;
+        return false;
+    }
 }
