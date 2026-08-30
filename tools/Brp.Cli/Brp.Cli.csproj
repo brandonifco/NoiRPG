@@ -18,6 +18,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\..\src\Brp.Core\Brp.Core.csproj" />
+    <ProjectReference Include="..\..\src\Brp.Data\Brp.Data.csproj" />
   </ItemGroup>
 
   <ItemGroup>

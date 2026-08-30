@@ -89,6 +89,49 @@ public class BaseChanceExpressionTests
         Assert.Throws<InvalidOperationException>(() => firearm.Evaluate(Create()));
     }
 
+    // ---- TryEvaluateWithoutAbilities: the abilities-less path used by brp roll (#38) --------
+
+    [Fact]
+    public void A_constant_base_chance_evaluates_without_abilities()
+    {
+        var spot = new ConstantBaseChance(Percent.Of(25));
+
+        Assert.True(spot.TryEvaluateWithoutAbilities(out var value));
+        Assert.Equal(Percent.Of(25), value);
+    }
+
+    [Fact]
+    public void An_era_conditional_over_constants_evaluates_without_abilities_to_its_modern_value()
+    {
+        // Drive: modern 20% / historical 01% (Ch 3, p.37). Both sides constant, so the modern
+        // value resolves with no character sheet -- which is what lets `brp roll --skill-name`
+        // price it.
+        var drive = new EraConditionalBaseChance(
+            new ConstantBaseChance(Percent.Of(20)), new ConstantBaseChance(Percent.Of(1)));
+
+        Assert.True(drive.TryEvaluateWithoutAbilities(out var value));
+        Assert.Equal(Percent.Of(20), value);
+    }
+
+    [Fact]
+    public void A_characteristic_formula_cannot_evaluate_without_abilities()
+    {
+        // Dodge DEX×2 (Ch 3, p.37): needs a characteristic, so an abilities-less caller must be
+        // told it cannot, not handed a wrong number.
+        var dodge = new CharacteristicFormulaBaseChance(new CharacteristicTerm(new CharacteristicId("DEX"), 2));
+
+        Assert.False(dodge.TryEvaluateWithoutAbilities(out var value));
+        Assert.Equal(Percent.Zero, value);
+    }
+
+    [Fact]
+    public void A_weapon_derived_base_chance_cannot_evaluate_without_abilities()
+    {
+        var firearm = new WeaponDerivedBaseChance();
+
+        Assert.False(firearm.TryEvaluateWithoutAbilities(out _));
+    }
+
     private static AbilitySet Create(int dexterity = 12, int intelligence = 12, int power = 12)
     {
         var ruleset = NoirAbilityRuleset.Load();

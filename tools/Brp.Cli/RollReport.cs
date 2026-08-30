@@ -22,7 +22,7 @@ internal static class RollReport
 
     private const string Indent = "  ";
 
-    public static string Render(ulong seed, ModifierChain chain, RollOutcome outcome)
+    public static string Render(ulong seed, ModifierChain chain, RollOutcome outcome, string? baseChanceSkillName = null)
     {
         ArgumentNullException.ThrowIfNull(chain);
         ArgumentNullException.ThrowIfNull(outcome);
@@ -53,9 +53,15 @@ internal static class RollReport
 
         // "base chance", not "base rating": this is the skill's printed starting value, the only
         // thing the floor rule below reads. The rating the chain started from is the Chance
-        // section's first row, and the two are not always the same number.
+        // section's first row, and the two are not always the same number. When the base chance
+        // was looked up from a named skill (--skill-name), the source is shown so the report
+        // records where the number came from rather than leaving it a bare figure; when it was
+        // given with --base-chance or defaulted to the rating, the line is unchanged.
+        var baseChanceProvenance = baseChanceSkillName is null
+            ? string.Empty
+            : $" from \"{baseChanceSkillName}\"";
         report.Append(CultureInfo.InvariantCulture,
-            $"Outcome bands  (effective {outcome.EffectiveChance}, base chance {outcome.BaseChance})\n");
+            $"Outcome bands  (effective {outcome.EffectiveChance}, base chance {outcome.BaseChance}{baseChanceProvenance})\n");
         foreach (var band in bands)
         {
             report.Append(Indent)

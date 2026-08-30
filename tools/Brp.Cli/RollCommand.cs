@@ -3,6 +3,8 @@ using System.Globalization;
 using Brp.Core.Modifiers;
 using Brp.Core.Primitives;
 using Brp.Core.Randomness;
+using Brp.Core.Skills;
+using Brp.Data;
 
 namespace Brp.Cli;
 
@@ -18,7 +20,7 @@ namespace Brp.Cli;
 internal static class RollCommand
 {
     private static readonly HashSet<string> KnownOptions =
-        ["--skill", "--base-chance", "--seed", "--difficulty", "--modifier", "--permanent-modifier"];
+        ["--skill", "--skill-name", "--base-chance", "--seed", "--difficulty", "--modifier", "--permanent-modifier"];
 
     internal static int Run(IReadOnlyList<string> args, TextWriter output, TextWriter error)
     {
@@ -57,7 +59,7 @@ internal static class RollCommand
             ?? throw new InvalidOperationException(
                 "The chain was gated, but the roll command exposes no gate modifiers.");
 
-        output.Write(RollReport.Render(options.Seed, chain, outcome));
+        output.Write(RollReport.Render(options.Seed, chain, outcome, options.BaseChanceSkillName));
         return ExitCode.Ok;
     }
 
@@ -71,6 +73,7 @@ internal static class RollCommand
 
         int? skill = null;
         int? baseChance = null;
+        string? skillName = null;
         ulong? seed = null;
         DifficultyModifier? difficulty = null;
         var seenDifficulty = false;
@@ -158,6 +161,22 @@ internal static class RollCommand
                     baseChance = printed;
                     break;
 
+                case "--skill-name":
+                    if (skillName is not null)
+                    {
+                        error = "'--skill-name' was given more than once.";
+                        return false;
+                    }
+
+                    if (string.IsNullOrWhiteSpace(value))
+                    {
+                        error = "'--skill-name' needs a skill name, e.g. \"Science (Forensics)\".";
+                        return false;
+                    }
+
+                    skillName = value.Trim();
+                    break;
+
                 case "--seed":
                     if (seed is not null)
                     {
@@ -236,19 +255,82 @@ internal static class RollCommand
             modifiers.Add(difficulty);
         }
 
+        if (!TryResolveBaseChance(baseChance, skillName, skill.Value, out var resolvedBase, out var source, out error))
+        {
+            return false;
+        }
+
         options = new RollOptions
         {
             Skill = Percent.Of(skill.Value),
-
-            // Defaulting the printed base chance to the character's rating is right whenever the
-            // skill's printed base is 5% or higher, because the floor rule only asks which side
-            // of 5% that base falls on. It is wrong for the handful of in-scope skills printed
-            // at 01% -- Science, Strategy, Martial Arts -- where a trained character's rating is
-            // above the floor and the skill's base chance is not. Hence the option.
-            BaseChance = Percent.Of(baseChance ?? skill.Value),
+            BaseChance = resolvedBase,
+            BaseChanceSkillName = source,
             Seed = seed.Value,
             Modifiers = modifiers,
         };
+        return true;
+    }
+
+    /// <summary>
+    /// Settles the skill's printed base chance -- the only number the 5% floor reads -- from at
+    /// most one of two sources, or defaults it to the rating. <c>--base-chance</c> is the explicit
+    /// value for an ad-hoc action the skill list does not name; <c>--skill-name</c> looks the value
+    /// up in the shipped ruleset so the caller need not remember it. They are mutually exclusive:
+    /// naming a skill and also overriding its base would make one of the two silently ignored, which
+    /// is the kind of invisible step this command exists to prevent. When neither is given the base
+    /// defaults to the rating -- correct for every skill printed at 5% or higher, since the floor
+    /// only asks which side of 5% the base falls on, and wrong only for the 01%-base skills the two
+    /// options exist to serve.
+    /// </summary>
+    private static bool TryResolveBaseChance(
+        int? baseChance,
+        string? skillName,
+        int rating,
+        out Percent resolved,
+        out string? source,
+        [NotNullWhen(false)] out string? error)
+    {
+        resolved = default;
+        source = null;
+        error = null;
+
+        if (baseChance is not null && skillName is not null)
+        {
+            error = "give either '--skill-name' or '--base-chance', not both — '--base-chance' is "
+                + "for an ad-hoc action the skill list does not name.";
+            return false;
+        }
+
+        if (baseChance is not null)
+        {
+            resolved = Percent.Of(baseChance.Value);
+            return true;
+        }
+
+        if (skillName is not null)
+        {
+            var registry = NoirSkillRuleset.Load();
+            if (!registry.TryGetSkill(new SkillId(skillName), out var definition) || definition is null)
+            {
+                error = $"unknown skill '{skillName}'. Use a framework skill name, e.g. "
+                    + "\"Science (Forensics)\" or \"Spot\", or pass '--base-chance' for an ad-hoc action.";
+                return false;
+            }
+
+            if (!definition.BaseChance.TryEvaluateWithoutAbilities(out resolved))
+            {
+                // Formula- and weapon-derived bases need a character sheet or weapon data this
+                // command has no way to supply; refusing beats guessing a wrong floor.
+                error = $"the skill '{skillName}' has a base chance this command cannot compute on its "
+                    + "own (it depends on characteristics or weapon data); pass '--base-chance' explicitly.";
+                return false;
+            }
+
+            source = definition.Name;
+            return true;
+        }
+
+        resolved = Percent.Of(rating);
         return true;
     }
 
@@ -316,12 +398,22 @@ internal static class RollCommand
                                  from the command line that made it.
 
         options:
+          --skill-name <name>    A framework skill name, e.g. "Science
+                                 (Forensics)" or "Spot". Looks up the skill's
+                                 printed base chance from the ruleset, so you
+                                 need not pass --base-chance for a known skill.
+                                 A skill whose base depends on characteristics
+                                 (e.g. Dodge) or weapons (e.g. Firearms) has no
+                                 standalone value here — pass --base-chance for
+                                 those. Cannot be combined with --base-chance.
           --base-chance <n>      The skill's printed base chance — what an
                                  untrained character rolls against. Only the
-                                 5% floor reads it. Defaults to --skill, which
-                                 is right for every skill printed at 5% or
-                                 above; pass it for the ones printed at 01%,
-                                 such as Science, Strategy, or Martial Arts.
+                                 5% floor reads it. Use it for an ad-hoc action
+                                 the skill list does not name. When neither this
+                                 nor --skill-name is given, the base defaults to
+                                 --skill, which is right for every skill printed
+                                 at 5% or above; the 01%-base skills (Science,
+                                 Strategy, Martial Arts) need one of the two.
           --difficulty <grade>   easy, normal, or difficult. Default: normal.
                                  Doubles the rating or halves it, rounding up.
           --modifier "<n> <label>"
@@ -353,6 +445,14 @@ internal sealed class RollOptions
     /// nothing except the 5% floor (Ch 5: System, "Skill Rolls"). Defaults to <see cref="Skill"/>.
     /// </summary>
     public required Percent BaseChance { get; init; }
+
+    /// <summary>
+    /// The canonical name of the skill <see cref="BaseChance"/> was looked up from via
+    /// <c>--skill-name</c>, or <see langword="null"/> when the base was given with
+    /// <c>--base-chance</c> or defaulted to the rating. Carried only so the report can show where
+    /// the base chance came from.
+    /// </summary>
+    public string? BaseChanceSkillName { get; init; }
 
     /// <summary>The seed for the single draw this command makes.</summary>
     public required ulong Seed { get; init; }
