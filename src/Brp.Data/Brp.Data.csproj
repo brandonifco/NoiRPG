@@ -12,6 +12,7 @@
 
   <ItemGroup>
     <EmbeddedResource Include="ability-ruleset.json" />
+    <EmbeddedResource Include="skill-ruleset.json" />
   </ItemGroup>
 
 </Project>
