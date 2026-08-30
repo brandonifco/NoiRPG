@@ -31,3 +31,4 @@ supersedes it — the original is not edited or deleted.
 | [0006](0006-skill-bonus-system.md) | Full Skill Category Bonuses, applied by subtraction | Accepted |
 | [0007](0007-modifier-pipeline.md) | Modifier ordering, and difficulty that does not stack | Accepted |
 | [0008](0008-abilities.md) | Layer 1 abilities: floor eligibility, rules data, and experience checks | Accepted |
+| [0009](0009-drop-fate-points.md) | Drop Fate Points instead of rebasing their power-point economy | Accepted |

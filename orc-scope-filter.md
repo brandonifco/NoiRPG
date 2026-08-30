@@ -72,7 +72,7 @@ Nothing in this chapter enters the codebase: magic, sorcery, spells, divine/rune
 - `Projection` skill.
 - "Starting Equipment with Powers" (Ch 8).
 - Power-point reservoirs in items, enchanted gear, artifacts.
-- **Fate Points** — an optional rule that lets players spend power points to adjust dice. Interesting for a video game, but it's built on the power-point economy we're deleting, so it would need re-basing on a different currency. *Defer; don't cut on principle.*
+- **Fate Points** — an optional rule that spends power points to adjust dice and narrative results. **OFF:** drop rather than rebase onto Composure or a new currency. See `docs/decisions/0009-drop-fate-points.md` (Issue #5).
 - All power-related entries in the creature statblocks.
 
 Per the user's direction: no superheroes, no cyborgs, no galactic knights, no sorcerers. This chapter is where all four live.
@@ -164,9 +164,9 @@ Nonhuman Characters, Higher Starting Characteristics, Cultural Modifiers, Projec
 
 ### Decided since
 - **Skill Category Bonuses vs. Simpler Skill Bonuses** — **decided: full Skill Category Bonuses**, applied by subtraction. See `docs/decisions/0006-skill-bonus-system.md` (Issue #1). The two are mutually exclusive by the book's own statement, and this changes how every skill's effective rating is computed, so it had to land before Layer 2 — it has.
+- **Fate Points** — **decided: OFF.** Do not rebase the power-point option onto Composure, POW, or a new Luck currency. Failure branches and the Three Doors rule carry the gameplay burden instead. See `docs/decisions/0009-drop-fate-points.md` (Issue #5).
 
 ### Undecided — needs a call
-- **Fate Points** — needs re-basing off power points (see Ch 4 cut).
 - **Acting Without Skill** — a minor chance at untrained skills. Interacts directly with the framework's clue rule; the book warns it can break plausibility.
 
 ---
