@@ -233,3 +233,28 @@ for the non-attack skill checks it was written for; that is out of scope here.
   `WeaponDefinition` field -- a caller must supply the `bool` itself. Adding that field to the
   Gear layer schema (ADR 0013) is deferred to whichever future issue first adds a thrown weapon to
   the data.
+
+### Non-goal: the long-range guarantee holds through `Evaluate`, not against raw `Brp.Core` primitives
+
+The non-compounding guarantee on `RangeBandOutcome.ExclusiveOverride` (see "Long range is a base
+÷ 5 override" above) is verified through the supported entry point,
+`RangeBandResolver.Evaluate` -- confirmed by both an opus rules-conformance pass and a
+cross-vendor Codex pass. It is **not** a guarantee against a caller who reads
+`ExclusiveOverride.Chance` (say, 13), manually constructs `new OverrideModifier(source, 13)`, adds
+an unrelated `DifficultyModifier`, and feeds both directly to `Brp.Core.Modifiers.ModifierPipeline
+.Evaluate` -- that reconstructs exactly the base ÷ 10 this feature exists to prevent, one layer
+below the API this record's tests cover.
+
+This is treated as a caller category-error, not a defect in scope for #21: reading a final,
+already-resolved chance back out and re-feeding it into the general-purpose modifier pipeline as
+if it were an unmodified base is the same mistake as re-applying a Difficult grade to an
+already-halved result, or re-running the 5%-floor rule against an effective chance instead of a
+printed base (see ADR 0007 / #27). `Brp.Core.Modifiers` is a general-purpose primitive layer by
+design (AGENTS.md invariant 6); it has no notion of "this number came from an exclusive override
+and must not be recomposed," and giving it one would mean adding a marked/tainted-value concept to
+`Brp.Core`'s public modifier types purely to police one combat-layer rule -- out of scope for #21,
+and in tension with the composable design every other range band (`Composable`) relies on.
+Sealing this fully would require either that `Brp.Core` change, or removing `Chance` from the
+public result entirely (which would also remove the ability to test or render the computed value,
+including the discriminating-fixture test above). Recorded here as a known, accepted limitation
+rather than left implicit.

@@ -180,18 +180,25 @@ public class RangeBandResolverTests
     {
         // Post-review fix on #21: Ch 5 (p.132) figures a permanent/integral modifier into the
         // rating *before* a Difficult/Easy grade -- and, by the same logic, before the long-range
-        // override -- touches it. Worked example: base 65% + a permanent +10 -> the override is
-        // computed against 75%, not against the bare 65%. ceil(75/5) = 15%, not ceil(65/5) = 13%.
-        var otherModifiers = new Modifier[] { new AdditiveModifier("specialized training", 10, AdditiveKind.Permanent) };
+        // override -- touches it: fold-then-divide, not divide-then-add.
+        //
+        // Discriminating fixture (base 65 + Permanent(+10) does NOT discriminate: both readings
+        // give 15, since 65 and 10 are each already multiples of 5 and ceiling division is a
+        // no-op on exact multiples -- ceil(75/5)=15 and ceil(65/5)+ceil(10/5)=13+2=15 coincide).
+        // Base 66 + Permanent(+1) does discriminate:
+        //   correct (fold then divide):  ceil((66+1)/5) = ceil(67/5) = 14
+        //   wrong (divide then add):     ceil(66/5) + 1 = 14 + 1        = 15
+        // These differ, so asserting 14 pins the fold-before-divide reading the book requires.
+        var otherModifiers = new Modifier[] { new AdditiveModifier("specialized training", 1, AdditiveKind.Permanent) };
 
         var chain = RangeBandResolver.Evaluate(
-            Percent.Of(65),
+            Percent.Of(66),
             RangeBand.LongRange,
             otherModifiers,
             aimedWithTargetingEquipment: false,
             Ruleset);
 
-        Assert.Equal(Percent.Of(15), chain.EffectiveChance);
+        Assert.Equal(Percent.Of(14), chain.EffectiveChance);
     }
 
     [Fact]
