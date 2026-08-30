@@ -33,3 +33,4 @@ supersedes it — the original is not edited or deleted.
 | [0008](0008-abilities.md) | Layer 1 abilities: floor eligibility, rules data, and experience checks | Accepted |
 | [0009](0009-drop-fate-points.md) | Drop Fate Points instead of rebasing their power-point economy | Accepted |
 | [0010](0010-acting-without-skill.md) | Acting Without Skill is off for core clues; texture use deferred | Accepted |
+| [0011](0011-skill-definition.md) | SkillDefinition: base-chance shape, specialties, and the skill registry | Accepted |

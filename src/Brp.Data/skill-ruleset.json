@@ -1,0 +1,117 @@
+{
+  "skills": [
+    { "id": "Appraise", "name": "Appraise", "category": "Mental", "baseChance": { "type": "constant", "value": 15 } },
+    {
+      "id": "Art", "name": "Art", "category": "Manipulation", "baseChance": { "type": "constant", "value": 5 },
+      "specialties": [
+        { "id": "Photography", "name": "Photography", "bookEquivalent": "Art (Photography)", "baseChance": { "type": "constant", "value": 5 } }
+      ]
+    },
+    { "id": "Bargain", "name": "Bargain", "category": "Communication", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Brawl", "name": "Brawl", "category": "Combat", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Climb", "name": "Climb", "category": "Physical", "baseChance": { "type": "constant", "value": 40 } },
+    { "id": "Command", "name": "Command", "category": "Communication", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Disguise", "name": "Disguise", "category": "Communication", "baseChance": { "type": "constant", "value": 1 } },
+    {
+      "id": "Dodge", "name": "Dodge", "category": "Physical",
+      "baseChance": { "type": "formula", "terms": [ { "characteristic": "DEX", "multiplier": 2 } ] }
+    },
+    {
+      "id": "Drive", "name": "Drive", "category": "Physical",
+      "baseChance": {
+        "type": "era",
+        "modern": { "type": "constant", "value": 20 },
+        "historical": { "type": "constant", "value": 1 }
+      }
+    },
+    { "id": "Etiquette", "name": "Etiquette", "category": "Communication", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Fast Talk", "name": "Fast Talk", "category": "Communication", "baseChance": { "type": "constant", "value": 5 } },
+    {
+      "id": "Firearms", "name": "Firearms", "category": "Combat", "baseChance": { "type": "weaponDerived" }, "bookEquivalent": "Firearm",
+      "specialties": [
+        { "id": "Firearms (Handgun)", "name": "Firearms (Handgun)", "baseChance": { "type": "weaponDerived" } },
+        { "id": "Firearms (Shotgun)", "name": "Firearms (Shotgun)", "baseChance": { "type": "weaponDerived" } },
+        { "id": "Firearms (Rifle)", "name": "Firearms (Rifle)", "baseChance": { "type": "weaponDerived" } }
+      ]
+    },
+    { "id": "First Aid", "name": "First Aid", "category": "Mental", "baseChance": { "type": "constant", "value": 30 } },
+    {
+      "id": "Gaming", "name": "Gaming", "category": "Mental",
+      "baseChance": {
+        "type": "formula",
+        "terms": [ { "characteristic": "INT", "multiplier": 1 }, { "characteristic": "POW", "multiplier": 1 } ]
+      }
+    },
+    { "id": "Grapple", "name": "Grapple", "category": "Combat", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Hide", "name": "Hide", "category": "Physical", "baseChance": { "type": "constant", "value": 10 } },
+    { "id": "Insight", "name": "Insight", "category": "Perception", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Intimidate", "name": "Intimidate", "category": "Communication", "baseChance": { "type": "constant", "value": 5 }, "bookEquivalent": "Intimidate (no book equivalent)" },
+    { "id": "Jump", "name": "Jump", "category": "Physical", "baseChance": { "type": "constant", "value": 25 } },
+    {
+      "id": "Knowledge", "name": "Knowledge", "category": "Mental", "baseChance": { "type": "constant", "value": 5 },
+      "specialties": [
+        { "id": "Streetwise", "name": "Streetwise", "bookEquivalent": "Knowledge (Streetwise)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Law", "name": "Law", "bookEquivalent": "Knowledge (Law)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Accounting", "name": "Accounting", "bookEquivalent": "Knowledge (Accounting)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Knowledge (Group)", "name": "Knowledge (Group)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Knowledge (Region)", "name": "Knowledge (Region)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Knowledge (Politics)", "name": "Knowledge (Politics)", "baseChance": { "type": "constant", "value": 5 } }
+      ]
+    },
+    {
+      "id": "Language", "name": "Language",
+      "category": "Communication", "bookEquivalent": "Language (Own)",
+      "baseChance": { "type": "formula", "terms": [ { "characteristic": "INT", "multiplier": 5 } ] }
+    },
+    { "id": "Listen", "name": "Listen", "category": "Perception", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Locksmith", "name": "Locksmith", "category": "Manipulation", "bookEquivalent": "Fine Manipulation", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Martial Arts", "name": "Martial Arts", "category": "Combat", "baseChance": { "type": "constant", "value": 1 } },
+    {
+      "id": "Melee Weapon", "name": "Melee Weapon", "category": "Combat", "baseChance": { "type": "weaponDerived" },
+      "specialties": [
+        { "id": "Melee Weapon (Knife)", "name": "Melee Weapon (Knife)", "baseChance": { "type": "weaponDerived" } },
+        { "id": "Melee Weapon (Club)", "name": "Melee Weapon (Club)", "baseChance": { "type": "weaponDerived" } }
+      ]
+    },
+    { "id": "Medicine", "name": "Medicine", "category": "Mental", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Navigate", "name": "Navigate", "category": "Perception", "baseChance": { "type": "constant", "value": 10 } },
+    { "id": "Perform", "name": "Perform", "category": "Communication", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Persuade", "name": "Persuade", "category": "Communication", "baseChance": { "type": "constant", "value": 15 } },
+    { "id": "Psychotherapy", "name": "Psychotherapy", "category": "Mental", "baseChance": { "type": "constant", "value": 1 } },
+    {
+      "id": "Repair", "name": "Repair", "category": "Manipulation", "baseChance": { "type": "constant", "value": 15 },
+      "specialties": [
+        { "id": "Repair (Electrical)", "name": "Repair (Electrical)", "baseChance": { "type": "constant", "value": 15 } },
+        { "id": "Repair (Electronic)", "name": "Repair (Electronic)", "baseChance": { "type": "constant", "value": 15 } },
+        { "id": "Repair (Mechanical)", "name": "Repair (Mechanical)", "baseChance": { "type": "constant", "value": 15 } }
+      ]
+    },
+    { "id": "Research", "name": "Research", "category": "Perception", "baseChance": { "type": "constant", "value": 25 } },
+    {
+      "id": "Science", "name": "Science", "category": "Mental", "baseChance": { "type": "constant", "value": 1 },
+      "specialties": [
+        { "id": "Science (Chemistry)", "name": "Science (Chemistry)", "baseChance": { "type": "constant", "value": 1 } },
+        { "id": "Science (Forensics)", "name": "Science (Forensics)", "baseChance": { "type": "constant", "value": 1 } }
+      ]
+    },
+    { "id": "Sense", "name": "Sense", "category": "Perception", "baseChance": { "type": "constant", "value": 10 } },
+    { "id": "Shadow", "name": "Shadow", "category": "Physical", "bookEquivalent": "Stealth", "baseChance": { "type": "constant", "value": 10 } },
+    { "id": "Sleight of Hand", "name": "Sleight of Hand", "category": "Manipulation", "baseChance": { "type": "constant", "value": 5 } },
+    { "id": "Spot", "name": "Spot", "category": "Perception", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Status", "name": "Status", "category": "Communication", "baseChance": { "type": "constant", "value": 15 } },
+    { "id": "Stealth", "name": "Stealth", "category": "Physical", "baseChance": { "type": "constant", "value": 10 } },
+    { "id": "Strategy", "name": "Strategy", "category": "Mental", "baseChance": { "type": "constant", "value": 1 } },
+    { "id": "Swim", "name": "Swim", "category": "Physical", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Teach", "name": "Teach", "category": "Communication", "baseChance": { "type": "constant", "value": 10 } },
+    {
+      "id": "Technical Skill", "name": "Technical Skill", "category": "Mental", "baseChance": { "type": "constant", "value": 5 },
+      "specialties": [
+        { "id": "Technical Skill (Computer Use)", "name": "Technical Skill (Computer Use)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Technical Skill (Electronics)", "name": "Technical Skill (Electronics)", "baseChance": { "type": "constant", "value": 5 } },
+        { "id": "Technical Skill (Security Systems)", "name": "Technical Skill (Security Systems)", "baseChance": { "type": "constant", "value": 5 } }
+      ]
+    },
+    { "id": "Throw", "name": "Throw", "category": "Physical", "baseChance": { "type": "constant", "value": 25 } },
+    { "id": "Track", "name": "Track", "category": "Perception", "baseChance": { "type": "constant", "value": 10 } }
+  ]
+}
