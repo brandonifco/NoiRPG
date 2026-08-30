@@ -269,7 +269,7 @@ public class ModifierPipelineTests
             Percent.Of(70), [new GateModifier("impassable obstacle", GateKind.Impossible)]);
         var entropy = new FixedEntropySource(50);
 
-        var outcome = chain.Resolve(entropy);
+        var outcome = chain.Resolve(Percent.Of(70), entropy);
 
         Assert.Null(outcome);
         Assert.Equal(0, entropy.DrawCount);
@@ -281,12 +281,47 @@ public class ModifierPipelineTests
         var chain = ModifierPipeline.Evaluate(Percent.Of(50), []);
         var entropy = new FixedEntropySource(20);
 
-        var outcome = chain.Resolve(entropy);
+        var outcome = chain.Resolve(Percent.Of(50), entropy);
 
         Assert.NotNull(outcome);
         Assert.Equal(20, outcome!.Roll);
         Assert.Equal(SuccessLevel.Success, outcome.Level);
         Assert.Equal(1, entropy.DrawCount);
+    }
+
+    // ---- The 5% floor keys on the passed printed base, not the chain's rating (#27) --------
+
+    // The worked example from #27: Science (Forensics) at 40%, rolled Difficult with no lab
+    // access (a -18 situational penalty). 40 halved is 20, less 18 is an effective 2%. Its
+    // printed base is 01%, below the floor, so a roll of 01-05 must NOT be rescued. Resolving
+    // the same chain against a printed base of 5% or higher WOULD be rescued on the same roll.
+    // The two assertions together prove the floor reads Resolve's printedBaseChance argument,
+    // not the chain's starting rating -- the exact conflation this method used to make.
+    [Fact]
+    public void Resolving_a_sub_5_percent_printed_base_is_not_rescued_on_01_to_05()
+    {
+        var chain = ModifierPipeline.Evaluate(
+            Percent.Of(40),
+            [DifficultyModifier.Difficult("no lab access"), new AdditiveModifier("no lab access", -18)]);
+        Assert.Equal(Percent.Of(2), chain.EffectiveChance);
+
+        // Printed base 01% (Science is printed at 01%): a roll of 03, inside 01-05, still fails.
+        var unrescued = chain.Resolve(Percent.Of(1), new FixedEntropySource(3));
+        Assert.Equal(SuccessLevel.Failure, unrescued!.Level);
+    }
+
+    [Fact]
+    public void Resolving_a_5_percent_or_higher_printed_base_is_rescued_on_01_to_05()
+    {
+        var chain = ModifierPipeline.Evaluate(
+            Percent.Of(40),
+            [DifficultyModifier.Difficult("no lab access"), new AdditiveModifier("no lab access", -18)]);
+        Assert.Equal(Percent.Of(2), chain.EffectiveChance);
+
+        // Same chain, same roll, but a printed base of 25% (>= the 5% floor): 03 is rescued to
+        // a Success by the floor, even though the effective chance is only 2%.
+        var rescued = chain.Resolve(Percent.Of(25), new FixedEntropySource(3));
+        Assert.Equal(SuccessLevel.Success, rescued!.Level);
     }
 
     // ---- Clamp floors at zero, but does not cap at 100 -------------------------------------
@@ -324,7 +359,7 @@ public class ModifierPipelineTests
         var chain = ModifierPipeline.Evaluate(Percent.Of(10), modifiers);
         Assert.Equal(Percent.Zero, chain.EffectiveChance);
 
-        var outcome = chain.Resolve(new FixedEntropySource(5));
+        var outcome = chain.Resolve(Percent.Of(10), new FixedEntropySource(5));
 
         Assert.NotNull(outcome);
         Assert.Equal(SuccessLevel.Success, outcome!.Level);

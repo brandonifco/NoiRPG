@@ -14,7 +14,13 @@ namespace Brp.Core.Modifiers;
 /// </summary>
 public sealed record ModifierChain
 {
-    /// <summary>The unmodified base chance the chain started from.</summary>
+    /// <summary>
+    /// The rating the chain started from -- the value handed to <see cref="ModifierPipeline"/>,
+    /// which is the character's current rating in the skill. This is <em>not</em> the skill's
+    /// printed base chance: for a trained character the two differ, and the 5% floor keys on the
+    /// printed base, not on this. Resolving a roll therefore takes the printed base as a separate
+    /// argument (see <see cref="Resolve"/>); the two must not be conflated (#27).
+    /// </summary>
     public required Percent BaseChance { get; init; }
 
     /// <summary>Non-null when a gate short-circuited the chain; no roll should be attempted.</summary>
@@ -58,13 +64,22 @@ public sealed record ModifierChain
     /// <summary>
     /// Draws a roll and resolves it via <see cref="SkillResolver"/>, or returns
     /// <see langword="null"/> without touching <paramref name="entropy"/> when
-    /// <see cref="IsGated"/> -- per ADR 0007, a gate consumes no entropy. The 5%-base-chance
-    /// floor is applied by <see cref="SkillResolver"/> itself, after this chain; it is not
-    /// duplicated here.
+    /// <see cref="IsGated"/> -- per ADR 0007, a gate consumes no entropy.
     /// </summary>
-    public RollOutcome? Resolve(IEntropySource entropy, ResolutionPolicy? policy = null)
+    /// <param name="printedBaseChance">
+    /// The skill's printed base chance -- what an untrained character rolls against. It is a
+    /// required argument, not <see cref="BaseChance"/>, because the two are different numbers: the
+    /// chain starts from the character's rating (<see cref="BaseChance"/>), while the 5%-base-chance
+    /// floor (Ch 5: System, "Skill Rolls", p.128) keys on the printed base. Passing it explicitly is
+    /// what stops a trained character in a 01%-base skill (Science, Strategy, Martial Arts) from
+    /// being wrongly rescued on 01--05 (#27). Where a <c>SkillDefinition</c> is in hand,
+    /// <c>SkillRoll</c> supplies this from the skill's identity instead.
+    /// </param>
+    /// <param name="entropy">The source the single percentile roll is drawn from, unless gated.</param>
+    /// <param name="policy">The resolution policy, or <see langword="null"/> for the default.</param>
+    public RollOutcome? Resolve(Percent printedBaseChance, IEntropySource entropy, ResolutionPolicy? policy = null)
     {
         ArgumentNullException.ThrowIfNull(entropy);
-        return IsGated ? null : SkillResolver.Resolve(BaseChance, EffectiveChance!.Value, entropy, policy);
+        return IsGated ? null : SkillResolver.Resolve(printedBaseChance, EffectiveChance!.Value, entropy, policy);
     }
 }
