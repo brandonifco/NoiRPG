@@ -1,0 +1,15 @@
+[
+  {
+    "name": "Placeholder Investigator (test fixture -- not a Layer 5 noir package)",
+    "professionalSkillPoints": {
+      "Research": 40,
+      "Streetwise": 30,
+      "Insight": 25,
+      "Spot": 20,
+      "First Aid": 20,
+      "Persuade": 15,
+      "Drive": 10,
+      "Locksmith": 10
+    }
+  }
+]

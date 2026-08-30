@@ -2,11 +2,13 @@
   <Folder Name="/src/">
     <Project Path="src/Brp.Core/Brp.Core.csproj" />
     <Project Path="src/Brp.Data/Brp.Data.csproj" />
+    <Project Path="src/Brp.Rules/Brp.Rules.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/Brp.Cli.Tests/Brp.Cli.Tests.csproj" />
     <Project Path="tests/Brp.Core.Tests/Brp.Core.Tests.csproj" />
     <Project Path="tests/Brp.Data.Tests/Brp.Data.Tests.csproj" />
+    <Project Path="tests/Brp.Rules.Tests/Brp.Rules.Tests.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/Brp.Cli/Brp.Cli.csproj" />
