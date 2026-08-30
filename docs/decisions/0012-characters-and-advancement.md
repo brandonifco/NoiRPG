@@ -183,17 +183,43 @@ are #40's stated follow-on work).
   `tools/advancement_sim.py`'s `Skill.improvement_roll` was updated with the
   identical cap in the same change, so the two stay reconciled — see that
   file's docstring and inline comment.
-  The experience check clears either way. **The experience bonus (½INT
-  rounded up, `AbilitySet.ExperienceBonus`, already built in Layer 1)
-  defaults to 0** rather than being applied unconditionally. Ch 5 p.138
-  prints it as part of the roll ("added to the die roll ... just to the
-  roll to see if there is improvement"), and passing
-  `character.Abilities.ExperienceBonus` now reproduces Ch 5's printed rule
-  exactly, including the 100%-and-above case — the default of 0 exists only
-  so the implementation's simplest call matches `tools/advancement_sim.py`'s
-  deliberately simplified model, which omits the bonus term. This is a
-  reconciliation with the simulation's scope, not a claim that the book has
-  no such bonus.
+  The experience check clears either way. The experience bonus (½ INT
+  rounded up, `AbilitySet.ExperienceBonus`, already built in Layer 1) is
+  applied to the roll only, never to the gain (Ch 5 p.138, "The experience
+  bonus is not added to the actual skill points gained, just to the roll").
+  **Corrected 2026-08-30 (Codex cross-vendor cross-check, #43):**
+  `ExperienceSystem.CloseCase` — the improvement-roll path play actually
+  uses at case close — originally defaulted `includeExperienceBonus` to
+  `false`, so the default call passed a bonus of `0` instead of the
+  character's `ceil(INT/2)`. Ch 5 p.138, "Making an Experience Roll," states
+  the bonus is *always* added: "Your character's experience bonus ... is
+  added to the die roll when determining whether the experience roll
+  succeeded." The omitted bonus was a real defect, not a documented
+  deviation — a rating of 99 with bonus 1 and a roll of 99 should gain
+  (`99 + 1 = 100 > 99`) but the un-bonused default failed it, and the same
+  failure hit the ≥100% threshold, which the book is explicit needs the
+  bonus to reach at all ("which means the experience modifier is necessary").
+  `CloseCase` now defaults `includeExperienceBonus` to `true`; the parameter
+  remains for a caller that deliberately wants the unmodified roll (a house
+  rule or test double), documented as a deviation with no book basis, not a
+  second reading of p.138. `ImprovementRoll` itself still defaults its bare
+  `experienceBonus` parameter to `0`, because a `CharacterSkill` on its own
+  carries no `AbilitySet` to derive the bonus from — callers holding a full
+  `Character` should use `CloseCase`, not rely on that low-level default.
+  `tools/advancement_sim.py` was updated in the same change to add the
+  identical `ceil(INT/2)` bonus to its improvement roll (using a single
+  representative INT of 10, the point-buy baseline, since the sim does not
+  model individual characteristics), so the engine and the simulation stay
+  reconciled and both match the book. Re-running the 10,000-character
+  simulation after the fix shows every scenario's mean gain and "feel-it"
+  share shift up by a broadly similar amount (e.g. the 8-case RAW "feel-it"
+  share moves from 14% to 19%, tick-on-use from 59% to 71%) — the bonus
+  raises the odds of *any* improvement roll succeeding, regardless of
+  policy, so it does not privilege one variant over the other. The locked
+  balance conclusion — RAW ticks are nearly invisible at video-game length,
+  tick-on-use is not — is unchanged; see `tools/advancement_sim.py`'s
+  updated docstring for the reconciled model and the full before/after
+  numbers in the #43 PR description.
 - **Teaching:** `ExperienceSystem.Teach` now resolves the teacher's Teach
   roll through the same five-grade `Brp.Core.Resolution.SkillResolver` every
   other skill roll uses, rather than a bespoke percent-threshold check, so
@@ -266,11 +292,15 @@ professional-competence knob turned up, not a heroic-tier campaign; adopting
 the whole tier would also raise combat lethality assumptions the framework
 explicitly rejects ("danger never retires").
 
-**Applying the RAW experience bonus unconditionally in `ImprovementRoll`.**
-Considered for exactness to Ch 5 p.138, but rejected as the default because
-it would silently diverge from `tools/advancement_sim.py`'s model that the
-issue requires this system to reconcile with. Solved instead by making the
-bonus an explicit opt-in parameter, documented on both sides.
+**Leaving the experience bonus opt-in to avoid touching
+`tools/advancement_sim.py`.** This was the original approach (see the
+2026-08-30 `ImprovementRoll` correction above) and was itself a defect,
+caught by Codex's cross-vendor `conformance` pass on #43: the book has no
+such opt-out, so defaulting to "off" was an undocumented deviation, not a
+reconciliation. Fixed by making the bonus the default at the `CloseCase`
+layer (the path play actually exercises) and updating the sim in the same
+change instead of shaping the engine's default around the sim's simplified
+model.
 
 ## Consequences
 

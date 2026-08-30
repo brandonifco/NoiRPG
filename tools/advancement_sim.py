@@ -10,13 +10,22 @@ A character has skills in three build tiers (primary/secondary/tertiary) set by
 their background package. Per case, each skill is exercised under real stakes
 with a tier-dependent probability (players lean into their build). A skill
 gets at most one tick per case. At case close, each ticked skill makes an
-improvement roll: d100 strictly greater than the current rating raises the
-skill by 1d6, except that a skill at or above 100 uses a fixed threshold of
-100 instead of its own rating (Ch 5: System, "Exceeding 100% in a Skill",
+improvement roll: d100 plus the character's experience bonus (½ INT,
+rounded up — Ch 5 p.138, "Making an Experience Roll": the bonus "is added
+to the die roll ... just to the roll to see if there is improvement", always,
+never to the gain) strictly greater than the current rating raises the skill
+by 1d6, except that a skill at or above 100 uses a fixed threshold of 100
+instead of its own rating (Ch 5: System, "Exceeding 100% in a Skill",
 p.138 — "any roll of 100 or over earns a skill improvement"; an unmodified
-d100 can never again beat a rating that has itself reached 100). This mirrors
-`Brp.Rules.Advancement.ExperienceSystem.ImprovementRoll`, kept in sync so this
-simulation and the engine share one improvement rule. Between cases, downtime
+d100 can never again beat a rating that has itself reached 100, which the
+book says the experience bonus exists to close). This mirrors
+`Brp.Rules.Advancement.ExperienceSystem.ImprovementRoll`/`CloseCase`, kept in
+sync so this simulation and the engine share one improvement rule. The sim
+does not model individual characteristics, so it uses a single representative
+INT of 10 — the point-buy baseline every characteristic starts at before
+allocation (`character-creation-ruleset.json`'s `startingCharacteristicValue`)
+— giving a flat +5 bonus applied identically across every scenario, so it
+cannot bias the comparison toward any one build tier. Between cases, downtime
 training grants one chosen skill an extra improvement roll (the player trains
 their weakest primary).
 
@@ -33,6 +42,8 @@ from dataclasses import dataclass, field
 CASES = (8, 12)          # playthrough lengths to report
 TRIALS = 10_000          # characters simulated per scenario
 GAIN_DIE = 6             # improvement: +1d6 on a successful improvement roll
+REPRESENTATIVE_INT = 10  # point-buy baseline (character-creation-ruleset.json)
+EXPERIENCE_BONUS = -(-REPRESENTATIVE_INT // 2)  # ceil(INT/2), Ch 5 p.138
 
 # Build tiers: (starting rating, per-case chance the skill sees real stakes, count)
 TIERS = {
@@ -49,7 +60,9 @@ class Skill:
     gained: int = 0
 
     def improvement_roll(self, rng: random.Random) -> None:
-        roll = rng.randint(1, 100)
+        # Ch 5 p.138, "Making an Experience Roll": the experience bonus (½ INT,
+        # rounded up) is always added to the roll, never to the gain.
+        roll = rng.randint(1, 100) + EXPERIENCE_BONUS
         # Ch 5 p.138, "Exceeding 100% in a Skill": once a rating reaches 100, an
         # unmodified d100 can never again roll strictly higher than it, so the book
         # pins the threshold at 100 itself ("any roll of 100 or over earns a skill

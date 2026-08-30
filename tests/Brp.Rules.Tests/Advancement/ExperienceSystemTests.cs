@@ -231,6 +231,82 @@ public class ExperienceSystemTests
     }
 
     [Fact]
+    public void Close_case_applies_the_characters_experience_bonus_by_default()
+    {
+        // Codex cross-vendor falsifier (#43): a rating of 99 with a d100 of 99 fails on
+        // an unmodified roll (99 is not > 99), but Ch 5 p.138's experience bonus is
+        // *always* added to the roll -- "Your character's experience bonus ... is added
+        // to the die roll when determining whether the experience roll succeeded." With
+        // INT 10 the bonus is ceil(10/2) = 5, so 99 + 5 = 104 > 99 succeeds. Before this
+        // fix, `CloseCase`'s default omitted the bonus entirely and this roll failed.
+        var skill = MakeSkill(rating: 99);
+        TickViaRealStakes(skill);
+
+        var character = new Character(
+            new CharacterId("pc"),
+            "Case Closer",
+            MakeAbilities(),
+            new Dictionary<SkillId, CharacterSkill> { [new SkillId("Test Skill")] = skill });
+
+        var entropy = new FixedEntropySource(99, 3); // natural 99, +5 bonus succeeds, gain of 3
+
+        var results = ExperienceSystem.CloseCase(character, entropy);
+
+        Assert.Equal(3, results[new SkillId("Test Skill")]);
+        Assert.Equal(102, skill.CurrentRating);
+    }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(130)]
+    public void Close_case_default_bonus_reaches_the_at_or_above_100_percent_threshold(int rating)
+    {
+        // Codex cross-vendor falsifier (#43): at or above 100%, the threshold is pinned
+        // at 100 (Ch 5 p.138, "Exceeding 100% in a Skill"), and the book is explicit that
+        // reaching it "means the experience modifier is necessary" -- a raw d100 alone can
+        // never exceed 100. A roll of 95 plus the INT-10 bonus of 5 reaches exactly 100
+        // and succeeds; without the default bonus this roll would fail to gain at all.
+        var skill = MakeSkill(rating);
+        TickViaRealStakes(skill);
+
+        var character = new Character(
+            new CharacterId("pc"),
+            "Case Closer",
+            MakeAbilities(),
+            new Dictionary<SkillId, CharacterSkill> { [new SkillId("Test Skill")] = skill });
+
+        var entropy = new FixedEntropySource(95, 2); // 95 + 5 bonus = 100, then a gain of 2
+
+        var results = ExperienceSystem.CloseCase(character, entropy);
+
+        Assert.Equal(2, results[new SkillId("Test Skill")]);
+        Assert.Equal(rating + 2, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Close_case_can_opt_out_of_the_experience_bonus_for_an_unmodified_roll()
+    {
+        // The opt-out exists for callers that deliberately want the raw roll (e.g. a
+        // house rule or a test double) -- the book itself has no such option, so this is
+        // documented as a deviation, not a second reading of p.138.
+        var skill = MakeSkill(rating: 99);
+        TickViaRealStakes(skill);
+
+        var character = new Character(
+            new CharacterId("pc"),
+            "Case Closer",
+            MakeAbilities(),
+            new Dictionary<SkillId, CharacterSkill> { [new SkillId("Test Skill")] = skill });
+
+        var entropy = new FixedEntropySource(99); // one value only: no bonus, no gain draw
+
+        var results = ExperienceSystem.CloseCase(character, entropy, includeExperienceBonus: false);
+
+        Assert.Equal(0, results[new SkillId("Test Skill")]);
+        Assert.Equal(99, skill.CurrentRating);
+    }
+
+    [Fact]
     public void Teach_grants_a_gain_on_a_successful_teach_roll()
     {
         var student = MakeSkill(rating: 30);
