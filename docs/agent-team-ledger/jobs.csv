@@ -1,0 +1,7 @@
+layer,issue,pr,seq,phase,agent_type,role,tokens,tool_uses,duration_ms,commit,defects_found,defects_fixed,tests_after,outcome
+3,40,41,1,build,engine-dev,implement,198699,106,938495,0ade5bb,0,0,1728,"Scaffolded Brp.Rules; Character+Builder+ExperienceSystem; green build. Two rules-fidelity defects latent."
+3,40,41,2,verify,scope-warden,scope-gate,58278,52,131283,,0,0,1728,"12/12 scope gates pass; no power-point pool, CHA-not-APP, containers only."
+3,40,41,3,verify,rules-conformance,conformance-audit,85166,34,410242,,2,0,1728,"Found 2 defects: >=100% improvement cap; Teach missing 75% training cap. Core falsification target holds."
+3,40,41,4,rework,engine-dev,fix-defects,246175,37,366666,5fe502c,0,2,1735,"Fixed both defects; modeled teach-fumble -1D3; sim kept in lockstep."
+3,40,41,5,verify,rules-conformance,re-audit,36236,12,143633,,0,0,1735,"Both defects confirmed closed; tick gate untouched."
+3,40,41,6,rework,engine-dev,wire-cap,289172,35,241608,ccd3a78,0,0,1737,"Training cap sourced from Brp.Data (invariant-7 nick from re-audit). New ExperienceRuleset + loader."
