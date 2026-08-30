@@ -1,7 +1,7 @@
-layer,issue,pr,seq,phase,agent_type,role,tokens,tool_uses,duration_ms,commit,defects_found,defects_fixed,tests_after,outcome
-3,40,41,1,build,engine-dev,implement,198699,106,938495,0ade5bb,0,0,1728,"Scaffolded Brp.Rules; Character+Builder+ExperienceSystem; green build. Two rules-fidelity defects latent."
-3,40,41,2,verify,scope-warden,scope-gate,58278,52,131283,,0,0,1728,"12/12 scope gates pass; no power-point pool, CHA-not-APP, containers only."
-3,40,41,3,verify,rules-conformance,conformance-audit,85166,34,410242,,2,0,1728,"Found 2 defects: >=100% improvement cap; Teach missing 75% training cap. Core falsification target holds."
-3,40,41,4,rework,engine-dev,fix-defects,246175,37,366666,5fe502c,0,2,1735,"Fixed both defects; modeled teach-fumble -1D3; sim kept in lockstep."
-3,40,41,5,verify,rules-conformance,re-audit,36236,12,143633,,0,0,1735,"Both defects confirmed closed; tick gate untouched."
-3,40,41,6,rework,engine-dev,wire-cap,289172,35,241608,ccd3a78,0,0,1737,"Training cap sourced from Brp.Data (invariant-7 nick from re-audit). New ExperienceRuleset + loader."
+layer,issue,pr,seq,date,phase,agent_role,model,effort,risk_class,review_layer,tokens_total,tokens_R,tokens_A,tokens_H,tool_uses,duration_ms,human_minutes,cost_usd,commit,merge_sha,defects_found,false_positives,defects_fixed,deterministic_controls_added,repeated_error,tests_after,outcome
+3,40,41,1,2026-08-30,build,engine-dev-implement,sonnet,medium,R3,,198699,NI,NI,NI,106,938495,NI,NI,0ade5bb,pending,0,0,0,44,no,1728,"Scaffold Brp.Rules; Character+Builder+ExperienceSystem; 44 new tests. Two rules-fidelity defects latent."
+3,40,41,2,2026-08-30,verify,scope-warden-scope-gate,haiku,low,R3,scope-gate,58278,NI,NI,NI,52,131283,NI,NI,,pending,0,0,0,0,no,1728,"12/12 scope gates pass; no power-point pool, CHA-not-APP, containers only."
+3,40,41,3,2026-08-30,verify,rules-conformance-audit,opus,high,R3,conformance,85166,NI,NI,NI,34,410242,NI,NI,,pending,2,0,0,0,no,1728,"Found F1 (>=100% cap) and F2 (75% training cap). Core falsification target holds."
+3,40,41,4,2026-08-30,rework,engine-dev-fix-defects,sonnet,medium,R3,,246175,NI,NI,NI,37,366666,NI,NI,5fe502c,pending,0,0,2,7,no,1735,"Fixed F1+F2; modeled teach-fumble -1D3; sim kept in lockstep; 7 regression tests."
+3,40,41,5,2026-08-30,verify,rules-conformance-reaudit,opus,high,R3,conformance,36236,NI,NI,NI,12,143633,NI,NI,,pending,1,0,0,0,no,1735,"F1+F2 confirmed closed; found F3 (training cap hardcoded, invariant-7 nick)."
+3,40,41,6,2026-08-30,rework,engine-dev-wire-cap,sonnet,medium,R3,,289172,NI,NI,NI,35,241608,NI,NI,ccd3a78,pending,0,0,1,3,no,1737,"Fixed F3: training cap sourced from Brp.Data via new ExperienceRuleset + loader; 2 tests."
