@@ -14,12 +14,18 @@ namespace Brp.Rules.Gear;
 /// implemented here.
 /// </para>
 /// <para>
-/// <see cref="Missile"/> is added by #21 even though no weapon in the hand-picked subset uses
-/// it yet: Ch 7: Spot Rules, "Extended Range" (p.170) keys the throwing-weapon range cutoff to
-/// this class ("Small hand-propelled weapons such as the throwing knife and the throwing axe"),
-/// and Ch 8's own "Weapon Classes" list (p.196) files both under "Missile" alongside the blowgun,
-/// bola, boomerang, dagger, dart, hand axe, javelin, shuriken, and sling. The rule is implemented
-/// against the class now so it is correct the day a thrown weapon is added to the data.
+/// <see cref="Missile"/> is added by #21 even though no weapon in the hand-picked subset uses it
+/// yet: Ch 8's "Weapon Classes" list (p.196) files the blowgun, bola, boomerang, dagger, dart,
+/// hand axe, javelin, shuriken, sling, and throwing knife all under this one class. <strong>It is
+/// deliberately <em>not</em> used to key the Ch 7 (p.171) throwing-weapon range cutoff</strong>
+/// ("Small hand-propelled weapons such as the throwing knife and the throwing axe have no chance
+/// to hit beyond double base range"): the class mixes hand-thrown weapons with mechanism-launched
+/// ones (the sling, the blowgun), and Ch 3 (p.47) treats "entirely self-propelled" missile
+/// weapons as their own case for the unrelated damage-modifier halving rule -- evidence the two
+/// kinds are not interchangeable. An earlier revision of #21 keyed the cutoff to this whole class
+/// and wrongly cut off the sling and blowgun along with the throwing knife and axe; a
+/// rules-conformance pass caught it. The cutoff is now a per-weapon fact a caller supplies to
+/// <c>Combat.RangeBandResolver.IsBeyondThrowingCutoff</c>, not read from this enum.
 /// </para>
 /// </summary>
 public enum WeaponClass
@@ -28,9 +34,11 @@ public enum WeaponClass
     Brawl,
 
     /// <summary>
-    /// Small hand-thrown weapons: throwing knife, throwing axe, javelin, shuriken, and similar
-    /// (Ch 8: Equipment, "Weapon Classes", p.196). Not used by any weapon in the hand-picked
-    /// subset yet -- see the type remarks.
+    /// Hand-propelled and mechanism-launched missile weapons that are neither firearms nor bows:
+    /// blowgun, bola, boomerang, dagger (thrown), dart, hand axe, javelin, shuriken, sling,
+    /// throwing knife (Ch 8: Equipment, "Weapon Classes", p.196). Not used by any weapon in the
+    /// hand-picked subset yet -- see the type remarks, including why this class alone does not
+    /// determine the Ch 7 throwing-weapon range cutoff.
     /// </summary>
     Missile,
 

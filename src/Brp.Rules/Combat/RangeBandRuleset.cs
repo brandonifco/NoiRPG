@@ -1,12 +1,18 @@
-using Brp.Rules.Gear;
-
 namespace Brp.Rules.Combat;
 
 /// <summary>
-/// The data-defined thresholds, multipliers, and weapon classes the range-band mechanic reads
-/// (AGENTS.md invariant 7: rules values are data, not constants). Every value is sourced or
-/// marked as a house interpretation on its own member below. Loaded from
-/// <c>range-band-ruleset.json</c> by <c>Brp.Data.NoirRangeBandRuleset.Load()</c>.
+/// The data-defined thresholds and multipliers the range-band mechanic reads (AGENTS.md
+/// invariant 7: rules values are data, not constants). Every value is sourced or marked as a
+/// house interpretation on its own member below. Loaded from <c>range-band-ruleset.json</c> by
+/// <c>Brp.Data.NoirRangeBandRuleset.Load()</c>.
+/// <para>
+/// Carries no weapon-class list: the throwing-weapon cutoff (see
+/// <see cref="RangeBandResolver.IsBeyondThrowingCutoff"/>) is a per-weapon fact -- "is this a
+/// small hand-thrown weapon" -- not a class-level one, per the post-review fix to Issue #21 (the
+/// book's "Missile" weapon class, Ch 8 p.196, also contains mechanism-launched weapons such as
+/// the sling and blowgun, which must not be cut off). This ruleset owns only the multiplier the
+/// cutoff applies once a caller has established that fact.
+/// </para>
 /// </summary>
 public sealed class RangeBandRuleset
 {
@@ -14,18 +20,14 @@ public sealed class RangeBandRuleset
     public RangeBandRuleset(
         int pointBlankDexDivisor,
         int mediumRangeMultiplier,
-        int longRangeMultiplier,
         int longRangeChanceNumerator,
         int longRangeChanceDenominator,
         int throwingCutoffMultiplier,
-        IReadOnlyList<WeaponClass> throwingWeaponClasses,
         int targetingEquipmentDampeningNumerator,
         int targetingEquipmentDampeningDenominator)
     {
-        ArgumentNullException.ThrowIfNull(throwingWeaponClasses);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(pointBlankDexDivisor, 0);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(mediumRangeMultiplier, 0);
-        ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(longRangeMultiplier, mediumRangeMultiplier);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(longRangeChanceNumerator, 0);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(longRangeChanceDenominator, 0);
         ArgumentOutOfRangeException.ThrowIfLessThanOrEqual(throwingCutoffMultiplier, 0);
@@ -34,41 +36,41 @@ public sealed class RangeBandRuleset
 
         PointBlankDexDivisor = pointBlankDexDivisor;
         MediumRangeMultiplier = mediumRangeMultiplier;
-        LongRangeMultiplier = longRangeMultiplier;
         LongRangeChanceNumerator = longRangeChanceNumerator;
         LongRangeChanceDenominator = longRangeChanceDenominator;
         ThrowingCutoffMultiplier = throwingCutoffMultiplier;
-        ThrowingWeaponClasses = throwingWeaponClasses;
         TargetingEquipmentDampeningNumerator = targetingEquipmentDampeningNumerator;
         TargetingEquipmentDampeningDenominator = targetingEquipmentDampeningDenominator;
     }
 
     /// <summary>
-    /// Ch 6: Combat, "Missile Weapons" (p.153): "Point Blank: If the target is within the
+    /// Ch 6: Combat, "Missile Weapons" (p.154): "Point Blank: If the target is within the
     /// attacker's DEX/3 meters (round up)... the skill is Easy." Corroborated word-for-word by
-    /// Ch 7: Spot Rules, "Point-blank Range" (p.175) and "Extended Range" (p.170).
+    /// Ch 7: Spot Rules, "Point-blank Range" (p.176) and "Extended Range" (p.171).
     /// </summary>
     public int PointBlankDexDivisor { get; }
 
     /// <summary>
-    /// Ch 6 (p.153): "Medium Range: If the target is at double the weapon's standard listed
-    /// range, the attack is Difficult." Ch 7, "Extended Range" (p.170) corroborates.
+    /// Ch 6 (p.154): "Medium Range: If the target is at double the weapon's standard listed
+    /// range, the attack is Difficult." Ch 7, "Extended Range" (p.171) corroborates.
+    /// <para>
+    /// This is the only distance multiplier the ladder needs as data: Normal range is within the
+    /// listed range (multiplier 1, not worth naming), and Long range is everything past this
+    /// multiplier's boundary, with no upper cutoff the book ever states (see
+    /// <see cref="RangeBandResolver.DetermineBand"/>'s remarks for why a separate "quadruple
+    /// range" field would be dead configuration under that reading).
+    /// </para>
     /// </summary>
     public int MediumRangeMultiplier { get; }
 
     /// <summary>
-    /// Ch 6 (p.153): "Long Range: If the target is at quadruple the weapon's standard listed
-    /// range..." Ch 7 (p.170) corroborates: "at long range (four times basic range)".
-    /// </summary>
-    public int LongRangeMultiplier { get; }
-
-    /// <summary>
-    /// Ch 6 (p.153) / Ch 7 (p.170): at long range the attack is "1/5 normal skill chance
+    /// Ch 6 (p.154) / Ch 7 (p.171): at long range the attack is "1/5 normal skill chance
     /// (equivalent to a special success, but if rolled, the result is a normal success)."
-    /// Settled decision (Issue #21): this is an override against the character's current,
-    /// otherwise-unmodified rating -- the same one-fifth division
-    /// <c>Brp.Core.Resolution.ResolutionPolicy.SpecialDivisor</c> already uses for a special
-    /// success -- not a multiplier stacked on top of any other penalty for the same shot.
+    /// Settled decision (Issue #21): this is an override against the character's current
+    /// rating -- with permanent modifiers folded in first, per Ch 5 (p.132) -- the same
+    /// one-fifth division <c>Brp.Core.Resolution.ResolutionPolicy.SpecialDivisor</c> already uses
+    /// for a special success, not a multiplier stacked on top of any other penalty for the same
+    /// shot. See <see cref="RangeBandOutcome.ExclusiveOverride"/>.
     /// </summary>
     public int LongRangeChanceNumerator { get; }
 
@@ -76,18 +78,12 @@ public sealed class RangeBandRuleset
     public int LongRangeChanceDenominator { get; }
 
     /// <summary>
-    /// Ch 7: Spot Rules, "Extended Range" (p.170): "Small hand-propelled weapons such as the
+    /// Ch 7: Spot Rules, "Extended Range" (p.171): "Small hand-propelled weapons such as the
     /// throwing knife and the throwing axe have no chance to hit beyond double base range."
+    /// Applied only to weapons a caller identifies as hand-thrown -- see
+    /// <see cref="RangeBandResolver.IsBeyondThrowingCutoff"/> -- not to an entire weapon class.
     /// </summary>
     public int ThrowingCutoffMultiplier { get; }
-
-    /// <summary>
-    /// The weapon classes <see cref="ThrowingCutoffMultiplier"/> applies to. Ch 8: Equipment,
-    /// "Weapon Classes" (p.196) files the throwing knife and throwing axe under the "Missile"
-    /// class alongside the blowgun, bola, boomerang, dagger, dart, hand axe, javelin, shuriken,
-    /// and sling -- a weapon-class rule, not a distance tier, per the settled decision on #21.
-    /// </summary>
-    public IReadOnlyList<WeaponClass> ThrowingWeaponClasses { get; }
 
     /// <summary>
     /// Ch 6 (p.154), "Targeting Gear": "Using long-range goggles, a scope, laser sight, or

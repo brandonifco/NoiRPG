@@ -1,13 +1,12 @@
 using Brp.Core.Modifiers;
 using Brp.Core.Primitives;
 using Brp.Rules.Combat;
-using Brp.Rules.Gear;
 
 namespace Brp.Rules.Tests.Combat;
 
 /// <summary>
-/// Covers the four range bands against Ch 6: Combat, "Missile Weapons" (p.153-154) and Ch 7:
-/// Spot Rules, "Extended Range" (p.170), plus the throwing-weapon cutoff and targeting-equipment
+/// Covers the four range bands against Ch 6: Combat, "Missile Weapons" (p.154) and Ch 7: Spot
+/// Rules, "Extended Range" (p.171), plus the throwing-weapon cutoff and targeting-equipment
 /// dampening. See <c>docs/decisions/0014-range-bands.md</c>.
 /// </summary>
 public class RangeBandResolverTests
@@ -15,13 +14,13 @@ public class RangeBandResolverTests
     private static readonly RangeBandRuleset Ruleset = new(
         pointBlankDexDivisor: 3,
         mediumRangeMultiplier: 2,
-        longRangeMultiplier: 4,
         longRangeChanceNumerator: 1,
         longRangeChanceDenominator: 5,
         throwingCutoffMultiplier: 2,
-        throwingWeaponClasses: [WeaponClass.Missile],
         targetingEquipmentDampeningNumerator: 1,
         targetingEquipmentDampeningDenominator: 2);
+
+    private static readonly Modifier[] NoOtherModifiers = [];
 
     // ---- Band thresholds (the printed table, reproduced in full) --------------------------
 
@@ -61,11 +60,12 @@ public class RangeBandResolverTests
     [Fact]
     public void Point_blank_is_an_easy_grade()
     {
-        var result = RangeBandResolver.Resolve(RangeBand.PointBlank, Percent.Of(50), aimedWithTargetingEquipment: false, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.PointBlank, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: false, Ruleset);
 
-        var difficulty = Assert.Single(result.Modifiers.OfType<DifficultyModifier>());
+        var composable = Assert.IsType<RangeBandOutcome.Composable>(outcome);
+        var difficulty = Assert.Single(composable.Modifiers.OfType<DifficultyModifier>());
         Assert.Equal(DifficultyDirection.Easier, difficulty.Direction);
-        Assert.False(result.IsExclusive);
     }
 
     // ---- Normal: unmodified -----------------------------------------------------------------
@@ -73,10 +73,11 @@ public class RangeBandResolverTests
     [Fact]
     public void Normal_range_contributes_no_modifier()
     {
-        var result = RangeBandResolver.Resolve(RangeBand.Normal, Percent.Of(50), aimedWithTargetingEquipment: false, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.Normal, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: false, Ruleset);
 
-        Assert.Empty(result.Modifiers);
-        Assert.False(result.IsExclusive);
+        var composable = Assert.IsType<RangeBandOutcome.Composable>(outcome);
+        Assert.Empty(composable.Modifiers);
     }
 
     // ---- Medium: Difficult, and it collapses with other Difficult conditions ---------------
@@ -84,11 +85,12 @@ public class RangeBandResolverTests
     [Fact]
     public void Medium_range_is_a_difficult_grade()
     {
-        var result = RangeBandResolver.Resolve(RangeBand.Medium, Percent.Of(50), aimedWithTargetingEquipment: false, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.Medium, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: false, Ruleset);
 
-        var difficulty = Assert.Single(result.Modifiers.OfType<DifficultyModifier>());
+        var composable = Assert.IsType<RangeBandOutcome.Composable>(outcome);
+        var difficulty = Assert.Single(composable.Modifiers.OfType<DifficultyModifier>());
         Assert.Equal(DifficultyDirection.Harder, difficulty.Direction);
-        Assert.False(result.IsExclusive);
     }
 
     [Fact]
@@ -113,7 +115,7 @@ public class RangeBandResolverTests
     [Fact]
     public void Point_blank_and_a_difficult_condition_cancel_pairwise()
     {
-        // Ch 7, "Firing into Combat" (p.169): "target are both within close combat range, the
+        // Ch 7, "Firing into Combat" (p.173): "target are both within close combat range, the
         // attack is Easy (for Point-blank Range), so the Difficult and Easy modifiers cancel
         // one another." ADR 0007 models this as the same non-stacking collapse.
         var otherModifiers = new Modifier[] { DifficultyModifier.Difficult("firing into combat") };
@@ -133,11 +135,11 @@ public class RangeBandResolverTests
     [Fact]
     public void Long_range_is_one_fifth_of_the_base_rating_rounded_up()
     {
-        var result = RangeBandResolver.Resolve(RangeBand.LongRange, Percent.Of(65), aimedWithTargetingEquipment: false, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.LongRange, Percent.Of(65), NoOtherModifiers, aimedWithTargetingEquipment: false, Ruleset);
 
-        Assert.True(result.IsExclusive);
-        var over = Assert.IsType<OverrideModifier>(Assert.Single(result.Modifiers));
-        Assert.Equal(Percent.Of(13), over.Value); // ceil(65/5) = 13
+        var exclusive = Assert.IsType<RangeBandOutcome.ExclusiveOverride>(outcome);
+        Assert.Equal(Percent.Of(13), exclusive.Chance); // ceil(65/5) = 13
     }
 
     [Fact]
@@ -146,7 +148,7 @@ public class RangeBandResolverTests
         var chain = RangeBandResolver.Evaluate(
             Percent.Of(65),
             RangeBand.LongRange,
-            otherModifiers: [],
+            NoOtherModifiers,
             aimedWithTargetingEquipment: false,
             Ruleset);
 
@@ -173,20 +175,102 @@ public class RangeBandResolverTests
         Assert.NotEqual(Percent.Of(7), chain.EffectiveChance); // the forbidden base / 10 result
     }
 
-    // ---- Throwing-weapon cutoff: a weapon-class rule, not a distance tier ------------------
+    [Fact]
+    public void Long_range_folds_in_a_permanent_modifier_before_dividing_by_five()
+    {
+        // Post-review fix on #21: Ch 5 (p.132) figures a permanent/integral modifier into the
+        // rating *before* a Difficult/Easy grade -- and, by the same logic, before the long-range
+        // override -- touches it. Worked example: base 65% + a permanent +10 -> the override is
+        // computed against 75%, not against the bare 65%. ceil(75/5) = 15%, not ceil(65/5) = 13%.
+        var otherModifiers = new Modifier[] { new AdditiveModifier("specialized training", 10, AdditiveKind.Permanent) };
+
+        var chain = RangeBandResolver.Evaluate(
+            Percent.Of(65),
+            RangeBand.LongRange,
+            otherModifiers,
+            aimedWithTargetingEquipment: false,
+            Ruleset);
+
+        Assert.Equal(Percent.Of(15), chain.EffectiveChance);
+    }
+
+    [Fact]
+    public void Long_range_still_discards_a_situational_modifier_even_though_it_folds_in_permanent_ones()
+    {
+        // Only AdditiveKind.Permanent is folded in; a situational modifier alongside it (e.g.
+        // darkness, -20%) must still be discarded for the override, not summed in.
+        var otherModifiers = new Modifier[]
+        {
+            new AdditiveModifier("specialized training", 10, AdditiveKind.Permanent),
+            new AdditiveModifier("darkness", -20, AdditiveKind.Situational),
+        };
+
+        var chain = RangeBandResolver.Evaluate(
+            Percent.Of(65),
+            RangeBand.LongRange,
+            otherModifiers,
+            aimedWithTargetingEquipment: false,
+            Ruleset);
+
+        Assert.Equal(Percent.Of(15), chain.EffectiveChance); // ceil((65+10)/5), darkness discarded
+    }
+
+    [Fact]
+    public void No_grade_capping_is_applied_at_long_range()
+    {
+        // Owner's decision: a long-range shot keeps its normal five-grade resolution once the
+        // base/5 override is computed -- critical and special thresholds are derived from the
+        // *reduced* chance by the ordinary resolver, not capped at "special" as an upper bound.
+        // RangeBandResolver only produces the effective chance fed to SkillResolver; grading is
+        // untouched by #21. This test documents that no grade-capping was added here, not
+        // SkillResolver's own behaviour (covered elsewhere).
+        var chain = RangeBandResolver.Evaluate(
+            Percent.Of(100),
+            RangeBand.LongRange,
+            NoOtherModifiers,
+            aimedWithTargetingEquipment: false,
+            Ruleset);
+
+        // 100 / 5 = 20% effective chance -- an ordinary, uncapped Percent, free to be graded by
+        // SkillResolver same as any other roll.
+        Assert.Equal(Percent.Of(20), chain.EffectiveChance);
+    }
+
+    // ---- Throwing-weapon cutoff: a per-weapon fact, not a distance tier or a whole class ---
 
     [Theory]
-    [InlineData(WeaponClass.Missile, 41, 20, true)]  // beyond double base range (20*2=40)
-    [InlineData(WeaponClass.Missile, 40, 20, false)] // exactly double: still has a chance
-    [InlineData(WeaponClass.Missile, 10, 20, false)] // well within range
-    [InlineData(WeaponClass.Pistol, 41, 20, false)]  // not a throwing-class weapon: no cutoff at all
-    [InlineData(WeaponClass.Pistol, 1000, 20, false)]
-    public void Only_throwing_weapon_classes_are_cut_off_beyond_double_base_range(
-        WeaponClass weaponClass, int distance, int listedRange, bool expected)
+    [InlineData(true, 41, 20, true)]   // hand-thrown (e.g. throwing knife), beyond double base range
+    [InlineData(true, 40, 20, false)]  // hand-thrown, exactly double: still has a chance
+    [InlineData(true, 10, 20, false)]  // hand-thrown, well within range
+    [InlineData(false, 41, 20, false)] // not hand-thrown (e.g. sling, blowgun): no cutoff at all
+    [InlineData(false, 1000, 20, false)]
+    public void Only_hand_thrown_weapons_are_cut_off_beyond_double_base_range(
+        bool isHandThrownWeapon, int distance, int listedRange, bool expected)
     {
-        var cutOff = RangeBandResolver.IsBeyondThrowingCutoff(weaponClass, distance, listedRange, Ruleset);
+        var cutOff = RangeBandResolver.IsBeyondThrowingCutoff(isHandThrownWeapon, distance, listedRange, Ruleset);
 
         Assert.Equal(expected, cutOff);
+    }
+
+    [Fact]
+    public void A_sling_style_missile_weapon_in_the_same_book_class_as_a_throwing_knife_is_not_cut_off()
+    {
+        // Ch 8 (p.196) files both the throwing knife and the sling under the same "Missile"
+        // weapon class, but Ch 7 (p.171) names only "small hand-propelled weapons such as the
+        // throwing knife and the throwing axe" for the cutoff -- the sling and blowgun are
+        // "entirely self-propelled" (Ch 3, p.47) and must not be cut off. Fixture: two
+        // same-class Missile weapons, distinguished only by the hand-thrown fact, at a distance
+        // beyond double their shared base range.
+        const int distance = 41;
+        const int listedRange = 20;
+
+        var throwingKnife = RangeBandResolver.IsBeyondThrowingCutoff(
+            isHandThrownWeapon: true, distance, listedRange, Ruleset);
+        var sling = RangeBandResolver.IsBeyondThrowingCutoff(
+            isHandThrownWeapon: false, distance, listedRange, Ruleset);
+
+        Assert.True(throwingKnife);
+        Assert.False(sling);
     }
 
     // ---- Targeting equipment: halves range modifiers after a round spent aiming -----------
@@ -196,30 +280,33 @@ public class RangeBandResolverTests
     {
         // Unaimed: Difficult, i.e. x1/2. Aimed: the shortfall from 1 (1/2) is itself halved,
         // giving x3/4 instead -- see RangeBandRuleset.TargetingEquipmentDampeningNumerator.
-        var result = RangeBandResolver.Resolve(RangeBand.Medium, Percent.Of(60), aimedWithTargetingEquipment: true, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.Medium, Percent.Of(60), NoOtherModifiers, aimedWithTargetingEquipment: true, Ruleset);
 
-        var multiplier = Assert.IsType<MultiplicativeModifier>(Assert.Single(result.Modifiers));
+        var composable = Assert.IsType<RangeBandOutcome.Composable>(outcome);
+        var multiplier = Assert.IsType<MultiplicativeModifier>(Assert.Single(composable.Modifiers));
         Assert.Equal(3, multiplier.Numerator);
         Assert.Equal(4, multiplier.Denominator);
-        Assert.False(result.IsExclusive);
     }
 
     [Fact]
     public void Targeting_equipment_halves_the_severity_of_the_long_range_override()
     {
         // Unaimed: 1/5 (a 4/5 shortfall from 1). Aimed: half that shortfall, giving 3/5.
-        var result = RangeBandResolver.Resolve(RangeBand.LongRange, Percent.Of(100), aimedWithTargetingEquipment: true, Ruleset);
+        var outcome = RangeBandResolver.Resolve(
+            RangeBand.LongRange, Percent.Of(100), NoOtherModifiers, aimedWithTargetingEquipment: true, Ruleset);
 
-        var over = Assert.IsType<OverrideModifier>(Assert.Single(result.Modifiers));
-        Assert.Equal(Percent.Of(60), over.Value); // 100 * 3/5
-        Assert.True(result.IsExclusive);
+        var exclusive = Assert.IsType<RangeBandOutcome.ExclusiveOverride>(outcome);
+        Assert.Equal(Percent.Of(60), exclusive.Chance); // 100 * 3/5
     }
 
     [Fact]
     public void Point_blank_and_normal_range_are_unaffected_by_targeting_equipment()
     {
-        var pointBlank = RangeBandResolver.Resolve(RangeBand.PointBlank, Percent.Of(50), aimedWithTargetingEquipment: true, Ruleset);
-        var normal = RangeBandResolver.Resolve(RangeBand.Normal, Percent.Of(50), aimedWithTargetingEquipment: true, Ruleset);
+        var pointBlank = Assert.IsType<RangeBandOutcome.Composable>(RangeBandResolver.Resolve(
+            RangeBand.PointBlank, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: true, Ruleset));
+        var normal = Assert.IsType<RangeBandOutcome.Composable>(RangeBandResolver.Resolve(
+            RangeBand.Normal, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: true, Ruleset));
 
         Assert.Equal(DifficultyDirection.Easier, Assert.Single(pointBlank.Modifiers.OfType<DifficultyModifier>()).Direction);
         Assert.Empty(normal.Modifiers);
@@ -234,12 +321,16 @@ public class RangeBandResolverTests
         // condition row ("Far beyond the normal range -50%", etc.). For a missile/firearm attack
         // the Ch 6/7 multiplicative bands are authoritative and this row must not be layered on
         // top of them -- so RangeBandResolver never produces a generic range AdditiveModifier at
-        // any band, only the band's own DifficultyModifier/MultiplicativeModifier/OverrideModifier.
+        // any composable band, only the band's own DifficultyModifier/MultiplicativeModifier.
         foreach (var band in Enum.GetValues<RangeBand>())
         {
-            var result = RangeBandResolver.Resolve(band, Percent.Of(50), aimedWithTargetingEquipment: false, Ruleset);
+            var outcome = RangeBandResolver.Resolve(
+                band, Percent.Of(50), NoOtherModifiers, aimedWithTargetingEquipment: false, Ruleset);
 
-            Assert.DoesNotContain(result.Modifiers, m => m is AdditiveModifier);
+            if (outcome is RangeBandOutcome.Composable composable)
+            {
+                Assert.DoesNotContain(composable.Modifiers, m => m is AdditiveModifier);
+            }
         }
     }
 }

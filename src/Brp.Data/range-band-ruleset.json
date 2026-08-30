@@ -1,11 +1,9 @@
 {
   "pointBlankDexDivisor": 3,
   "mediumRangeMultiplier": 2,
-  "longRangeMultiplier": 4,
   "longRangeChanceNumerator": 1,
   "longRangeChanceDenominator": 5,
   "throwingCutoffMultiplier": 2,
-  "throwingWeaponClasses": ["Missile"],
   "targetingEquipmentDampeningNumerator": 1,
   "targetingEquipmentDampeningDenominator": 2
 }
