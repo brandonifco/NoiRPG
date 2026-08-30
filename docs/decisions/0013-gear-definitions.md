@@ -38,12 +38,12 @@ is the realistic target, not two hundred rows."*
 | Rifle, Elephant | Colonial big-game hunting rifle; not a noir-plausible encounter, and outside the "couple of rifles" budget. |
 | Rifle, Sporting | Same trim — a third rifle would exceed the target. |
 | Shotgun, Automatic | Trim to the two-shotgun target ("shotguns incl. sawed-off"); more tactical/military than noir-plausible. |
-| Shotgun, Sporting | Same trim, redundant with Double-barreled and Sawed-off. |
+| Shotgun, Sporting | Same trim, redundant with Double-barreled and Sawn-off. |
 | Chainsaw | The book's own Weapon Classes list (p.196) puts it under an "Improvised" skill class that has no matching entry in `skill-ruleset.json` (Ch 3's IN list has no Improvised-Weapon skill). Rather than invent a new skill specialty — out of scope for this issue and explicitly forbidden by the issue text — or silently misfile it under an unrelated skill, it is cut outright. **Flagged for rules-conformance/scope-warden**: if a future issue reopens the skill list to add an Improvised-Weapon specialty, this is the weapon that motivates it. |
 
 Kept firearms (12, matching the "dozen" target exactly): Pistol
 Derringer/Light/Medium/Heavy, Revolver Light/Medium/Heavy, Rifle
-Bolt-action, Rifle Sniper, Shotgun Double-barreled, Shotgun Sawed-off, Gun
+Bolt-action, Rifle Sniper, Shotgun Double-barreled, Shotgun Sawn-off, Gun
 Submachine.
 
 Kept melee (6): Brass Knuckles, Knife Butcher/Pocket/Switchblade, and two
@@ -182,6 +182,17 @@ error was caught and corrected:
   `baseChanceWithBipod: 20` (equal to the printed base) and
   `baseChanceWithoutBipod: 10`. Covered by
   `NoirGearRulesetTests.Sniper_rifle_reproduces_its_printed_stats_and_bipod_scope_notes`.
+- **The sawed-off shotgun's display name was misspelled.** The extractor's
+  transcription (and this ADR's first draft) used "Shotgun, Sawed-off"; the
+  book prints "Shotgun, Sawn-off" (Modern Missile Weapons table, p.201).
+  Corrected in `weapon-ruleset.json`'s `name` field (the `shotgunSawedOff`
+  ruleset id is unchanged, since it is an internal identifier, not a
+  display name, and nothing depends on it matching the book's spelling).
+  This one matters beyond cosmetics: `GearRegistry.Resolve` matches
+  `EquipmentItem.Name` by exact display name, so an `EquipmentItem`
+  authored with the book's own spelling would previously have failed to
+  resolve. Covered by
+  `NoirGearRulesetTests.Sawn_off_shotgun_reproduces_its_two_step_damage_by_range`.
 
 `NoirGearRulesetTests` reproduces every kept weapon's and armor's printed
 stats individually (data-driven, one row per weapon/armor, per AGENTS.md's

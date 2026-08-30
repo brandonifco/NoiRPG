@@ -204,7 +204,7 @@
     },
     {
       "id": "shotgunSawedOff",
-      "name": "Shotgun, Sawed-off",
+      "name": "Shotgun, Sawn-off",
       "skillId": "Firearms (Shotgun)",
       "damage": "4D6/1D6",
       "damageByRange": {

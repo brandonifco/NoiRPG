@@ -133,14 +133,14 @@ public class NoirGearRulesetTests
     }
 
     [Fact]
-    public void Sawed_off_shotgun_reproduces_its_two_step_damage_by_range()
+    public void Sawn_off_shotgun_reproduces_its_two_step_damage_by_range()
     {
         // Ch 8, Modern Missile Weapons table (p.201), note 7: "not effective beyond 20 yards".
         var registry = NoirGearRuleset.Load();
 
         var shotgun = registry.WeaponById(new WeaponId("shotgunSawedOff"));
 
-        Assert.Equal("Shotgun, Sawed-off", shotgun.Name);
+        Assert.Equal("Shotgun, Sawn-off", shotgun.Name);
         Assert.Collection(
             shotgun.DamageByRange,
             first => AssertIncrement(first, 5, "4D6"),
