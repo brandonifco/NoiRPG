@@ -78,11 +78,13 @@ public static class ExperienceSystem
     /// capped at 100 rather than at the (possibly much higher) current rating.
     /// </para>
     /// <para>
-    /// <paramref name="experienceBonus"/> defaults to 0, which is the form
-    /// <c>tools/advancement_sim.py</c> simulates (updated alongside this fix to share the
-    /// same 100%-cap rule, so the two stay reconciled). Passing a character's
-    /// <see cref="Core.Abilities.AbilitySet.ExperienceBonus"/> reproduces Ch 5's printed rule
-    /// exactly, including the 100%-and-above case.
+    /// <paramref name="experienceBonus"/> defaults to 0 at this low level, because a bare
+    /// <see cref="CharacterSkill"/> carries no <see cref="Core.Abilities.AbilitySet"/> to
+    /// derive it from. Callers that hold a <see cref="Character"/> should not rely on that
+    /// default -- Ch 5 p.138 says the bonus is *always* added ("Your character's experience
+    /// bonus ... is added to the die roll"), so <see cref="CloseCase"/>, the path play
+    /// actually uses, always supplies the character's
+    /// <see cref="Core.Abilities.AbilitySet.ExperienceBonus"/> rather than leaving it at 0.
     /// </para>
     /// </summary>
     public static int ImprovementRoll(
@@ -120,9 +122,17 @@ public static class ExperienceSystem
     /// carries an experience check, in a stable order keyed by <see cref="SkillId"/> so the
     /// draw sequence -- and therefore the resulting roll log -- is reproducible for a given
     /// seed. Returns each ticked skill's gain (0 for a failed improvement roll).
+    /// <para>
+    /// Ch 5 p.138, "Making an Experience Roll": the character's experience bonus (½ INT,
+    /// rounded up) is *always* added to the roll -- it is not optional. This is the default
+    /// improvement-roll path used at case close, so it always applies
+    /// <see cref="Core.Abilities.AbilitySet.ExperienceBonus"/> unless a caller explicitly
+    /// opts out via <paramref name="includeExperienceBonus"/> (for a test double or a house
+    /// rule that wants the un-modified roll -- the book itself has no such option).
+    /// </para>
     /// </summary>
     public static IReadOnlyDictionary<SkillId, int> CloseCase(
-        Character character, IEntropySource entropy, int gainDieSides = 6, bool includeExperienceBonus = false)
+        Character character, IEntropySource entropy, int gainDieSides = 6, bool includeExperienceBonus = true)
     {
         ArgumentNullException.ThrowIfNull(character);
         ArgumentNullException.ThrowIfNull(entropy);
