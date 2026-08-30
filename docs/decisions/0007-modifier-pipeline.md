@@ -80,6 +80,12 @@ when the arithmetic is defensible.
 
 ### Range bands are out of scope here
 
+**Superseded by [0014](0014-range-bands.md), which implements the mechanics this section only
+scoped out.** The analysis below is kept for its own sake -- it is what told #21 where the
+earlier draft went wrong -- but the bands themselves, the long-range override, the throwing
+cutoff, and the reconciliation with the Situational Modifiers table's "Range" row are recorded
+there, not here.
+
 An earlier draft specified range bands in this record. It was wrong in every particular
 and has been removed rather than corrected.
 

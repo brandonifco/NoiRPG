@@ -36,3 +36,4 @@ supersedes it — the original is not edited or deleted.
 | [0011](0011-skill-definition.md) | SkillDefinition: base-chance shape, specialties, and the skill registry | Accepted |
 | [0012](0012-characters-and-advancement.md) | Layer 3 — Character, CharacterBuilder, and ExperienceSystem shape | Accepted |
 | [0013](0013-gear-definitions.md) | Layer 4 keystone — weapon/armor definition schema and the hand-picked subset | Accepted |
+| [0014](0014-range-bands.md) | Missile/firearm range bands: the four bands, the long-range override, and reconciling three treatments of range | Accepted |

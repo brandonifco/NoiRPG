@@ -1,0 +1,9 @@
+{
+  "pointBlankDexDivisor": 3,
+  "mediumRangeMultiplier": 2,
+  "longRangeChanceNumerator": 1,
+  "longRangeChanceDenominator": 5,
+  "throwingCutoffMultiplier": 2,
+  "targetingEquipmentDampeningNumerator": 1,
+  "targetingEquipmentDampeningDenominator": 2
+}
