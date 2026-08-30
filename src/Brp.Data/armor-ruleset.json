@@ -1,0 +1,44 @@
+{
+  "armor": [
+    {
+      "id": "bulletproofVestEarly",
+      "name": "Bulletproof Vest, Early",
+      "armorValue": 4,
+      "skillPenalty": {
+        "category": "Physical",
+        "value": -25
+      },
+      "hitLocations": ["Chest"],
+      "source": "Ch 8, Modern Armor table (p.207); description (p.206): 'an older variant of the bulletproof vest, heavy and cumbersome'"
+    },
+    {
+      "id": "bulletproofVestModern",
+      "name": "Bulletproof Vest, Modern",
+      "armorValue": {
+        "melee": 4,
+        "firearms": 8
+      },
+      "skillPenalty": {
+        "category": "Physical",
+        "value": -5
+      },
+      "hitLocations": ["Chest"],
+      "source": "Ch 8, Modern Armor table (p.207); description (p.206): 'lighter, thinner form of protection'"
+    },
+    {
+      "id": "riotGear",
+      "name": "Riot Gear",
+      "armorValue": {
+        "melee": 12,
+        "firearms": 6
+      },
+      "skillPenalty": {
+        "category": "Physical",
+        "value": -10
+      },
+      "hitLocations": ["Head", "Arms", "Chest", "Abdomen", "Legs"],
+      "note": "Includes helmet",
+      "source": "Ch 8, Modern Armor table (p.207); description (p.206): 'a heavy bulletproof jacket and toughened clothing coverall, with plates in strategic body parts and a helmet'"
+    }
+  ]
+}

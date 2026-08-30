@@ -35,3 +35,4 @@ supersedes it — the original is not edited or deleted.
 | [0010](0010-acting-without-skill.md) | Acting Without Skill is off for core clues; texture use deferred | Accepted |
 | [0011](0011-skill-definition.md) | SkillDefinition: base-chance shape, specialties, and the skill registry | Accepted |
 | [0012](0012-characters-and-advancement.md) | Layer 3 — Character, CharacterBuilder, and ExperienceSystem shape | Accepted |
+| [0013](0013-gear-definitions.md) | Layer 4 keystone — weapon/armor definition schema and the hand-picked subset | Accepted |
