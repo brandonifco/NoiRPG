@@ -1,0 +1,19 @@
+{
+  "characteristicPointPool": 24,
+  "startingCharacteristicValue": 10,
+  "characteristicCreationMaximum": 21,
+  "characteristicCosts": {
+    "STR": 1,
+    "CON": 1,
+    "SIZ": 1,
+    "CHA": 1,
+    "DEX": 3,
+    "INT": 3,
+    "POW": 3
+  },
+  "freeShiftPoints": 3,
+  "professionalSkillPoints": 250,
+  "personalSkillPointsIntMultiplier": 10,
+  "increasedPersonalSkillPointsIntMultiplier": 15,
+  "startingSkillCapPercent": 75
+}

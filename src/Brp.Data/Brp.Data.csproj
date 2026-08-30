@@ -8,11 +8,14 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Brp.Core\Brp.Core.csproj" />
+    <ProjectReference Include="..\Brp.Rules\Brp.Rules.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <EmbeddedResource Include="ability-ruleset.json" />
     <EmbeddedResource Include="skill-ruleset.json" />
+    <EmbeddedResource Include="character-creation-ruleset.json" />
+    <EmbeddedResource Include="background-packages.json" />
   </ItemGroup>
 
 </Project>
