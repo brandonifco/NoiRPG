@@ -19,6 +19,7 @@
     <EmbeddedResource Include="experience-ruleset.json" />
     <EmbeddedResource Include="weapon-ruleset.json" />
     <EmbeddedResource Include="armor-ruleset.json" />
+    <EmbeddedResource Include="range-band-ruleset.json" />
   </ItemGroup>
 
 </Project>
