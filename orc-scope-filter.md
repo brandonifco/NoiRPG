@@ -42,13 +42,19 @@ Chapter 10 has both a **Noir** entry and a **Modern** entry. NoiRPG is neither o
 
 | Skill | Modern base | Historical base |
 |---|---|---|
-| Drive | 20% | 01% |
-| First Aid | 30% | INT×1 |
-| Knowledge (any) | 05% | 01% |
-| Medicine | 05% | 00% |
+| Drive | 20% | 01% (common vs. unknown/uncommon vehicles) |
 | Literacy | universal — treat as automatic, no roll | varies |
 
 Getting this wrong silently makes every starting detective worse than intended, and it's the kind of error that only surfaces after balance testing.
+
+> **Correction (verified 2026-08-29 against the PDF; see ADR 0011).** An earlier version
+> of this table also listed First Aid (`30% | INT×1`), Knowledge (`05% | 01%`), and
+> Medicine (`05% | 00%`) as modern/historical pairs. The printed text does **not** carry a
+> second era value for these: First Aid prints a single `30%` (Ch 3, p.39), Medicine a
+> single `05%` (p.46), and Knowledge `05%` (p.42) whose `00%` variant is a per-specialty
+> "requires research and study" rule, not a historical era value. Only **Drive** is a
+> genuine printed era pair in scope. The engine encodes First Aid, Knowledge, and Medicine
+> as plain constants accordingly.
 
 **Further consequences of "modern," each of which changes what gets implemented:**
 
@@ -93,12 +99,19 @@ Locksmith*. Four of those map onto existing book skills under different names:
 
 | Framework name | Book equivalent |
 |---|---|
-| Shadow (tailing) | `Stealth`, opposed by `Spot` |
 | Locksmith | `Fine Manipulation` (the book names lockpicking explicitly) |
 | Accounting | `Knowledge (Accounting)` specialty |
 | Photography | `Art (Photography)` specialty |
 | Law | `Knowledge (Law)` specialty |
-| Intimidate | No direct equivalent — an original skill |
+| Intimidate | No direct equivalent — an original skill (house-ruled 05% base; see ADR 0011) |
+
+**`Shadow` and `Stealth` are two distinct skills, not one renamed.** An earlier draft of
+this table listed `Shadow (tailing)` as a rename of the book's `Stealth`; that is
+withdrawn. Both `noir-rpg-framework.md`'s 18-skill list and the locked
+`tools/case_validator.py` enumerate `Shadow` and `Stealth` separately, and the engine
+loads both (decided 2026-08-29; recorded in ADR 0011). `Shadow` covers tailing/following
+a target; `Stealth` covers hiding and moving unseen. Both share the book's `Stealth` base
+of 10% until the game defines what "tailing" adds mechanically.
 
 An earlier draft of this document recommended adopting the book's names in the engine
 and aliasing the framework names for display. **That is wrong and is withdrawn.**

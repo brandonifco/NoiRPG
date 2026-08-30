@@ -108,7 +108,7 @@ public class NoirSkillRulesetTests
         // Ch 3: Skills, "Firearm (various)" (p.39), "Base Chance: As per weapon specialty".
         var registry = NoirSkillRuleset.Load();
 
-        var handgun = registry[new SkillId("Firearm (Handgun)")];
+        var handgun = registry[new SkillId("Firearms (Handgun)")];
 
         Assert.IsType<WeaponDerivedBaseChance>(handgun.BaseChance);
         Assert.Throws<InvalidOperationException>(() => handgun.BaseChanceFor(Average()));

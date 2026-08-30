@@ -145,15 +145,35 @@ instead takes the non-destructive path: `Stealth` is loaded as its own top-level
 `Stealth` should in fact resolve identically, or diverge once the game defines what
 "tailing" adds mechanically, is left for the project owner.
 
-`tools/case_validator.py`'s `SKILLS` set also uses a single flat `Firearms` label,
-where this record's data splits `Firearm` into `Handgun`/`Shotgun`/`Rifle` specialties
-per `orc-scope-filter.md`'s explicit Ch 3 filter text. This is judged **not** a
-conflict of the same kind: `case_validator.py`'s set omits several other in-scope
-skills entirely (`Grapple`, `Melee Weapon`, `Martial Arts`, every `Knowledge`
-specialty beyond the framework's renamed four, `Research`'s siblings, etc.), which
-confirms it is a narrower, tool-specific label set for clue-door validation rather than
-a claim about the full character skill list this record builds. No change made for
-this one.
+The framework's canonical name for the parent skill is `Firearms` (plural), used by
+both `noir-rpg-framework.md`'s 18-skill list and `tools/case_validator.py`. Per the
+naming rule ("framework names win"), the parent entry is loaded as `Firearms`
+(`bookEquivalent: "Firearm"`, Ch 3 p.39), and its weapon specialties as
+`Firearms (Handgun)` / `(Shotgun)` / `(Rifle)`.
+
+`tools/case_validator.py`'s `SKILLS` set uses that single flat `Firearms` label as a
+**clue-door validation label**, where this record's data splits `Firearms` into weapon
+specialties. This is judged **not** a conflict: `case_validator.py`'s set omits several
+other in-scope skills entirely (`Grapple`, `Melee Weapon`, `Martial Arts`, every
+`Knowledge` specialty beyond the framework's renamed four, `Research`'s siblings, etc.),
+which confirms it is a narrower, tool-specific label set for clue-door validation rather
+than a claim about the full character skill list this record builds. How a flat door
+label such as `Firearms` resolves against the engine's weapon specialties is a **Layer 5
+seam** (case-tooling ↔ engine) that also depends on Layer 4 weapon data (#21), and is
+deliberately left to that layer. No collapse of the specialties is made here.
+
+## Maintainer decisions (2026-08-29)
+
+Confirmed by the project owner after the `rules-conformance` and `scope-warden`
+verification pass on this record's PR:
+
+- **`Shadow` and `Stealth` stay two distinct skills.** The non-destructive path above is
+  ratified, not just tolerated. `orc-scope-filter.md`'s stale "Shadow → Stealth" rename
+  row is corrected to match.
+- **`Intimidate` base chance is 05%** (house rule; no book entry exists). Ratified as the
+  Communication-category baseline shared by Bargain/Command/Etiquette/Fast Talk/Perform.
+- **`Firearms` (plural) is the canonical parent name**, per the naming rule; the data and
+  tests were updated from the book's singular `Firearm`.
 
 ### Registry and resolution routing
 

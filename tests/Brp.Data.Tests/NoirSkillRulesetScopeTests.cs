@@ -22,7 +22,7 @@ public class NoirSkillRulesetScopeTests
         "Technical Skill (Computer Use)", "Technical Skill (Electronics)", "Technical Skill (Security Systems)",
         "Track", "Hide", "Climb", "Jump", "Swim", "Throw",
         "Brawl", "Grapple", "Dodge",
-        "Firearm (Handgun)", "Firearm (Shotgun)", "Firearm (Rifle)",
+        "Firearms (Handgun)", "Firearms (Shotgun)", "Firearms (Rifle)",
         "Melee Weapon (Knife)", "Melee Weapon (Club)", "Martial Arts",
     };
 
