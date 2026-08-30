@@ -165,28 +165,71 @@ are #40's stated follow-on work).
   nothing else about the gate or the improvement roll.
 - **Improvement roll:** `ExperienceSystem.ImprovementRoll` draws a d100 via
   the injected `IEntropySource`, adds an optional `experienceBonus`, and
-  compares to the current rating: `roll > rating` grants `+1D6` (`Ch 5
-  p.138-139`). The experience check clears either way. **The experience
-  bonus (½INT rounded up, `AbilitySet.ExperienceBonus`, already built in
-  Layer 1) defaults to 0** rather than being applied unconditionally. Ch 5
-  p.138 prints it as part of the roll ("added to the die roll ... just to
-  the roll to see if there is improvement"), and passing
-  `character.Abilities.ExperienceBonus` reproduces that exactly — the
-  default of 0 exists only so the implementation's simplest call matches
-  `tools/advancement_sim.py`'s deliberately simplified model, which omits
-  the bonus term. This is a reconciliation with the simulation's scope, not
-  a claim that the book has no such bonus.
-- **Teaching:** `ExperienceSystem.Teach` retains the RAW teaching rule (a
-  Teach roll against the teacher's chance grants the student `+1D6` on
-  success, nothing on failure). The book's fumble consequence (self-injury)
-  is not modeled — that is a combat/injury effect, Layer 4.
+  compares against a success threshold: `roll > rating` grants `+1D6` (Ch 5
+  p.138-139) below 100%. **Corrected 2026-08-30 (post-implementation
+  conformance review):** at or above 100%, the threshold is pinned at 100
+  rather than at the (possibly much higher) current rating — Ch 5 p.138,
+  "Exceeding 100% in a Skill": "No matter how much over 100% the skill has
+  risen, any roll of 100 or over earns a skill improvement." The original
+  implementation used `roll <= rating` unconditionally, which meant a skill
+  at or above 100% could **never** improve (the maximum possible roll of 100
+  always satisfies `100 <= rating` once `rating >= 100`) — a real defect,
+  since NoiRPG does not cut skills at 100% and tick-on-use can carry a
+  primary skill past it over a campaign. Fixed by comparing against
+  `min(rating, 100)`, with `roll >= 100` at that cap instead of `roll >
+  100` (an unmodified d100 tops out at 100, so "greater than" would make
+  the capped threshold unreachable without the experience bonus, which
+  contradicts the book's own "any roll of 100 or over" clause).
+  `tools/advancement_sim.py`'s `Skill.improvement_roll` was updated with the
+  identical cap in the same change, so the two stay reconciled — see that
+  file's docstring and inline comment.
+  The experience check clears either way. **The experience bonus (½INT
+  rounded up, `AbilitySet.ExperienceBonus`, already built in Layer 1)
+  defaults to 0** rather than being applied unconditionally. Ch 5 p.138
+  prints it as part of the roll ("added to the die roll ... just to the
+  roll to see if there is improvement"), and passing
+  `character.Abilities.ExperienceBonus` now reproduces Ch 5's printed rule
+  exactly, including the 100%-and-above case — the default of 0 exists only
+  so the implementation's simplest call matches `tools/advancement_sim.py`'s
+  deliberately simplified model, which omits the bonus term. This is a
+  reconciliation with the simulation's scope, not a claim that the book has
+  no such bonus.
+- **Teaching:** `ExperienceSystem.Teach` now resolves the teacher's Teach
+  roll through the same five-grade `Brp.Core.Resolution.SkillResolver` every
+  other skill roll uses, rather than a bespoke percent-threshold check, so
+  its fumble band matches the book's general fumble rule exactly. A Success
+  (or better — Ch 5 p.138 does not distinguish Special/Critical for
+  teaching) grants `+1D6`, capped so training alone cannot carry the skill
+  past `trainingCapPercent` (75%, `Ch 5 p.138`: "No skill can be trained
+  above 75%, no matter how good the instructor. Any increase above this
+  must come through successful use of the skill"). **Corrected
+  2026-08-30:** the original implementation applied the die roll
+  uncapped, which could train a skill past 75% — a real defect, since that
+  cap is the book's explicit floor on what teaching alone can do. A plain
+  Failure grants nothing. A **fumble now applies the book's printed
+  penalty**: `CharacterSkill.Degrade` reduces the rating by `1D3`, floored
+  at zero (Ch 5 p.138: "a fumble is counterproductive, with the teacher
+  causing self-doubt and contradicting your character's prior learnings,
+  reducing the skill by -1D3"). This was previously left unmodeled with an
+  incorrect scope note calling it "a combat/injury effect, Layer 4" — a
+  teaching fumble is skill *degradation*, not a physical injury, and there
+  was no genuine scope reason to defer it. `Teach` returns the signed
+  change actually applied (positive for a capped gain, negative for a
+  floored fumble penalty, zero for a plain failure), not the raw uncapped
+  die roll, so a caller reading the return value never sees a number larger
+  than what the skill's rating actually moved by.
 
 Policy names (`TickOnUse`, `RawTickOnSuccess`), the mechanical gate
-(`CheckStakes`), and the improvement rule (`d100 > rating → +1D6`) are
-written to match `tools/advancement_sim.py`'s two simulated variants ("B
-tick on use" / "A RAW (tick on success)") so the simulation remains a valid
-sanity check against this implementation, per the issue's explicit
-requirement.
+(`CheckStakes`), and the improvement rule (`d100 > rating → +1D6`, with the
+100%-and-above threshold correction above) are written to match
+`tools/advancement_sim.py`'s two simulated variants ("B tick on use" / "A RAW
+(tick on success)") so the simulation remains a valid sanity check against
+this implementation, per the issue's explicit requirement. The
+rules-conformance falsification target — flipping `ExperiencePolicy` and
+nothing else must reproduce BRP's tick-on-success behavior exactly, with no
+other divergence from the book's experience rule — is unaffected by either
+correction: both defects lived inside "no other divergence," not in the
+gate itself, and both are now closed.
 
 ## Alternatives considered
 
@@ -229,3 +272,12 @@ bonus an explicit opt-in parameter, documented on both sides.
   book would show once a weapon is chosen. This is not a defect introduced
   here; it is the same gap Layer 2 already recorded, now visible at
   character-build time.
+- **Post-implementation correction (2026-08-30, rules-conformance audit):**
+  the initial implementation had two real defects, both inside the
+  falsification target's "no other divergence from the book" zone rather
+  than in the gate: the improvement roll's `>=100%` threshold (skills at or
+  above 100% could never improve) and the Teach roll's missing 75% training
+  cap (training could push a skill past it). Both are fixed and covered by
+  tests (see the "Decision: `ExperienceSystem`" section above); a Teach
+  fumble now applies the printed -1D3 skill degradation instead of being
+  left unmodeled under an inaccurate Layer-4-injury scope note.

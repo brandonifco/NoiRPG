@@ -194,15 +194,49 @@ public class ExperienceSystemTests
         Assert.Equal(90, skillB.CurrentRating);
     }
 
+    [Theory]
+    [InlineData(100)]
+    [InlineData(130)]
+    public void Improvement_roll_grants_an_improvement_on_a_natural_100_once_the_skill_is_at_or_above_100_percent(int rating)
+    {
+        // Ch 5 p.138, "Exceeding 100% in a Skill": "No matter how much over 100% the skill
+        // has risen, any roll of 100 or over earns a skill improvement." Before this fix, a
+        // skill at or above 100% could never improve: `roll <= skill.CurrentRating` with
+        // roll capped at 100 is always true once the rating reaches 100.
+        var skill = MakeSkill(rating);
+        TickViaRealStakes(skill);
+        var entropy = new FixedEntropySource(100, 3); // natural 100, then a gain of 3
+
+        var gain = ExperienceSystem.ImprovementRoll(skill, entropy);
+
+        Assert.Equal(3, gain);
+        Assert.Equal(rating + 3, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Improvement_roll_below_100_percent_still_requires_beating_the_rating_not_just_reaching_100()
+    {
+        // A rating of 99 is still below the 100%-and-above regime: the roll must exceed
+        // 99, so a roll of exactly 99 still fails (unlike the >=100 case above).
+        var skill = MakeSkill(rating: 99);
+        TickViaRealStakes(skill);
+        var entropy = new FixedEntropySource(99); // one value only: a gain draw would throw
+
+        var gain = ExperienceSystem.ImprovementRoll(skill, entropy);
+
+        Assert.Equal(0, gain);
+        Assert.Equal(99, skill.CurrentRating);
+    }
+
     [Fact]
     public void Teach_grants_a_gain_on_a_successful_teach_roll()
     {
         var student = MakeSkill(rating: 30);
-        var entropy = new FixedEntropySource(50, 5); // teach roll 50 <= 60% chance, then +5
+        var entropy = new FixedEntropySource(50, 5); // teach roll 50: a Success at 60% chance, then +5
 
-        var taught = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
 
-        Assert.True(taught);
+        Assert.Equal(5, gain);
         Assert.Equal(35, student.CurrentRating);
     }
 
@@ -210,11 +244,68 @@ public class ExperienceSystemTests
     public void Teach_grants_nothing_on_a_failed_teach_roll()
     {
         var student = MakeSkill(rating: 30);
-        var entropy = new FixedEntropySource(70); // teach roll 70 > 60% chance: fails
+        var entropy = new FixedEntropySource(70); // teach roll 70: a plain Failure at 60% chance
 
-        var taught = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
 
-        Assert.False(taught);
+        Assert.Equal(0, gain);
         Assert.Equal(30, student.CurrentRating);
+    }
+
+    [Fact]
+    public void Teach_caps_the_gain_so_training_alone_cannot_carry_a_skill_past_the_seventy_five_percent_ceiling()
+    {
+        // Ch 5 p.138: "No skill can be trained above 75%, no matter how good the
+        // instructor. Any increase above this must come through successful use of the
+        // skill." 74 + a full 1D6 gain of 6 would reach 80%; training must stop at 75%.
+        var student = MakeSkill(rating: 74);
+        var entropy = new FixedEntropySource(50, 6); // teach roll 50: a Success at 80% chance, then +6
+
+        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy);
+
+        Assert.Equal(1, gain);
+        Assert.Equal(75, student.CurrentRating);
+    }
+
+    [Fact]
+    public void Teach_grants_nothing_more_once_a_skill_is_already_at_the_training_ceiling()
+    {
+        var student = MakeSkill(rating: 75);
+        var entropy = new FixedEntropySource(50, 6); // a Success that would otherwise grant +6
+
+        var gain = ExperienceSystem.Teach(student, Percent.Of(80), entropy);
+
+        Assert.Equal(0, gain);
+        Assert.Equal(75, student.CurrentRating);
+    }
+
+    [Fact]
+    public void Teach_fumble_degrades_the_students_skill_instead_of_improving_it()
+    {
+        // Ch 5 p.138: "a fumble is counterproductive, with the teacher causing self-doubt
+        // and contradicting your character's prior learnings, reducing the skill by -1D3."
+        // At a 60% teach chance, the fumble band is 98-100 (Ch 5's standard fumble rule,
+        // Brp.Core.Resolution.ResolutionPolicy), so a roll of 99 fumbles.
+        var student = MakeSkill(rating: 30);
+        var entropy = new FixedEntropySource(99, 2); // fumble roll, then a -1D3 of 2
+
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+
+        Assert.Equal(-2, gain);
+        Assert.Equal(28, student.CurrentRating);
+    }
+
+    [Fact]
+    public void Teach_fumble_never_degrades_a_skill_below_zero()
+    {
+        var student = MakeSkill(rating: 1);
+        var entropy = new FixedEntropySource(99, 3); // fumble roll, then a -1D3 of 3
+
+        var gain = ExperienceSystem.Teach(student, Percent.Of(60), entropy);
+
+        // The rating can only fall from 1 to 0 -- the returned change reflects what was
+        // actually applied, not the raw, unclamped -1D3 penalty.
+        Assert.Equal(-1, gain);
+        Assert.Equal(0, student.CurrentRating);
     }
 }

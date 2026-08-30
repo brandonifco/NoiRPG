@@ -11,8 +11,14 @@ their background package. Per case, each skill is exercised under real stakes
 with a tier-dependent probability (players lean into their build). A skill
 gets at most one tick per case. At case close, each ticked skill makes an
 improvement roll: d100 strictly greater than the current rating raises the
-skill by 1d6. Between cases, downtime training grants one chosen skill an
-extra improvement roll (the player trains their weakest primary).
+skill by 1d6, except that a skill at or above 100 uses a fixed threshold of
+100 instead of its own rating (Ch 5: System, "Exceeding 100% in a Skill",
+p.138 — "any roll of 100 or over earns a skill improvement"; an unmodified
+d100 can never again beat a rating that has itself reached 100). This mirrors
+`Brp.Rules.Advancement.ExperienceSystem.ImprovementRoll`, kept in sync so this
+simulation and the engine share one improvement rule. Between cases, downtime
+training grants one chosen skill an extra improvement roll (the player trains
+their weakest primary).
 
 Variants compared:
   A. RAW BRP  — a skill ticks only if it *succeeded* under stakes.
@@ -43,7 +49,14 @@ class Skill:
     gained: int = 0
 
     def improvement_roll(self, rng: random.Random) -> None:
-        if rng.randint(1, 100) > self.rating:
+        roll = rng.randint(1, 100)
+        # Ch 5 p.138, "Exceeding 100% in a Skill": once a rating reaches 100, an
+        # unmodified d100 can never again roll strictly higher than it, so the book
+        # pins the threshold at 100 itself ("any roll of 100 or over earns a skill
+        # improvement") rather than at the skill's own, possibly much higher, rating.
+        threshold = min(self.rating, 100)
+        succeeded = roll >= 100 if threshold >= 100 else roll > threshold
+        if succeeded:
             g = rng.randint(1, GAIN_DIE)
             self.rating += g
             self.gained += g

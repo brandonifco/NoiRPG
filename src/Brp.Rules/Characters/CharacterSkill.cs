@@ -55,4 +55,11 @@ public sealed class CharacterSkill
 
     /// <summary>Raises the current rating by a gain from a successful improvement roll or teaching.</summary>
     internal void Improve(int gain) => CurrentRating += Math.Max(0, gain);
+
+    /// <summary>
+    /// Lowers the current rating -- Ch 5: System, "Skill Training" (p.138): a teaching
+    /// fumble "reduc[es] the skill by -1D3." Floors at zero rather than letting a rating go
+    /// negative, which the book never contemplates.
+    /// </summary>
+    internal void Degrade(int amount) => CurrentRating = Math.Max(0, CurrentRating - Math.Max(0, amount));
 }
