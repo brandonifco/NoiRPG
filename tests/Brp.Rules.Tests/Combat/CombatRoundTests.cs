@@ -86,8 +86,8 @@ public class CombatRoundTests
 
     [Theory]
     [InlineData(0, 16)]  // no movement: unmodified
-    [InlineData(10, 8)]  // 6-15m: half of 16, rounded down
-    [InlineData(20, 4)]  // 16-29m: quarter of 16
+    [InlineData(10, 8)]  // 6-15m: half of 16 (exact, so rounding direction doesn't discriminate here)
+    [InlineData(20, 4)]  // 16-29m: quarter of 16 (also exact)
     public void Movement_fractions_the_effective_DEX_rank_before_any_flat_penalty(int movementMeters, int expectedRank)
     {
         var requests = new[] { new CombatActionRequest("mover", 16, movementMeters, 0, WeaponTypeTier.ShortOrUnarmed) };
@@ -95,6 +95,34 @@ public class CombatRoundTests
         var round = CombatRound.Create(requests, Ruleset);
 
         Assert.Equal(expectedRank, Assert.Single(round.ActionPhaseOrder).EffectiveDexRank);
+    }
+
+    [Fact]
+    public void Movement_fraction_rounds_up_per_Ch5_p140s_half_of_X_convention()
+    {
+        // Ch 5: System, "Characteristic Increases" (p.140): "1/2 of 13 rounds up to 7" -- the
+        // book's only explicit rounding rule for this fraction shape. DEX rank 15 moving 6-15m ->
+        // ceil(15/2) = 8, not the floor(15/2) = 7 an earlier draft used.
+        var requests = new[] { new CombatActionRequest("mover", 15, 10, 0, WeaponTypeTier.ShortOrUnarmed) };
+
+        var round = CombatRound.Create(requests, Ruleset);
+
+        Assert.Equal(8, Assert.Single(round.ActionPhaseOrder).EffectiveDexRank);
+    }
+
+    [Fact]
+    public void A_DEX_rank_one_combatant_moving_6_to_15_meters_still_acts()
+    {
+        // Rounding up avoids the pathological truncate-to-zero case: a rank-1 combatant walking
+        // 6-15m stays at rank 1 (ceil(1/2) = 1) and is present in the action order, rather than
+        // being dropped for taking an ordinary walk.
+        var requests = new[] { new CombatActionRequest("walker", 1, 10, 0, WeaponTypeTier.ShortOrUnarmed) };
+
+        var round = CombatRound.Create(requests, Ruleset);
+
+        var turn = Assert.Single(round.ActionPhaseOrder);
+        Assert.Equal("walker", turn.CombatantId);
+        Assert.Equal(1, turn.EffectiveDexRank);
     }
 
     [Fact]

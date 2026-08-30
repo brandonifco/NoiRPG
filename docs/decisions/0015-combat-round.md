@@ -105,11 +105,25 @@ distances of 30m or more (the book states no tier there; a fully-unengaged chara
 without other actions) leave the DEX rank unmodified — no third tier is invented for either
 case.
 
-**House interpretation, unsourced:** the book states the 1/2 and 1/4 fractions but never
-states a rounding direction for the resulting rank. `EffectiveDexRankCalculator.ApplyMovement`
-truncates toward zero (rounds down for the non-negative ranks the game uses). No printed
-example in Ch 6 exercises this fraction with an odd DEX value to settle the direction either
-way; this is a house call, not a transcription from the text.
+**Rounding direction — Ch 6 silent, decided by a governing precedent elsewhere in the book:**
+Ch 6 states the 1/2 and 1/4 fractions but never states a rounding direction for the resulting
+rank. Ch 5: System, "Characteristic Increases" (p.140) is the book's only explicit rounding
+convention for the same "half of X" shape, and it rounds up: "Any attempts to train or research
+an increase to the DEX or CHA characteristics are limited to half again the original
+characteristic (round up). For example, your character with DEX 13 can train or research their
+DEX up to 20 (1/2 of 13 rounds up to 7, and 13+7=20)." No passage anywhere in the book rounds a
+"half of a characteristic" calculation down. `EffectiveDexRankCalculator.ApplyMovement`
+therefore rounds the halved/quartered DEX rank **up** (ceiling), following that precedent rather
+than truncating toward zero.
+
+An earlier draft of this record truncated instead, reasoning only that the book was silent. That
+was wrong on two counts: it missed the p.140 precedent, and it produced a pathological result —
+a DEX-rank-1 combatant moving 6-15m truncated to floor(1/2) = 0 and lost their action entirely,
+when Ch 6 (p.144) names losing an action only as a consequence of *penalties* stacking a rank
+below the floor, never as a consequence of an ordinary walk. Rounding up keeps that combatant at
+rank 1 (ceil(1/2) = 1); they still act. The DEX-rank-0 floor itself is unchanged and still
+applies to cumulative penalties (movement plus stacked flat penalties) pushing a rank below 1 —
+only the movement fraction's rounding direction changed.
 
 ### Flat penalties: drawing a weapon, and successive-attack spacing — sourced, modelled as ordering arithmetic only
 
@@ -174,9 +188,10 @@ them last. A lost action is absent from the sequence, not merely ranked lowest.
   `IReadOnlyList<CombatantTurn>` — to know when each combatant's attack/defense resolves, and
   supplies `CombatActionRequest.FlatDexRankPenalty` itself once it has decided how many actions
   a combatant is taking and whether one of them is a weapon draw.
-- The movement-fraction rounding direction is a house call (see above) and may need revisiting
-  if a later spot rule or worked example in the book turns out to depend on the opposite
-  direction; flag any such finding against this record rather than the new piece.
+- The movement-fraction rounding direction follows the Ch 5 p.140 "half of X (round up)"
+  precedent (see above), since Ch 6 itself is silent. If a later spot rule or worked example
+  in the book is found to depend on rounding a combat movement fraction down instead, flag that
+  against this record rather than the new piece.
 - The two flat-penalty fields (`DrawWeaponDexRankPenalty`, `MultipleActionDexRankPenalty`) are
   presently identical (5) because the book only ever states one number; this is not itself an
   invariant a future edit should assume is permanent.

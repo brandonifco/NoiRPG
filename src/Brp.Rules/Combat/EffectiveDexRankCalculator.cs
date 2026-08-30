@@ -21,10 +21,18 @@ public static class EffectiveDexRankCalculator
     /// and movement of 5 meters or less, which the book folds into an ordinary attack's own "up to
     /// 5 meters" allowance) leave the rank unmodified.
     /// <para>
-    /// <strong>House interpretation:</strong> the book states the 1/2 and 1/4 fractions but not a
-    /// rounding direction for them. This implementation truncates toward zero (rounding down, for
-    /// the non-negative ranks the game uses). Unsourced for this specific fraction; see
-    /// <c>docs/decisions/0015-combat-round.md</c>.
+    /// <strong>House interpretation, governed by a nearby printed convention:</strong> Ch 6 never
+    /// states a rounding direction for these two fractions, but Ch 5: System, "Characteristic
+    /// Increases" (p.140) gives the book's only explicit rounding rule for the same "half of X"
+    /// shape: "Any attempts to train or research an increase to the DEX or CHA characteristics are
+    /// limited to half again the original characteristic (round up). For example, ... DEX 13 ...
+    /// (1/2 of 13 rounds up to 7 ...)." No BRP passage anywhere rounds a "half of a characteristic"
+    /// calculation down. This implementation follows that precedent and rounds the halved/quartered
+    /// DEX rank up (ceiling) rather than truncating -- the opposite of an earlier draft, which
+    /// truncated toward zero and had the pathological effect of a DEX-rank-1 combatant moving 6-15m
+    /// truncating to 0 and losing their action outright, when the sole named consequence in Ch 6 for
+    /// a rank of 0 or below is losing an action to <em>penalties</em> (p.144), not to a mid-range
+    /// walk. See <c>docs/decisions/0015-combat-round.md</c>.
     /// </para>
     /// </summary>
     public static int ApplyMovement(int baseDexRank, int movementMeters, CombatRoundRuleset ruleset)
@@ -36,7 +44,7 @@ public static class EffectiveDexRankCalculator
         {
             if (movementMeters >= tier.MinMeters && movementMeters <= tier.MaxMeters)
             {
-                return baseDexRank * tier.FractionNumerator / tier.FractionDenominator;
+                return CeilDiv(baseDexRank * tier.FractionNumerator, tier.FractionDenominator);
             }
         }
 
@@ -66,4 +74,6 @@ public static class EffectiveDexRankCalculator
 
         return effective > ruleset.DexRankFloor ? effective : null;
     }
+
+    private static int CeilDiv(int value, int divisor) => (value + divisor - 1) / divisor;
 }

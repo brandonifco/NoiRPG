@@ -21,16 +21,29 @@ public class EffectiveDexRankCalculatorTests
     [Theory]
     [InlineData(0, 15)]  // no movement: unmodified
     [InlineData(5, 15)]  // 5m or less folds into an ordinary attack's own allowance: unmodified
-    [InlineData(6, 7)]   // lower edge of 6-15m: half of 15, rounded down
-    [InlineData(15, 7)]  // upper edge of 6-15m
-    [InlineData(16, 3)]  // lower edge of 16-29m: quarter of 15, rounded down
-    [InlineData(29, 3)]  // upper edge of 16-29m
+    [InlineData(6, 8)]   // lower edge of 6-15m: half of 15, rounded up -- ceil(15/2) = 8
+    [InlineData(15, 8)]  // upper edge of 6-15m
+    [InlineData(16, 4)]  // lower edge of 16-29m: quarter of 15, rounded up -- ceil(15/4) = 4
+    [InlineData(29, 4)]  // upper edge of 16-29m
     [InlineData(30, 15)] // beyond every printed tier: unmodified (book defines no band past 29m)
-    public void Movement_fractions_the_DEX_rank_at_the_printed_tiers(int movementMeters, int expected)
+    public void Movement_fractions_the_DEX_rank_at_the_printed_tiers_rounding_up(int movementMeters, int expected)
     {
         var rank = EffectiveDexRankCalculator.ApplyMovement(15, movementMeters, Ruleset);
 
         Assert.Equal(expected, rank);
+    }
+
+    [Fact]
+    public void A_DEX_rank_one_combatant_moving_6_to_15_meters_still_rounds_up_to_rank_one()
+    {
+        // Ch 5: System, "Characteristic Increases" (p.140) is the book's only explicit rounding
+        // convention for a "half of X" calculation -- "(round up)," worked as "1/2 of 13 rounds up
+        // to 7." Truncating instead would send a DEX-rank-1 combatant moving 6-15m to rank 0 and
+        // lose their action to an ordinary walk, which Ch 6 never names as a consequence of
+        // movement (only of penalties stacking below the floor, p.144). Rounding up keeps rank 1.
+        var rank = EffectiveDexRankCalculator.ApplyMovement(1, movementMeters: 10, Ruleset);
+
+        Assert.Equal(1, rank);
     }
 
     [Fact]
