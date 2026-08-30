@@ -41,12 +41,28 @@ derived:
 base = effective - category_bonus
 ```
 
-Characteristics come from the source's point-based creation at Normal power level:
-every characteristic starts at 10, 24 points to spend, DEX/INT/POW cost 3 per point,
-STR/CON/SIZ/CHA cost 1, reductions refund at the same rate.
+The seven main characteristics come from the source's point-based creation at Normal
+power level: each starts at 10, there are 24 points to spend, DEX/INT/POW cost 3 per
+point, STR/CON/SIZ/CHA cost 1, and reductions refund at the same rate. **Sourced:**
+Ch 2, “Point-Based Character Creation (Option)” (p. 10).
+
+EDU is an optional eighth characteristic, not one of the seven named by that
+24-point pool. The source says the GM assigns EDU from a character's age and
+background; a player may then modify it using pool points at 3 per EDU point.
+The audited background packages therefore record explicit neutral EDU 10 values while
+their existing seven-characteristic 24-point totals remain intact. **Sourced:** Ch 2,
+“Education (Option)” (p. 10). EDU 10 is an owner-approved audit fixture, not a
+character-creation assignment; Layer 3 will assign EDU from age and background.
+
+For the Mental category, INT is primary and POW **and EDU** are secondary. Each
+secondary contributes +1% per 2 points above 10 or −1% per 2 points below 10,
+rounding the magnitude down. **Sourced:** Ch 2, “Skill Category Bonuses (Option),”
+the “Skill Category Modifiers” and “Skill Bonus Table” (pp. 18–19).
 
 `tools/skill_bonus.py` holds the characteristic sets, the category mapping, and the
-formulas. `--check` asserts the point-buy totals are exact and that base plus bonus
+formulas. `--check` asserts the seven-characteristic point-buy totals are exact,
+reproduces all 21 numbered secondary rows through the Mental/EDU path, checks the
+table's continuation rule at EDU 22, 23, and 40, and verifies that base plus bonus
 reproduces every authored rating.
 
 ### Skill categories for the canonical 18

@@ -25,23 +25,28 @@ from __future__ import annotations
 import argparse
 import math
 
-# --- Point-buy (source: point-based character creation, Normal power level) --------
-# Every characteristic starts at 10. 24 points to spend. DEX/INT/POW cost 3 per
-# point; STR/CON/SIZ/CHA cost 1. Reducing below 10 refunds at the same rate.
-# Range 3-21.
+# --- Point-buy (source: Ch 2, "Point-Based Character Creation (Option)", p. 10) --
+# The seven listed characteristics start at 10. 24 points to spend. DEX/INT/POW
+# cost 3 per point; STR/CON/SIZ/CHA cost 1. Reducing below 10 refunds at the same
+# rate. Range 3-21.
+#
+# EDU is not part of that seven-characteristic pool. Ch 2, "Education (Option)",
+# p. 10 says the GM assigns it from age and background; players may modify that
+# assigned value at 3 pool points per EDU point. These authored packages record only
+# their GM-assigned EDU values, so their 24-point validation deliberately excludes it.
 POINT_BUDGET = 24
 COSTS = {"STR": 1, "CON": 1, "SIZ": 1, "CHA": 1, "DEX": 3, "INT": 3, "POW": 3}
+POINT_BUY_CHARACTERISTICS = frozenset(COSTS)
 
-# --- Category formulas (source: Skill Category Modifiers) -------------------------
+# --- Category formulas (source: Ch 2, "Skill Category Bonuses (Option)", pp. 18-19)
 # primary: +/-1 per point from 10
 # secondary: +/-1 per 2 points from 10, magnitude rounded down
 # negative: inverted primary
-# EDU is not used in NoiRPG, so Mental has POW as its only secondary.
 CATEGORIES = {
     "Combat": {"primary": "DEX", "secondary": ["INT", "STR"], "negative": []},
     "Communication": {"primary": "INT", "secondary": ["POW", "CHA"], "negative": []},
     "Manipulation": {"primary": "DEX", "secondary": ["INT", "STR"], "negative": []},
-    "Mental": {"primary": "INT", "secondary": ["POW"], "negative": []},
+    "Mental": {"primary": "INT", "secondary": ["POW", "EDU"], "negative": []},
     "Perception": {"primary": "INT", "secondary": ["POW", "CON"], "negative": []},
     "Physical": {"primary": "DEX", "secondary": ["STR", "CON"], "negative": ["SIZ"]},
 }
@@ -72,14 +77,30 @@ SKILL_CATEGORY = {
 }
 
 # --- Background packages ----------------------------------------------------------
-# Each spends exactly POINT_BUDGET. Shapes chosen to match the packages' fiction:
-# the cop is a rounded generalist, the accountant trades physicality for INT/POW,
-# the soldier trades INT/CHA for DEX/STR/CON.
+# Each spends exactly POINT_BUDGET on the seven point-buy characteristics. EDU is a
+# separate GM-assigned value (Ch 2, "Education (Option)", p. 10). Until Layer 3
+# character creation assigns it from age and background, these audit fixtures use the
+# neutral value 10 so existing package bonuses and derived base ratings stay intact.
+# Shapes otherwise match the packages' fiction: the cop is a rounded generalist, the
+# accountant trades physicality for INT/POW, and the soldier trades INT/CHA for
+# DEX/STR/CON.
 CHARACTERISTICS = {
-    "ex-cop": {"STR": 12, "CON": 13, "SIZ": 12, "INT": 13, "POW": 10, "DEX": 12, "CHA": 12},
-    "ex-accountant": {"STR": 8, "CON": 12, "SIZ": 11, "INT": 15, "POW": 12, "DEX": 10, "CHA": 12},
-    "ex-soldier": {"STR": 14, "CON": 14, "SIZ": 12, "INT": 10, "POW": 11, "DEX": 14, "CHA": 9},
+    "ex-cop": {"STR": 12, "CON": 13, "SIZ": 12, "INT": 13, "POW": 10, "DEX": 12, "CHA": 12, "EDU": 10},
+    "ex-accountant": {"STR": 8, "CON": 12, "SIZ": 11, "INT": 15, "POW": 12, "DEX": 10, "CHA": 12, "EDU": 10},
+    "ex-soldier": {"STR": 14, "CON": 14, "SIZ": 12, "INT": 10, "POW": 11, "DEX": 14, "CHA": 9, "EDU": 10},
 }
+
+# Ch 2, "Skill Bonus Table", pp. 18-19. Each numbered secondary column entry is a
+# falsification row for the Mental formula below, with INT and POW held at 10.
+PRINTED_SECONDARY_BONUS_ROWS = {
+    1: -4, 2: -4, 3: -3, 4: -3, 5: -2, 6: -2, 7: -1, 8: -1, 9: 0, 10: 0,
+    11: 0, 12: 1, 13: 1, 14: 2, 15: 2, 16: 3, 17: 3, 18: 4, 19: 4, 20: 5,
+    21: 5,
+}
+
+# The table's continuation row reads "+1%/2 points" after its numbered 1-21 rows.
+# These cases pin the immediate parity boundary and a farther value beyond that range.
+SECONDARY_BONUS_CONTINUATION_CASES = {22: 6, 23: 6, 40: 15}
 
 # Authored effective ratings. Must stay in sync with BUILDS in case_validator.py.
 EFFECTIVE = {
@@ -96,7 +117,8 @@ EFFECTIVE = {
 
 
 def point_cost(chars: dict[str, int]) -> int:
-    return sum((value - 10) * COSTS[name] for name, value in chars.items())
+    """Return the seven-characteristic pool cost, excluding GM-assigned EDU."""
+    return sum((chars[name] - 10) * COSTS[name] for name in POINT_BUY_CHARACTERISTICS)
 
 
 def signed_half(delta: int) -> int:
@@ -147,6 +169,8 @@ def check() -> int:
     """Base + bonus must reproduce the authored effective ratings exactly."""
     failures = []
     for build in CHARACTERISTICS:
+        if set(CHARACTERISTICS[build]) != POINT_BUY_CHARACTERISTICS | {"EDU"}:
+            failures.append(f"{build}: must define the seven point-buy characteristics and EDU")
         cost = point_cost(CHARACTERISTICS[build])
         if cost != POINT_BUDGET:
             failures.append(f"{build}: spends {cost}, budget is {POINT_BUDGET}")
@@ -159,12 +183,22 @@ def check() -> int:
     for skill in EFFECTIVE["ex-cop"] | EFFECTIVE["ex-accountant"] | EFFECTIVE["ex-soldier"]:
         if skill not in SKILL_CATEGORY:
             failures.append(f"{skill} has no category")
+    for edu, expected in PRINTED_SECONDARY_BONUS_ROWS.items():
+        got = category_bonus({"INT": 10, "POW": 10, "EDU": edu}, "Mental")
+        if got != expected:
+            failures.append(f"Mental/EDU {edu}: {got:+d} != printed secondary bonus {expected:+d}")
+    for edu, expected in SECONDARY_BONUS_CONTINUATION_CASES.items():
+        got = category_bonus({"INT": 10, "POW": 10, "EDU": edu}, "Mental")
+        if got != expected:
+            failures.append(f"Mental/EDU {edu}: {got:+d} != continuation secondary bonus {expected:+d}")
     if failures:
         print("FAIL")
         for line in failures:
             print("  " + line)
         return 1
-    print("OK: point-buy totals correct; base + bonus reproduces every authored rating")
+    print("OK: seven-characteristic point-buy totals correct; Mental reproduces all 21 numbered EDU secondary rows")
+    print("    -> Mental also passes EDU continuation checks at 22, 23, and 40")
+    print("    -> base + bonus reproduces every authored rating")
     print("    -> door coverage in audited cases is unchanged by construction")
     return 0
 
