@@ -18,53 +18,113 @@ Ch 6: Combat, pp.146–156, and Ch 7: Spot Rules, "Knockout Attacks" (p.174), ar
 consulted. `src/Brp.Data/damage-ruleset.json` was drafted by a prior extraction pass before this
 issue's implementation began; per AGENTS.md ("the extractor confirmed them but you own
 correctness"), every formula in it was re-verified against the printed text while building this
-piece, and one was found and corrected — see "The special-success formula" below.
+piece. **Two** successive corrections were needed to the special-success formula before it
+matched the book — see "Special-success damage is weapon-type-dependent" below, which records
+both, since the record of a wrong correction being caught is as load-bearing as the fix itself
+(AGENTS.md's "an unmarked assertion is a defect even when it happens to be right").
 
 ## Decision
 
-### Normal and Special hits share identical damage arithmetic — corrected against the ruleset draft
+### Special-success damage is weapon-type-dependent — corrected twice against the ruleset draft
 
-`damage-ruleset.json`'s original `specialSuccessDamage.formula` read
-`weaponMaxDieResult + normalDamageDiceRoll + damageBonus - armor` — the weapon's maximum result
-plus a *second*, fresh roll of the same dice. This is not what the book says.
+**First (wrong) draft** — `damage-ruleset.json`'s original `specialSuccessDamage.formula` read
+`weaponMaxDieResult + normalDamageDiceRoll + damageBonus - armor`: the weapon's maximum result
+plus a *second*, fresh roll of the same dice, for every weapon. Ch 6, p.147, footnote `**` (the
+footnote the ruleset's own `printedFootnoteExplanation` field already quoted, without drawing the
+conclusion its own prose demanded) disproves this: "This is the damage which that type of attack
+would normally do. This is not the same as 'maximum damage'. **For a greatsword, full damage is
+2D8 on a normal success, 2D8 bleeding damage on a special success**, and on a critical success it
+does 16 damage ignoring armor." The greatsword's normal-success dice (2D8) and special-success
+dice (2D8) are identical — no maximum-plus-fresh-roll combination anywhere.
 
-Ch 6, p.147, footnote `**` (the footnote the ruleset's own `printedFootnoteExplanation` field
-already quoted, without drawing the conclusion its own prose demanded): "This is the damage
-which that type of attack would normally do. This is not the same as 'maximum damage'. **For a
-greatsword, full damage is 2D8 on a normal success, 2D8 bleeding damage on a special success**,
-and on a critical success it does 16 damage ignoring armor." The greatsword's normal-success
-dice (2D8) and special-success dice (2D8) are identical — the "bleeding" label names the
-special-effect *type* (Ch 6, "Special Successes and Damage," pp.148–149: bleeding, crushing,
-entangling, impaling, knockback — all out of scope, see below), not extra dice.
+**Second (also wrong) draft, made during this same issue's implementation** —
+"Special repeats Normal's dice + db exactly, for every weapon," on the strength of Ch 6, p.146's
+general "Special Success" entry ("Often, a special attack means that the weapon does normal
+damage in addition to a special result") and the same p.147 footnote. This is **also wrong**,
+independently caught by both `rules-conformance` and Codex: it is only true for the three special
+types whose special *result* is a separable effect layered on unchanged damage. It is false for
+the other two types, whose special success changes the damage *number* itself:
 
-Ch 6, p.146's general "Special Success" entry independently confirms this: "An exceptional
-roll... Often, a special attack means that **the weapon does normal damage** in addition to a
-special result based on the weapon's type," with a worked example: "with Firearm 60%, your
-character achieves a special success... **This does normal damage (1D8, for example)**, but in
-the case of a firearm, also does impaling damage." No maximum-plus-normal-roll combination
-appears anywhere in either passage. Only Critical uses the weapon's maximum (p.146: "the maximum
-possible damage for the weapon used... plus the normal rolled damage modifier").
+- **Impaling** (Ch 6, pp.149–150): "An impale doubles the dice and modifier for the weapon's
+  normal rolled damage... a short sword normally does 1D6+1 points of damage, while an impale
+  with the same weapon does twice that, or 2D6+2 points of damage... Only the weapon's damage is
+  doubled. If the attacker has a damage modifier, the damage modifier is not doubled, but is
+  instead rolled normally and added to the damage." Ch 6, p.148 (the type's own definition):
+  "Firearms, arrows, and other pointed weapons inflict impaling damage."
+- **Crushing** (Ch 6, p.149): "A crushing special success doubles the damage modifier normally
+  applied to the attack. If the attacker has a negative damage modifier, this becomes no damage
+  modifier, and if there is no damage modifier, it becomes +1D4... The weapon's damage is rolled
+  normally, but the damage modifier is increased." Ch 6, p.148: "Clubs, unarmed strikes, and
+  other blunt weapons can cause crushing damage."
+- **Bleeding / Entangling / Knockback** (Ch 6, pp.149–151): each has a genuinely unchanged-damage
+  special success — the *effect* (ongoing bleeding, pinning, being sent sprawling) is what
+  differs, matching the second draft's premise. No weapon in the hand-picked gear subset uses any
+  of these three types, so the earlier (wrong) blanket rule never actually surfaced in a shipped
+  weapon's numbers — which is exactly why two independent falsification passes, not one, were
+  needed to catch it.
 
-**Corrected formula, as implemented in `DamageResolver.RollDamage`:**
+**Corrected formula, as implemented in `DamageResolver.RollDamage` / `RollSpecialDamage`:**
 
 | Landed grade | Damage | Armor |
 |---|---|---|
 | Miss | none | n/a |
 | Normal | weapon dice + db | subtracted |
-| Special | weapon dice + db (same as Normal) | subtracted |
+| Special — Impaling | 2 × weapon dice (dice **and** fixed modifier) + db (undoubled) | subtracted |
+| Special — Crushing | weapon dice (normal) + doubled db (or +1D4 if none; negative db → 0) | subtracted |
+| Special — Bleeding/Entangling/Knockback | weapon dice + db (identical to Normal); effect deferred | subtracted |
 | Critical | weapon maximum + db | ignored |
 
-`damage-ruleset.json` was updated in the same change to record the correction inline
-(`specialSuccessDamage.correctionNote`) rather than silently overwritten, so the discrepancy and
-its citation stay visible to future readers of the data file, not only this record.
-`rules-conformance` and Codex's cross-check were both told, before this correction, to
-falsify exactly this formula — this is the falsification they should confirm caught something
-real, not a formality that passed by construction.
+**Doubling technique.** Rather than parsing and doubling a `DiceExpression`'s internal terms,
+`DamageResolver` rolls the same expression *twice*, independently, and sums the raw totals. This
+is not an approximation: for a weapon `NdM+C`, two independent rolls summed have exactly the
+distribution of `2N`d`M`+`2C` — each of the `N`-dice groups draws its own `M`-sided faces, so
+summing two independent `N`-dice draws is indistinguishable from drawing `2N` dice from the same
+population, and the fixed constant doubles arithmetically either way. The book's own worked
+example is consistent with this: a short sword's `1D6+1` impale becomes `2D6+2`, which is exactly
+what summing two independent `1D6+1` rolls produces. `RollCrushingDamageBonus` reuses the
+identical technique for a Crushing special's doubled damage bonus.
+
+**Worked examples** (from `DamageResolverTests`, fixed entropy):
+
+- *Medium Pistol* (`1D8`, no db, Impaling) special success with scripted dice `6, 7`: two
+  independent `1D8` rolls, summed = `13`. **Not** a single `1D8` roll (which would cap at 8) —
+  this is the test the coordinator's brief named directly
+  (`Medium_pistol_special_success_doubles_1D8_not_a_single_1D8_roll`).
+- *Club* (`1D8`, db `1D4`, Crushing) special success with scripted dice `5, 3, 2`: one normal
+  weapon roll (`5`), then the db rolled *twice* and summed (`3 + 2 = 5`) for a doubled db, total
+  `10`. A no-db Crushing club instead substitutes the ruleset's `+1D4` fallback for the (absent)
+  db roll.
+
+**Weapon classification** (`weapon-ruleset.json`'s `specialDamageType` field, all 18 shipped
+weapons, each with an inline `specialDamageTypeSource` citation):
+
+- **Impaling** — all 12 firearms (`pistolDerringer`, `pistolLight`, `pistolMedium`,
+  `pistolHeavy`, `revolverLight`, `revolverMedium`, `revolverHeavy`, `rifleBoltAction`,
+  `rifleSniper`, `shotgunDoubleBarreled`, `shotgunSawedOff`, `gunSubmachine`) and the 3 knives
+  (`knifeButcher`, `knifePocket`, `knifeSwitchblade`) — 15 weapons. Ch 6, p.148: "Firearms,
+  arrows, and other pointed weapons inflict impaling damage"; knives are pointed/thrusting
+  weapons (Ch 8's Dagger class), not edged slashing weapons, so they classify as pointed rather
+  than as the (unused) Bleeding type.
+- **Crushing** — `brassKnuckles`, `clubHeavy`, `clubLight` — 3 weapons. Ch 6, p.148: "Clubs,
+  unarmed strikes, and other blunt weapons can cause crushing damage."
+- **Bleeding / Entangling / Knockback** — no shipped weapon (no edged slashing weapon, net,
+  rope, or shield exists in the hand-picked subset); the enum values and their unchanged-damage
+  formula exist for a future weapon addition, per `SpecialDamageType`'s own remarks.
+
+15 + 3 = 18, covering every weapon in `weapon-ruleset.json`;
+`NoirGearRulesetTests.The_special_damage_type_table_covers_every_shipped_weapon_exactly_once`
+pins this as a table, not a sample.
+
+`damage-ruleset.json` records both corrections inline
+(`specialSuccessDamage.correctionHistory`, an ordered list of what was tried and why each attempt
+failed) rather than silently overwriting the file a second time, so a future reader sees the
+falsification history, not just the final answer.
 
 Db is rolled once, separately, and added to the raw (pre-floor) weapon-dice total before the
 floor-at-zero and armor subtraction are applied — Ch 6, p.147 footnote: "Damage modifier, in all
 cases, is rolled separately and added afterwards." `WeaponDefinition.ApplyDamageBonus` gates
-whether it applies at all (firearms do not receive it).
+whether it applies at all (firearms do not receive it) — this still holds for Impaling (db added
+once, undoubled) and is superseded only for Crushing's own doubling/substitution rule.
 
 ### Armor treatment collapse
 
@@ -137,7 +197,13 @@ The printed rule has more structure than "damage > half HP knocks out":
 1. Roll damage for the landed grade using the ordinary `RollDamage` path — "armor defends
    normally in all cases" is read as "apply the grade's ordinary armor treatment" (still ignored
    on a Critical), which is also what "special or critical successes... apply in all cases" says
-   in the same paragraph; not a knockout-specific armor override.
+   in the same paragraph; not a knockout-specific armor override. Because this reuses
+   `RollDamage` unchanged, an Impaling special's doubled damage (or a Crushing special's
+   doubled/substituted damage modifier) already flows into the roll used for the next step —
+   `ResolveKnockoutAttack` does not special-case this itself, and
+   `Knockout_attack_with_an_impaling_special_uses_the_doubled_damage_for_the_major_wound_determination`
+   pins that an undoubled roll that would otherwise fall short of a major wound crosses the
+   threshold once Impaling's doubling is applied.
 2. Compare that rolled damage against `target.MajorWoundLevel` (`>=` is major, `<` is minor).
 3. **Minor branch**: the rolled damage is discarded; the target instead takes
    `weapon.Damage.MinimumPossible()` (a new method added to `DiceExpression` for this — see
@@ -178,11 +244,12 @@ even mean.
   authored here.
 - **Fumble tables** — piece C already carries the flags (`DefenderRollsOnFumbleTable` /
   `AttackerRollsOnFumbleTable`); the tables themselves are a separate piece.
-- **The five special-success damage *types*** (bleeding, crushing, entangling, impaling,
-  knockback, Ch 6 pp.148–149) and their mechanical effects (e.g. bleeding's ongoing 1 HP/round,
-  crushing's doubled damage modifier and Stamina-roll-or-stunned check) — #52's scope names these
-  explicitly out; `DamageRoll`'s `SourceText` notes where a Special hit's grade is available for a
-  future piece to key off of, but no special-effect logic exists here.
+- **The special-success *effects*** (bleeding's ongoing 1 HP/round, crushing's
+  Stamina-roll-or-stunned check, entangling's pinning, impaling's lodged-weapon/extraction rules,
+  knockback's resisted shove, Ch 6 pp.149–151) — #52's scope names these explicitly out. Only the
+  *damage number* each type produces is implemented (see above); `DamageRoll.SpecialDamageTypeApplied`
+  and `SourceText` carry which type applied so a future piece can key its effect off of the same
+  roll without re-deriving it.
 - **Half damage bonus for thrown weapons** (Ch 6 p.147 / Ch 3 p.47's "entirely self-propelled"
   distinction) — no thrown weapon exists in the hand-picked gear subset yet (#42), so
   `WeaponDefinition.ApplyDamageBonus` stays a boolean rather than a three-way (none/half/full)
@@ -194,10 +261,14 @@ even mean.
 
 - `DamageResolver` is the single seam piece C and future combat-loop code call to turn a landed
   hit into HP loss and a wound; `Brp.Rules.Combat` still has no game-engine dependency.
-- `damage-ruleset.json`'s corrected `specialSuccessDamage` section and its `correctionNote` are
-  the load-bearing artifact for future rules-conformance passes: if a later change reintroduces
-  "weaponMax + normalRoll" for Special, `Special_success_uses_the_same_dice_arithmetic_as_a_normal_hit_not_weaponMax_plus_a_fresh_roll`
-  in `DamageResolverTests` fails, by design.
+- `damage-ruleset.json`'s `specialSuccessDamage.correctionHistory` and `specialDamageByType`
+  section, plus `weapon-ruleset.json`'s per-weapon `specialDamageType` field, are the load-bearing
+  artifacts for future rules-conformance passes: if a later change reintroduces a uniform
+  "special = normal" or "special = weaponMax + normalRoll" formula, either
+  `Impaling_special_doubles_the_whole_weapon_damage_expression_and_adds_an_undoubled_damage_bonus`
+  or `Crushing_special_rolls_normal_weapon_dice_but_doubles_a_positive_damage_bonus` in
+  `DamageResolverTests` fails, by design — and `A_special_hit_deals_more_than_a_normal_hit_for_every_shipped_special_damage_type`
+  fails if either type's damage number regresses to match Normal.
 - The dead-at-end-of-following-round timing is a stateless predicate, not a scheduled event —
   piece B's combat-round loop (not yet extended to call it) and piece E's First Aid window are
   both future consumers of `DamageResolver.ResolvesToDeath`.

@@ -9,17 +9,37 @@ namespace Brp.Rules.Combat;
 /// <summary>
 /// Turns a landed attack (piece C's <see cref="AttackDefenseOutcome"/>) into damage, applies it
 /// to a target's hit points, and determines the resulting condition. Ch 6: Combat, "Levels of
-/// Success and Failure" (pp.146-147) and "Damage &amp; Healing" (pp.154-156); Ch 7: Spot Rules,
-/// "Knockout Attacks" (p.174). This is Layer 4 piece D (#52). See
-/// <c>docs/decisions/0017-damage.md</c> for the corrections made against the initial ruleset
-/// transcription and the seams this leaves for piece E and the injury spot rules.
+/// Success and Failure" (pp.146-147), "Special Successes and Damage" (pp.148-151), and "Damage
+/// &amp; Healing" (pp.154-156); Ch 7: Spot Rules, "Knockout Attacks" (p.174). This is Layer 4
+/// piece D (#52). See <c>docs/decisions/0017-damage.md</c> for the two corrections made against
+/// the initial ruleset transcription and the seams this leaves for piece E and the injury spot
+/// rules.
 /// <para>
-/// <strong>Normal and Special hits share identical damage arithmetic</strong> -- Ch 6, p.147,
-/// footnote **: "For a greatsword, full damage is 2D8 on a normal success, 2D8 bleeding damage
-/// on a special success" -- the dice are the same (2D8 both times); only the (out-of-scope)
-/// special-effect type (bleeding, crushing, entangling, impaling, knockback) differs. Only a
-/// Critical hit uses the weapon's maximum instead of a fresh roll (Ch 6, p.146: "the maximum
-/// possible damage for the weapon used ... plus the normal rolled damage modifier").
+/// <strong>Special-success damage is weapon-type-dependent</strong> (Ch 6, "Special Successes
+/// and Damage", pp.148-151), keyed by <see cref="WeaponDefinition.SpecialDamageType"/>:
+/// </para>
+/// <list type="bullet">
+/// <item><description>
+/// <strong>Impaling</strong> (firearms, pointed knives -- p.150): doubles the weapon's whole
+/// damage expression (a fresh, independent second roll of the same dice, summed with the first
+/// -- mathematically identical to doubling the dice count and any fixed modifier, per the
+/// greatsword-style worked example "1D6+1 ... twice that, or 2D6+2"). The damage bonus is added
+/// once, undoubled.
+/// </description></item>
+/// <item><description>
+/// <strong>Crushing</strong> (clubs, brass knuckles -- p.149): weapon dice roll normally, but the
+/// damage bonus doubles (rolled twice and summed) -- unless the attacker has no damage bonus, in
+/// which case a flat <c>+1D4</c> substitutes, or a negative damage bonus, which collapses to no
+/// bonus at all rather than doubling the negative.
+/// </description></item>
+/// <item><description>
+/// <strong>Bleeding / Entangling / Knockback</strong> (no shipped weapon uses these): the base
+/// damage number is identical to a Normal hit; only the (deferred) special effect differs.
+/// </description></item>
+/// </list>
+/// <para>
+/// A Critical hit is unrelated to any of this -- it always uses the weapon's maximum instead of
+/// rolling (Ch 6, p.146).
 /// </para>
 /// </summary>
 public static class DamageResolver
@@ -31,7 +51,10 @@ public static class DamageResolver
     /// </summary>
     /// <param name="landedGrade">The effective grade of hit, from piece C's outcome.</param>
     /// <param name="armorTreatment">How armor applies, from piece C's outcome.</param>
-    /// <param name="weapon">The attacker's weapon.</param>
+    /// <param name="weapon">
+    /// The attacker's weapon. Its <see cref="WeaponDefinition.SpecialDamageType"/> selects which
+    /// Special-success formula applies -- see the type remarks.
+    /// </param>
     /// <param name="damageBonus">
     /// The attacker's damage bonus expression (<see cref="AbilitySet.DamageModifier"/>), or
     /// <see langword="null"/> if none applies. Added only when
@@ -43,6 +66,10 @@ public static class DamageResolver
     /// The applicable armor value at the location struck. Supplied by the caller -- this
     /// resolver does not roll hit locations or select armor by location.
     /// </param>
+    /// <param name="ruleset">
+    /// Supplies the Crushing special success's no-damage-bonus fallback (<c>+1D4</c>, Ch 6,
+    /// p.149).
+    /// </param>
     /// <param name="entropy">The entropy source, per AGENTS.md invariant 5.</param>
     public static DamageRoll RollDamage(
         LandedGrade landedGrade,
@@ -50,17 +77,19 @@ public static class DamageResolver
         WeaponDefinition weapon,
         DiceExpression? damageBonus,
         int armorValue,
+        DamageRuleset ruleset,
         IEntropySource entropy)
     {
         ArgumentNullException.ThrowIfNull(weapon);
+        ArgumentNullException.ThrowIfNull(ruleset);
         ArgumentNullException.ThrowIfNull(entropy);
         ArgumentOutOfRangeException.ThrowIfNegative(armorValue);
 
         if (landedGrade == LandedGrade.Miss)
         {
             return new DamageRoll(
-                landedGrade, WeaponRoll: null, DamageBonusRoll: null, WeaponMaximum: null,
-                ArmorApplied: 0, DamageDealt: 0,
+                landedGrade, SpecialDamageTypeApplied: null, WeaponRolls: [], DamageBonusRolls: [],
+                WeaponMaximum: null, ArmorApplied: 0, DamageDealt: 0,
                 SourceText: "Ch 6: Combat, Attack and Defense Matrix (p.147): a Miss deals no damage.");
         }
 
@@ -74,27 +103,92 @@ public static class DamageResolver
         if (landedGrade == LandedGrade.Critical)
         {
             var weaponMaximum = weapon.Damage.MaximumPossible();
-            var (bonusValue, bonusRoll) = RollDamageBonus(weapon, damageBonus, entropy);
+            var (bonusValue, bonusRolls) = RollNormalDamageBonus(weapon, damageBonus, entropy);
             var criticalDamage = Math.Max(0, weaponMaximum + bonusValue);
             return new DamageRoll(
-                landedGrade, WeaponRoll: null, bonusRoll, weaponMaximum,
+                landedGrade, SpecialDamageTypeApplied: null, WeaponRolls: [], bonusRolls, weaponMaximum,
                 ArmorApplied: 0, DamageDealt: criticalDamage,
                 SourceText: "Ch 6: Combat, \"Critical Success\" (p.146): maximum weapon damage " +
                     "plus the damage modifier, ignoring armor.");
         }
 
-        // Normal and Special: identical dice arithmetic -- see the type remarks.
-        var weaponRoll = weapon.Damage.Roll(entropy);
-        var (dbValue, dbRoll) = RollDamageBonus(weapon, damageBonus, entropy);
-        var rawTotal = weaponRoll.RawTotal + dbValue;
-        var armorApplied = ignoreArmor ? 0 : Math.Min(armorValue, Math.Max(0, rawTotal));
-        var damageDealt = ignoreArmor ? Math.Max(0, rawTotal) : Math.Max(0, rawTotal - armorValue);
-        var sourceText = landedGrade == LandedGrade.Special
-            ? "Ch 6: Combat, \"Special Success\" (p.146) and Attack and Defense Matrix footnote " +
-              "** (p.147): normal weapon damage plus the damage modifier, armor subtracted " +
-              "(the special-effect type is out of scope -- see docs/decisions/0017-damage.md)."
-            : "Ch 6: Combat, \"Success\" (p.146): weapon damage plus the damage modifier, armor subtracted.";
-        return new DamageRoll(landedGrade, weaponRoll, dbRoll, WeaponMaximum: null, armorApplied, damageDealt, sourceText);
+        if (landedGrade == LandedGrade.Normal)
+        {
+            var weaponRoll = weapon.Damage.Roll(entropy);
+            var (bonusValue, bonusRolls) = RollNormalDamageBonus(weapon, damageBonus, entropy);
+            var (armorApplied, damageDealt) = ApplyArmor(weaponRoll.RawTotal + bonusValue, ignoreArmor, armorValue);
+            return new DamageRoll(
+                landedGrade, SpecialDamageTypeApplied: null, [weaponRoll], bonusRolls, WeaponMaximum: null,
+                armorApplied, damageDealt,
+                SourceText: "Ch 6: Combat, \"Success\" (p.146): weapon damage plus the damage modifier, armor subtracted.");
+        }
+
+        // Special -- the weapon-type-dependent branch. See the type remarks.
+        return RollSpecialDamage(weapon, damageBonus, ignoreArmor, armorValue, ruleset, entropy);
+    }
+
+    private static DamageRoll RollSpecialDamage(
+        WeaponDefinition weapon,
+        DiceExpression? damageBonus,
+        bool ignoreArmor,
+        int armorValue,
+        DamageRuleset ruleset,
+        IEntropySource entropy)
+    {
+        switch (weapon.SpecialDamageType)
+        {
+            case SpecialDamageType.Impaling:
+                {
+                    // Ch 6, p.150: "An impale doubles the dice and modifier for the weapon's
+                    // normal rolled damage... a short sword ... 1D6+1 ... does twice that, or
+                    // 2D6+2." Summing two independent rolls of the same weapon-damage expression
+                    // has the identical distribution to doubling its dice count and constant
+                    // (see docs/decisions/0017-damage.md's worked proof), and lets this reuse
+                    // WeaponDefinition.Damage as-is rather than needing to double a parsed
+                    // expression's terms. The damage bonus is added once, undoubled -- "the
+                    // damage modifier is not doubled, but is instead rolled normally and added."
+                    var first = weapon.Damage.Roll(entropy);
+                    var second = weapon.Damage.Roll(entropy);
+                    var (bonusValue, bonusRolls) = RollNormalDamageBonus(weapon, damageBonus, entropy);
+                    var (armorApplied, damageDealt) = ApplyArmor(first.RawTotal + second.RawTotal + bonusValue, ignoreArmor, armorValue);
+                    return new DamageRoll(
+                        LandedGrade.Special, SpecialDamageType.Impaling, [first, second], bonusRolls, WeaponMaximum: null,
+                        armorApplied, damageDealt,
+                        SourceText: "Ch 6: Combat, \"Impaling\" (pp.149-150): the weapon's damage " +
+                            "(dice and any fixed modifier) doubled, plus an undoubled damage modifier, armor subtracted.");
+                }
+
+            case SpecialDamageType.Crushing:
+                {
+                    // Ch 6, p.149: "A crushing special success doubles the damage modifier
+                    // normally applied... The weapon's damage is rolled normally, but the damage
+                    // modifier is increased."
+                    var weaponRoll = weapon.Damage.Roll(entropy);
+                    var (bonusValue, bonusRolls) = RollCrushingDamageBonus(weapon, damageBonus, ruleset, entropy);
+                    var (armorApplied, damageDealt) = ApplyArmor(weaponRoll.RawTotal + bonusValue, ignoreArmor, armorValue);
+                    return new DamageRoll(
+                        LandedGrade.Special, SpecialDamageType.Crushing, [weaponRoll], bonusRolls, WeaponMaximum: null,
+                        armorApplied, damageDealt,
+                        SourceText: "Ch 6: Combat, \"Crushing\" (p.149): normal weapon damage plus " +
+                            "a doubled (or, absent one, +1D4) damage modifier, armor subtracted.");
+                }
+
+            default:
+                {
+                    // Bleeding / Entangling / Knockback (Ch 6, pp.149-151): the special RESULT is
+                    // a separable effect (deferred -- see docs/decisions/0017-damage.md); the
+                    // base damage number is identical to a Normal hit. No shipped weapon uses
+                    // any of these three types.
+                    var weaponRoll = weapon.Damage.Roll(entropy);
+                    var (bonusValue, bonusRolls) = RollNormalDamageBonus(weapon, damageBonus, entropy);
+                    var (armorApplied, damageDealt) = ApplyArmor(weaponRoll.RawTotal + bonusValue, ignoreArmor, armorValue);
+                    return new DamageRoll(
+                        LandedGrade.Special, weapon.SpecialDamageType, [weaponRoll], bonusRolls, WeaponMaximum: null,
+                        armorApplied, damageDealt,
+                        SourceText: $"Ch 6: Combat, \"{weapon.SpecialDamageType}\" (pp.149-151): damage number " +
+                            "unchanged from a Normal hit; the special effect is deferred (see docs/decisions/0017-damage.md).");
+                }
+        }
     }
 
     /// <summary>
@@ -138,11 +232,15 @@ public static class DamageResolver
     /// <param name="armorValue">
     /// The applicable armor value. Ch 7, p.174: "Armor defends normally in all cases" -- this
     /// resolver applies <paramref name="outcome"/>'s ordinary per-grade armor treatment (still
-    /// ignored on a Critical), not a knockout-specific rule.
+    /// ignored on a Critical), not a knockout-specific rule. Likewise, "the effects of special or
+    /// critical successes... apply in all cases" means an Impaling special's doubled damage (or
+    /// a Crushing special's doubled/substituted damage modifier) still applies to the damage
+    /// rolled here to determine minor-vs-major wound equivalence -- this falls out of reusing
+    /// <see cref="RollDamage"/> unchanged, not a separate rule.
     /// </param>
     /// <param name="target">The target, whose <see cref="AbilitySet.MajorWoundLevel"/> (Ch 2,
     /// p.14) supplies the half-total-hit-points threshold this rule compares against.</param>
-    /// <param name="ruleset">Supplies the knockout duration dice.</param>
+    /// <param name="ruleset">Supplies the knockout duration dice and the Crushing fallback bonus.</param>
     /// <param name="entropy">The entropy source, per AGENTS.md invariant 5.</param>
     public static KnockoutOutcome ResolveKnockoutAttack(
         AttackDefenseOutcome outcome,
@@ -159,7 +257,7 @@ public static class DamageResolver
         ArgumentNullException.ThrowIfNull(ruleset);
         ArgumentNullException.ThrowIfNull(entropy);
 
-        var roll = RollDamage(outcome.LandedGrade, outcome.ArmorTreatment, weapon, damageBonus, armorValue, entropy);
+        var roll = RollDamage(outcome.LandedGrade, outcome.ArmorTreatment, weapon, damageBonus, armorValue, ruleset, entropy);
 
         if (outcome.LandedGrade == LandedGrade.Miss)
         {
@@ -168,12 +266,14 @@ public static class DamageResolver
 
         // Ch 6, p.156: "equal to or more than half the character's total hit points" is a major
         // wound -- reuse the already-tested Layer 1 figure rather than a second copy of the
-        // fraction (see DamageRuleset's remarks).
+        // fraction (see DamageRuleset's remarks). roll.DamageDealt already reflects any
+        // weapon-type-dependent Special formula (e.g. a doubled Impaling roll), per Ch 7 p.174.
         var isMajorWound = roll.DamageDealt >= target.MajorWoundLevel;
         if (!isMajorWound)
         {
             // Ch 7, p.174: "the original damage rolled is ignored and the target is dealt the
-            // minimum damage for the weapon (after armor) but is not knocked out."
+            // minimum damage for the weapon (after armor) but is not knocked out." This is a
+            // flat baseline unrelated to the grade or special-damage type that landed.
             var ignoreArmor = outcome.ArmorTreatment is ArmorTreatment.Bypassed or ArmorTreatment.DoesNotApply;
             var weaponMinimum = weapon.Damage.MinimumPossible();
             var minorDamage = ignoreArmor ? Math.Max(0, weaponMinimum) : Math.Max(0, weaponMinimum - armorValue);
@@ -250,12 +350,22 @@ public static class DamageResolver
             : HitPointCondition.Unaffected;
     }
 
-    private static (int Value, DiceRoll? Roll) RollDamageBonus(
+    private static (int ArmorApplied, int DamageDealt) ApplyArmor(int rawTotal, bool ignoreArmor, int armorValue)
+    {
+        if (ignoreArmor)
+        {
+            return (0, Math.Max(0, rawTotal));
+        }
+
+        return (Math.Min(armorValue, Math.Max(0, rawTotal)), Math.Max(0, rawTotal - armorValue));
+    }
+
+    private static (int Value, IReadOnlyList<DiceRoll> Rolls) RollNormalDamageBonus(
         WeaponDefinition weapon, DiceExpression? damageBonus, IEntropySource entropy)
     {
         if (!weapon.ApplyDamageBonus || damageBonus is null)
         {
-            return (0, null);
+            return (0, []);
         }
 
         // Thrown weapons take half db, rounded up (Ch 6, p.147 note on missile weapons carried
@@ -263,6 +373,36 @@ public static class DamageResolver
         // hand-picked subset), so WeaponDefinition.ApplyDamageBonus stays a boolean and this is
         // the seam a future thrown-weapon addition would extend, not a rule implemented here.
         var roll = damageBonus.Roll(entropy);
-        return (roll.RawTotal, roll);
+        return (roll.RawTotal, [roll]);
+    }
+
+    private static (int Value, IReadOnlyList<DiceRoll> Rolls) RollCrushingDamageBonus(
+        WeaponDefinition weapon, DiceExpression? damageBonus, DamageRuleset ruleset, IEntropySource entropy)
+    {
+        if (!weapon.ApplyDamageBonus)
+        {
+            return (0, []);
+        }
+
+        if (damageBonus is null)
+        {
+            // Ch 6, p.149: "if there is no damage modifier, it becomes +1D4."
+            var fallback = ruleset.CrushingNoModifierBonus.Roll(entropy);
+            return (fallback.RawTotal, [fallback]);
+        }
+
+        if (damageBonus.MaximumPossible() <= 0)
+        {
+            // Ch 6, p.149: "If the attacker has a negative damage modifier, this becomes no
+            // damage modifier" -- not rolled at all, not doubled-then-floored.
+            return (0, []);
+        }
+
+        // Ch 6, p.149: "doubles the damage modifier." Two independent rolls of the same
+        // expression, summed, have the identical distribution to doubling its dice count (the
+        // same technique RollSpecialDamage's Impaling branch uses for the weapon's own dice).
+        var first = damageBonus.Roll(entropy);
+        var second = damageBonus.Roll(entropy);
+        return (first.RawTotal + second.RawTotal, [first, second]);
     }
 }

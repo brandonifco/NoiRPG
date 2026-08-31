@@ -7,7 +7,9 @@
       "damage": "2",
       "applyDamageBonus": true,
       "weaponClass": "Brawl",
-      "source": "Ch 8, Modern Melee Weapons table (p.201)"
+      "source": "Ch 8, Modern Melee Weapons table (p.201)",
+      "specialDamageType": "crushing",
+      "specialDamageTypeSource": "Ch 6, p.149 (Special Successes and Damage, 'Crushing'): 'Clubs, unarmed strikes, and other blunt weapons can cause crushing damage.'"
     },
     {
       "id": "clubHeavy",
@@ -16,7 +18,9 @@
       "damage": "1D8",
       "applyDamageBonus": true,
       "weaponClass": "Club",
-      "source": "Ch 8, Primitive Melee Weapons table (p.196); description text (p.194) names the modern equivalent as a crowbar"
+      "source": "Ch 8, Primitive Melee Weapons table (p.196); description text (p.194) names the modern equivalent as a crowbar",
+      "specialDamageType": "crushing",
+      "specialDamageTypeSource": "Ch 6, p.149 (Special Successes and Damage, 'Crushing'): 'Clubs, unarmed strikes, and other blunt weapons can cause crushing damage.'"
     },
     {
       "id": "clubLight",
@@ -25,7 +29,9 @@
       "damage": "1D6",
       "applyDamageBonus": true,
       "weaponClass": "Club",
-      "source": "Ch 8, Primitive Melee Weapons table (p.196); description text (p.194) names modern equivalents: baseball bat, tire iron, truncheon"
+      "source": "Ch 8, Primitive Melee Weapons table (p.196); description text (p.194) names modern equivalents: baseball bat, tire iron, truncheon",
+      "specialDamageType": "crushing",
+      "specialDamageTypeSource": "Ch 6, p.149 (Special Successes and Damage, 'Crushing'): 'Clubs, unarmed strikes, and other blunt weapons can cause crushing damage.'"
     },
     {
       "id": "knifeButcher",
@@ -34,7 +40,9 @@
       "damage": "1D6",
       "applyDamageBonus": true,
       "weaponClass": "Dagger",
-      "source": "Ch 8, Modern Melee Weapons table (p.201)"
+      "source": "Ch 8, Modern Melee Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "knifePocket",
@@ -43,7 +51,9 @@
       "damage": "1D4",
       "applyDamageBonus": true,
       "weaponClass": "Dagger",
-      "source": "Ch 8, Modern Melee Weapons table (p.201)"
+      "source": "Ch 8, Modern Melee Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "knifeSwitchblade",
@@ -52,7 +62,9 @@
       "damage": "1D4",
       "applyDamageBonus": true,
       "weaponClass": "Dagger",
-      "source": "Ch 8, Modern Melee Weapons table (p.201)"
+      "source": "Ch 8, Modern Melee Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "pistolDerringer",
@@ -66,7 +78,9 @@
       "ammoCapacity": "1 or 2",
       "attacksPerRound": 1,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "pistolLight",
@@ -80,7 +94,9 @@
       "ammoCapacity": 8,
       "attacksPerRound": 3,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "pistolMedium",
@@ -94,7 +110,9 @@
       "ammoCapacity": 12,
       "attacksPerRound": 2,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "pistolHeavy",
@@ -108,7 +126,9 @@
       "ammoCapacity": 8,
       "attacksPerRound": 1,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "revolverLight",
@@ -122,7 +142,9 @@
       "ammoCapacity": 6,
       "attacksPerRound": 2,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "revolverMedium",
@@ -136,7 +158,9 @@
       "ammoCapacity": 6,
       "attacksPerRound": 1,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "revolverHeavy",
@@ -150,7 +174,9 @@
       "ammoCapacity": 6,
       "attacksPerRound": 1,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "rifleBoltAction",
@@ -164,7 +190,9 @@
       "ammoCapacity": 5,
       "attacksPerRound": 0.5,
       "baseChance": 25,
-      "source": "Ch 8, Modern Missile Weapons table (p.201)"
+      "source": "Ch 8, Modern Missile Weapons table (p.201)",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "rifleSniper",
@@ -181,7 +209,9 @@
       "ammoCapacity": 11,
       "attacksPerRound": 1,
       "baseChance": 20,
-      "source": "Ch 8, Modern Missile Weapons table (p.201), with notes 4 and 5 on bipod and scope (p.202). Note 4: 'usually equipped with a bipod, doubling the chance; without a bipod ... reduce the base chance to 10%' -- the printed 20% base already assumes the usual bipod, so 20 is the with-bipod figure and 10 is the without-bipod figure, not 40/20 as an earlier transcription had it."
+      "source": "Ch 8, Modern Missile Weapons table (p.201), with notes 4 and 5 on bipod and scope (p.202). Note 4: 'usually equipped with a bipod, doubling the chance; without a bipod ... reduce the base chance to 10%' -- the printed 20% base already assumes the usual bipod, so 20 is the with-bipod figure and 10 is the without-bipod figure, not 40/20 as an earlier transcription had it.",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "shotgunDoubleBarreled",
@@ -200,7 +230,9 @@
       "ammoCapacity": 2,
       "attacksPerRound": "1 or 2",
       "baseChance": 30,
-      "source": "Ch 8, Modern Missile Weapons table (p.201); note 6 on damage by range"
+      "source": "Ch 8, Modern Missile Weapons table (p.201); note 6 on damage by range",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "shotgunSawedOff",
@@ -218,7 +250,9 @@
       "ammoCapacity": "1 or 2",
       "attacksPerRound": "1 or 2",
       "baseChance": 30,
-      "source": "Ch 8, Modern Missile Weapons table (p.201); note 7: not effective beyond 20 yards"
+      "source": "Ch 8, Modern Missile Weapons table (p.201); note 7: not effective beyond 20 yards",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     },
     {
       "id": "gunSubmachine",
@@ -232,7 +266,9 @@
       "ammoCapacity": 32,
       "attacksPerRound": "2 or burst",
       "baseChance": 15,
-      "source": "Ch 8, Modern Missile Weapons table (p.201). Skill mapping note: the book treats Submachine Gun as its own Firearm specialty, distinct from Pistol/Revolver/Rifle/Shotgun (Ch 3 p.39, 'Specialties: Machine Gun, Pistol, Revolver, Rifle, Shotgun, Submachine Gun'). NoiRPG's Layer 2 skill list (skill-ruleset.json) only defines Firearms (Handgun|Shotgun|Rifle) -- no standalone Submachine Gun specialty. Mapped here to Firearms (Handgun) as the closest existing specialty (one-handed, short-to-medium range weapon per its own description) rather than inventing a new specialty out of scope for this issue. Flagged for rules-conformance/scope-warden review; revisit if/when the skill list is revisited."
+      "source": "Ch 8, Modern Missile Weapons table (p.201). Skill mapping note: the book treats Submachine Gun as its own Firearm specialty, distinct from Pistol/Revolver/Rifle/Shotgun (Ch 3 p.39, 'Specialties: Machine Gun, Pistol, Revolver, Rifle, Shotgun, Submachine Gun'). NoiRPG's Layer 2 skill list (skill-ruleset.json) only defines Firearms (Handgun|Shotgun|Rifle) -- no standalone Submachine Gun specialty. Mapped here to Firearms (Handgun) as the closest existing specialty (one-handed, short-to-medium range weapon per its own description) rather than inventing a new specialty out of scope for this issue. Flagged for rules-conformance/scope-warden review; revisit if/when the skill list is revisited.",
+      "specialDamageType": "impaling",
+      "specialDamageTypeSource": "Ch 6, p.150 (Special Successes and Damage, 'Impaling'): 'Firearms, arrows, and other pointed weapons inflict impaling damage.'"
     }
   ]
 }

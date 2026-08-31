@@ -26,11 +26,14 @@ public static class NoirDamageRuleset
             ?? throw new InvalidOperationException("The damage ruleset data is empty.");
 
         var knockoutDuration = DiceExpression.Parse(data.KnockoutRule.KnockoutDurationRoundsFormula);
+        var crushingNoModifierBonus = DiceExpression.Parse(
+            data.DamageFormulas.SpecialSuccessDamage.SpecialDamageByType.Crushing.CrushingNoModifierBonusFormula);
 
         return new DamageRuleset(
             unconsciousHitPointLevel: data.DamageThresholds.UnconsciousHitPointLevel,
             deadHitPointLevel: data.DamageThresholds.DeadHitPointLevel,
-            knockoutDuration: knockoutDuration);
+            knockoutDuration: knockoutDuration,
+            crushingNoModifierBonus: crushingNoModifierBonus);
     }
 
     private sealed class DamageRulesetData
@@ -38,6 +41,8 @@ public static class NoirDamageRuleset
         public required DamageThresholdsData DamageThresholds { get; init; }
 
         public required KnockoutRuleData KnockoutRule { get; init; }
+
+        public required DamageFormulasData DamageFormulas { get; init; }
     }
 
     private sealed class DamageThresholdsData
@@ -50,5 +55,25 @@ public static class NoirDamageRuleset
     private sealed class KnockoutRuleData
     {
         public required string KnockoutDurationRoundsFormula { get; init; }
+    }
+
+    private sealed class DamageFormulasData
+    {
+        public required SpecialSuccessDamageData SpecialSuccessDamage { get; init; }
+    }
+
+    private sealed class SpecialSuccessDamageData
+    {
+        public required SpecialDamageByTypeData SpecialDamageByType { get; init; }
+    }
+
+    private sealed class SpecialDamageByTypeData
+    {
+        public required CrushingData Crushing { get; init; }
+    }
+
+    private sealed class CrushingData
+    {
+        public required string CrushingNoModifierBonusFormula { get; init; }
     }
 }

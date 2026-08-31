@@ -18,9 +18,14 @@ namespace Brp.Rules.Combat;
 public sealed class DamageRuleset
 {
     /// <summary>Creates a damage ruleset from data-defined values.</summary>
-    public DamageRuleset(int unconsciousHitPointLevel, int deadHitPointLevel, DiceExpression knockoutDuration)
+    public DamageRuleset(
+        int unconsciousHitPointLevel,
+        int deadHitPointLevel,
+        DiceExpression knockoutDuration,
+        DiceExpression crushingNoModifierBonus)
     {
         ArgumentNullException.ThrowIfNull(knockoutDuration);
+        ArgumentNullException.ThrowIfNull(crushingNoModifierBonus);
         if (unconsciousHitPointLevel < deadHitPointLevel)
         {
             throw new ArgumentException(
@@ -30,6 +35,7 @@ public sealed class DamageRuleset
         UnconsciousHitPointLevel = unconsciousHitPointLevel;
         DeadHitPointLevel = deadHitPointLevel;
         KnockoutDuration = knockoutDuration;
+        CrushingNoModifierBonus = crushingNoModifierBonus;
     }
 
     /// <summary>
@@ -51,4 +57,11 @@ public sealed class DamageRuleset
     /// Ch 7: Spot Rules, "Knockout Attacks" (p.174): "knocked out for 1D10+10 rounds."
     /// </summary>
     public DiceExpression KnockoutDuration { get; }
+
+    /// <summary>
+    /// Ch 6: Combat, "Crushing" (p.149): "if there is no damage modifier, it becomes +1D4" --
+    /// the flat bonus a Crushing special success uses in place of a doubled damage modifier when
+    /// the attacker has none.
+    /// </summary>
+    public DiceExpression CrushingNoModifierBonus { get; }
 }

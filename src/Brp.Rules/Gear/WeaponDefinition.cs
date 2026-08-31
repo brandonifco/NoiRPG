@@ -37,6 +37,12 @@ namespace Brp.Rules.Gear;
 /// Firearm-only stats (range, malfunction number, ammo capacity/rate, printed base chance).
 /// <see langword="null"/> for melee and brawl weapons.
 /// </param>
+/// <param name="SpecialDamageType">
+/// The special-success damage type this weapon inflicts (Ch 6, "Special Successes and Damage",
+/// pp.148-149) -- e.g. firearms and pointed knives are <see cref="Gear.SpecialDamageType.Impaling"/>
+/// (p.150), clubs and brass knuckles are <see cref="Gear.SpecialDamageType.Crushing"/> (p.149).
+/// Read by <c>Brp.Rules.Combat.DamageResolver</c> to compute special-success damage.
+/// </param>
 /// <param name="Source">The book table (and any note) this entry was transcribed from.</param>
 public sealed record WeaponDefinition(
     WeaponId Id,
@@ -47,6 +53,7 @@ public sealed record WeaponDefinition(
     bool ApplyDamageBonus,
     IReadOnlyList<RangeIncrementDamage> DamageByRange,
     FirearmProfile? Firearm,
+    SpecialDamageType SpecialDamageType,
     string Source)
 {
     /// <summary>True for weapons with <see cref="Firearm"/> data; false for melee/brawl weapons.</summary>

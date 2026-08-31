@@ -87,6 +87,7 @@ public static class NoirGearRuleset
             ApplyDamageBonus: entry.ApplyDamageBonus,
             DamageByRange: damageByRange,
             Firearm: firearm,
+            SpecialDamageType: ToSpecialDamageType(entry.SpecialDamageType),
             Source: entry.Source);
     }
 
@@ -144,6 +145,16 @@ public static class NoirGearRuleset
 
     private static int? SingleNumber(JsonElement element) =>
         element.ValueKind == JsonValueKind.Number ? element.GetInt32() : null;
+
+    private static SpecialDamageType ToSpecialDamageType(string value) => value switch
+    {
+        "bleeding" => SpecialDamageType.Bleeding,
+        "crushing" => SpecialDamageType.Crushing,
+        "entangling" => SpecialDamageType.Entangling,
+        "impaling" => SpecialDamageType.Impaling,
+        "knockback" => SpecialDamageType.Knockback,
+        _ => throw new InvalidOperationException($"Unknown special damage type '{value}'."),
+    };
 
     private static WeaponClass ToWeaponClass(string value) => value switch
     {
@@ -219,6 +230,8 @@ public static class NoirGearRuleset
         public int? BaseChanceWithoutBipod { get; init; }
 
         public DamageByRangeData? DamageByRange { get; init; }
+
+        public required string SpecialDamageType { get; init; }
 
         public required string Source { get; init; }
     }

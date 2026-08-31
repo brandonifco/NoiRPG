@@ -26,4 +26,13 @@ public class NoirDamageRulesetTests
 
         Assert.Equal("1D10+10", ruleset.KnockoutDuration.Notation);
     }
+
+    [Fact]
+    public void Load_returns_the_printed_crushing_no_modifier_fallback_dice()
+    {
+        // Ch 6, p.149: "if there is no damage modifier, it becomes +1D4."
+        var ruleset = NoirDamageRuleset.Load();
+
+        Assert.Equal("1D4", ruleset.CrushingNoModifierBonus.Notation);
+    }
 }

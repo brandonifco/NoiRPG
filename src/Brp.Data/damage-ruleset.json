@@ -21,7 +21,7 @@
       {
         "title": "Knockout Attacks (Ch 7: Spot Rules)",
         "printedPage": 174,
-        "sourceNote": "Defines the condition for a knockout (Difficult attack, damage > 1/2 total HP)."
+        "sourceNote": "Defines the condition for a knockout (Difficult attack, damage >= 1/2 total HP -- 'equivalent to a major wound')."
       }
     ]
   },
@@ -29,7 +29,7 @@
     "unconsciousHitPointLevel": 2,
     "unconsciousHitPointCondition": "Character falls unconscious when hit points reduced to 1 or 2",
     "deadHitPointLevel": 0,
-    "deadHitPointCondition": "Character dies at end of round if hit points reach 0 or below",
+    "deadHitPointCondition": "Character dies at end of the following round if hit points reach 0 or below",
     "deadHitPointResolutionTiming": "end of following round",
     "trackNegativeHitPoints": true
   },
@@ -39,8 +39,8 @@
       "numerator": 1,
       "denominator": 2
     },
-    "damageThresholdDescription": "Damage exceeds half (1/2) of the target's total hit points",
-    "damageThresholdNote": "The engine reuses AbilitySet.MajorWoundLevel (Ch 2, p.14, majorWoundDivisor=2, rounded up) already computed in Layer 1, rather than re-deriving this fraction here, so the half-hit-points figure is defined in exactly one place. Comparison is '>=' (major wound, Ch 6 p.156: 'equal to or more than half'), not the loose '>' this description's prose implies.",
+    "damageThresholdDescription": "Damage is at least half (1/2) of the target's total hit points (equivalent to a major wound)",
+    "damageThresholdNote": "The engine reuses AbilitySet.MajorWoundLevel (Ch 2, p.14, majorWoundDivisor=2, rounded up) already computed in Layer 1, rather than re-deriving this fraction here, so the half-hit-points figure is defined in exactly one place. Comparison is '>=' (major wound, Ch 6 p.156: 'equal to or more than half'), matching this description.",
     "knockoutDurationRoundsFormula": "1D10+10",
     "printedRule": "A Difficult attack roll is made as if targeting a particular body part (such as the head). The attack is non-lethal and is not intended to do damage, though damage is rolled to determine the potential for a knockout. Armor defends normally in all cases. If the damage is equivalent to a minor wound, the original damage rolled is ignored and the target is dealt the minimum damage for the weapon (after armor) but is not knocked out. If the attack is successful and the rolled damage is equivalent to a major wound (after armor), the target takes 1 damage and is knocked out for 1D10+10 rounds. The effects of special or critical successes (such as extra damage or bypassing armor) apply in all cases, while other special effects (slashing damage, knockback, etc.) do not apply to knockout attempts."
   },
@@ -72,8 +72,40 @@
       "printedSource": "Attack and Defense Matrix, p.147"
     },
     "specialSuccessDamage": {
-      "formula": "weaponDamageDice + damageBonus - armor",
-      "correctionNote": "CORRECTED during #52 implementation. This section originally read 'weaponMaxDieResult + normalDamageDiceRoll + damageBonus - armor', attributed to the footnote below -- but the footnote's own greatsword example contradicts that formula: 'full damage is 2D8 on a normal success, 2D8 bleeding damage on a special success' is the SAME dice (2D8), not the weapon's maximum (16) plus a fresh 2D8. Ch 6 p.146's general 'Special Success' entry confirms this independently: 'the weapon does normal damage in addition to a special result' -- e.g. 'This does normal damage (1D8, for example)' for a firearm example. So Normal and Special share identical damage arithmetic; the only difference is the (out-of-scope) special-effect type layered on top. Only Critical adds the weapon's maximum. See docs/decisions/0017-damage.md.",
+      "correctionHistory": [
+        "ORIGINAL (rules-extractor draft): 'weaponMaxDieResult + normalDamageDiceRoll + damageBonus - armor' for every weapon, citing the p.147 footnote's greatsword example. WRONG: the footnote's own example ('full damage is 2D8 on a normal success, 2D8 bleeding damage on a special success') shows special repeats the normal dice, it never adds the weapon's maximum.",
+        "FIRST CORRECTION (during #52 implementation): 'special = normal weapon dice + damage bonus - armor' for every weapon, i.e. identical to Normal. ALSO WRONG, caught independently by rules-conformance and Codex: this is only true for the three special-damage types whose special RESULT is a separable effect layered on top of unchanged damage (bleeding, entangling, knockback -- pp.149-151). It is not true for impaling (p.150) or crushing (p.149), whose special success changes the damage NUMBER itself, not just an added effect.",
+        "CURRENT (correct): the formula is weapon-type-dependent -- see specialDamageByType below. Every shipped weapon (weapon-ruleset.json's specialDamageType field) is either impaling (firearms, pointed knives) or crushing (clubs, brass knuckles); no shipped weapon uses bleeding/entangling/knockback, though the type and its unchanged-damage formula are still modeled for future weapons."
+      ],
+      "specialDamageByType": {
+        "impaling": {
+          "formula": "2 x weaponDamageDice (dice AND any fixed modifier doubled) + damageBonus (rolled once, NOT doubled) - armor",
+          "printedRule": "An impale doubles the dice and modifier for the weapon's normal rolled damage. For example, a short sword normally does 1D6+1 points of damage, while an impale with the same weapon does twice that, or 2D6+2 points of damage. Only the weapon's damage is doubled. If the attacker has a damage modifier, the damage modifier is not doubled, but is instead rolled normally and added to the damage.",
+          "printedSource": "Ch 6: Combat, \"Impaling\", pp.149-150"
+        },
+        "crushing": {
+          "formula": "weaponDamageDice (normal, not doubled) + doubledDamageBonus - armor",
+          "doubledDamageBonusRule": "If the attacker's damage modifier is positive, roll it twice (fresh) and sum, equivalent to doubling its dice count. If the attacker has a negative damage modifier, it becomes no modifier at all (0, not rolled). If the attacker has no damage modifier, it becomes a flat bonus rolled from crushingNoModifierBonusFormula (below) instead.",
+          "crushingNoModifierBonusFormula": "1D4",
+          "printedRule": "A crushing special success doubles the damage modifier normally applied to the attack. If the attacker has a negative damage modifier, this becomes no damage modifier, and if there is no damage modifier, it becomes +1D4 (see the Damage Modifier Table). The weapon's damage is rolled normally, but the damage modifier is increased.",
+          "printedSource": "Ch 6: Combat, \"Crushing\", p.149"
+        },
+        "bleeding": {
+          "formula": "weaponDamageDice + damageBonus - armor (unchanged from Normal)",
+          "note": "The special RESULT (ongoing 1 HP/round bleeding until stopped or healed) is a deferred effect, not a damage-number change. No shipped weapon uses this type.",
+          "printedSource": "Ch 6: Combat, \"Bleeding\", p.149"
+        },
+        "entangling": {
+          "formula": "weaponDamageDice + damageBonus - armor (unchanged from Normal)",
+          "note": "The special RESULT (pinning/ensnaring) is a deferred effect, not a damage-number change. No shipped weapon uses this type.",
+          "printedSource": "Ch 6: Combat, \"Entangling\", p.151"
+        },
+        "knockback": {
+          "formula": "weaponDamageDice + damageBonus - armor (unchanged from Normal)",
+          "note": "The special RESULT (sent sprawling backwards, resisted vs. SIZ) is a deferred effect, not a damage-number change. No shipped weapon uses this type.",
+          "printedSource": "Ch 6: Combat, \"Knockback\", p.151"
+        }
+      },
       "printedDescription": "Attack does full damage** plus normal damage modifier and appropriate special result. Defender's armor value subtracted from damage.",
       "printedFootnoteExplanation": "** This is the damage which that type of attack would normally do. This is not the same as 'maximum damage'. For a greatsword, full damage is 2D8 on a normal success, 2D8 bleeding damage on a special success, and on a critical success it does 16 damage ignoring armor. Damage modifier, in all cases, is rolled separately and added afterwards.",
       "specialDamageTypes": [
@@ -83,7 +115,7 @@
         "impaling",
         "knockback"
       ],
-      "printedSource": "Special Success, p.146; Special Successes and Damage, pp.148-149; Attack and Defense Matrix footnote **, p.147"
+      "printedSource": "Special Success, p.146; Special Successes and Damage, pp.148-151; Attack and Defense Matrix footnote **, p.147"
     },
     "criticalSuccessDamage": {
       "formula": "weaponMaxDieResult + damageBonus, armor ignored",
@@ -116,10 +148,10 @@
   },
   "notes": [
     "All threshold values (unconscious level, dead level, knockout fraction) are provided as ruleset data for the engine to consume, not as hardcoded constants.",
-    "CORRECTED (#52): the special-success formula is the SAME weapon dice + damage bonus as a normal hit, not 'weapon max die result + fresh normal roll + damage bonus'. The footnote's own greatsword example proves it: '2D8 on normal success, 2D8 bleeding damage on special success, and 16 damage on critical success ignoring armor' -- special repeats the normal dice (2D8), it does not add the maximum (16) on top. Only critical uses the maximum. See specialSuccessDamage.correctionNote and docs/decisions/0017-damage.md.",
+    "CORRECTED TWICE (#52): the special-success formula is NOT 'weapon max die result + fresh normal roll + damage bonus' (the original draft), and is NOT uniformly 'the same weapon dice + damage bonus as a normal hit' either (a first, still-wrong correction made during #52's own implementation). It is weapon-type-dependent -- see damageFormulas.specialSuccessDamage.specialDamageByType: impaling (firearms, pointed knives) doubles the weapon's whole damage expression (dice and fixed modifier) and adds an undoubled damage bonus (Ch 6, p.150); crushing (clubs, brass knuckles) rolls normal weapon dice but doubles the damage bonus, or substitutes +1D4 if there is none (Ch 6, p.149); the remaining three types (bleeding, entangling, knockback -- unused by any shipped weapon) use the same dice+bonus arithmetic as Normal, with only their special effect deferred. See docs/decisions/0017-damage.md.",
     "Armor treatment: Subtracted for normal/special, Bypassed or DoesNotApply both collapse to 'ignored' for critical outcomes (ADR 0016).",
     "Negative HP is tracked per the ruleset.",
-    "Knockout requires a Difficult attack whose damage (after armor) exceeds 1/2 of target's total HP. The knocked-out duration is 1D10+10 rounds.",
+    "Knockout requires a Difficult attack whose damage (after armor) is at least (>=) half of the target's total HP -- 'equivalent to a major wound', Ch 6 p.156. The knocked-out duration is 1D10+10 rounds. An impaling special used as the knockout's damage roll uses the doubled impaling damage, per Ch 7 p.174: 'The effects of special or critical successes... apply in all cases.'",
     "The damage bonus (damage modifier) table (STR+SIZ → dice) already exists in Layer 1 (ability-ruleset.json) and is sourced from Ch 2: Characters, pp.10-13."
   ],
   "verbatimPrintedRules": {
