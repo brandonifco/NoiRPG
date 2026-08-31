@@ -11,14 +11,14 @@ Together #50 and #96 complete the Ch 7 spot-rules surface for Layer 4.
 ## Context
 
 Ch 7: Spot Rules collects situational rules of two natures. #50 delivered nature (a): rules that
-modify an action roll. This record covers nature (b): rules that inflict harm — **Falling** (p.171),
-**Poison** and **Poison Antidotes** (pp.175-176), and **Disease** with the **Illness Severity Table**
-(pp.169-170). These do not touch the modifier pipeline; they remove hit points or lower a
+modify an action roll. This record covers nature (b): rules that inflict harm — **Falling** (pp.171-172),
+**Poison** and **Poison Antidotes** (p.176), and **Disease** with the **Illness Severity Table**
+(p.170). These do not touch the modifier pipeline; they remove hit points or lower a
 characteristic, and a lowered characteristic must recompute its derived values (hit points, major
 wound level, category modifiers) rather than being baked (AGENTS.md; ADR 0008's live-recompute
 `AbilitySet`).
 
-Ch 7 (pp.169-176) and the associated Ch 2 hit-point rules are the sole sources consulted. Each value
+Ch 7 (pp.170-176) and the associated Ch 2 hit-point rules are the sole sources consulted. Each value
 below was verified against the printed book text, not the issue or `engine-implementation-plan.md`
 (AGENTS.md invariant 2).
 
@@ -58,16 +58,16 @@ row-by-row in tests (`NoirInjuryRulesetTests`).
 | **Falling — force** | dice rolled doubled when thrown with considerable force | Ch 7, p.171 — **sourced** |
 | **Falling — small SIZ** | SIZ ≤ 5: reduce damage by 1D6 | Ch 7, p.171 — **sourced** |
 | **Falling — large SIZ** | SIZ > 20: +1D6, and another 1D6 per fraction of 20 above, cumulative with force | Ch 7, p.171 — **sourced** (band interpretation is a house reading, below) |
-| **Falling — armor** | half protection up to 3 m | Ch 7, p.171 — **sourced** (armor beyond 3 m is a house reading, below) |
-| **Poison — overcome** | overcomes CON → full POT as damage | Ch 7, "Poison", p.175 — **sourced** |
-| **Poison — resisted** | does not overcome CON → half POT, round up | Ch 7, p.175 — **sourced** |
-| **Poison — target** | damage to total HP or to a characteristic | Ch 7, p.175 — **sourced** |
-| **Poison — onset** | 3 combat rounds (fast) / 3 full turns (slow) default | Ch 7, p.175 — **sourced** |
-| **Poison — two doses** | two doses = two separate resistance rolls | Ch 7, p.175 — **sourced** |
+| **Falling — armor** | half protection up to 3 m | Ch 7, p.172 — **sourced** (armor beyond 3 m is a house reading, below) |
+| **Poison — overcome** | overcomes CON → full POT as damage | Ch 7, "Poison", p.176 — **sourced** |
+| **Poison — resisted** | does not overcome CON → half POT, round up | Ch 7, p.176 — **sourced** |
+| **Poison — target** | damage to total HP or to a characteristic | Ch 7, p.176 — **sourced** |
+| **Poison — onset** | 3 combat rounds (fast) / 3 full turns (slow) default | Ch 7, p.176 — **sourced** |
+| **Poison — two doses** | two doses = two separate resistance rolls | Ch 7, p.176 — **sourced** |
 | **Antidote** | POT taken ≤ 6 full turns before poisoning subtracts from poison POT before damage | Ch 7, "Poison Antidotes", p.176 — **sourced** |
-| **Disease — contract** | Stamina roll: success avoids, failure contracts | Ch 7, "Disease", p.169 — **sourced** (Stamina = CON's roll, below) |
-| **Disease — minor cost** | 1–2 HP (1D2) + 1D6 fatigue over a few days | Ch 7, p.169 — **sourced** |
-| **Disease — recovery ladder** | day 2 CON×2, day 3 CON×3, +1 multiplier/day; fumble −×1; strenuous −×1 per condition | Ch 7, p.169 — **sourced** |
+| **Disease — contract** | Stamina roll: success avoids, failure contracts | Ch 7, "Disease", p.170 — **sourced** (Stamina = CON's roll, below) |
+| **Disease — minor cost** | 1–2 HP (1D2) + 1D6 fatigue over a few days | Ch 7, p.170 — **sourced** |
+| **Disease — recovery ladder** | day 2 CON×2, day 3 CON×3, +1 multiplier/day; fumble −×1; strenuous −×1 per condition | Ch 7, p.170 — **sourced** |
 | **Illness Severity Table** | 0 None / 1 Mild (wk) / 2 Acute (day) / 3 Severe (hr) / 4+ Terminal (min) | Ch 7, "Illness Severity Table", p.170 — **sourced**, reproduced row-by-row |
 
 Details worth recording:
@@ -75,12 +75,17 @@ Details worth recording:
 - **Stamina is CON's characteristic roll — sourced.** The book says only "make a Stamina roll" here,
   but the ability ruleset (Ch 2) names CON's roll "Stamina," so the contraction roll is the standard
   CON roll (CON×5). This is a citation, not a house choice.
-- **Characteristic points lost = number of failed CON rolls — house procedural reading (marked).**
-  The book (p.170) says "the first characteristic point is lost within 24 hours... each successive
-  loss is added to the total whenever the CON roll is made to recover," and cross-indexes the failure
-  count on the Illness Severity Table to give a *rate* (per week/day/hour/minute). The resolver drains
-  one point per failed recovery roll and reports the table's degree as the rate; it does not simulate
-  wall-clock time. Recorded here rather than left silent.
+- **Illness Severity is a rate, applied over time by a clock-aware caller — sourced model.** The
+  Illness Severity Table (p.170) cross-indexes the failed-CON-roll count to a *degree*, and each
+  degree is a **rate** of characteristic loss over wall-clock time — Mild 1 pt/week, Acute 1 pt/day,
+  Severe 1 pt/hour, Terminal 1 pt/minute — with "the first characteristic point lost within 24 hours"
+  and "each successive loss added... whenever the CON roll is made to recover." Baking a flat
+  failed-roll count of points once would invent a quantity the book does not print. So
+  `DiseaseResolver.ResolveSeverity` reports only the degree and its loss period (`IllnessLossPeriod`),
+  and `DiseaseResolver.ApplyCharacteristicLoss` drains the points a clock-aware caller has accrued
+  (rate × elapsed periods) through `AbilitySet.Set`, so derived values recompute. This is the same
+  "resolver reports the rate, caller applies it over time" seam as poison onset (below) and the #50
+  turn-economy effects — this piece does not hold the campaign clock the wall-clock loss needs.
 
 ### House readings of ambiguous or silent prose (marked)
 
@@ -107,8 +112,8 @@ an `InjuryDecisionId` enum, canonical kebab-case ids (`InjuryDecisionIds.Canonic
 
 | Decision id | What the book leaves open | Timing | Default | Source |
 |---|---|---|---|---|
-| `falling-surface` | How the surface / intervening obstacles adjust falling damage | post-roll | no adjustment (0) | **sourced** — Ch 7 p.171 |
-| `poison-onset` | Which onset category (fast/slow), and any bespoke delay | pre-effect | fast-acting, printed default | **sourced** — Ch 7 p.175 |
+| `falling-surface` | How the surface / intervening obstacles adjust falling damage | post-roll | no adjustment (0) | **sourced** — Ch 7 p.172 |
+| `poison-onset` | Which onset category (fast/slow), and any bespoke delay | pre-effect | fast-acting, printed default | **sourced** — Ch 7 p.176 |
 | `antidote-cross-type` | How much of a mismatched antidote's POT still applies | pre-effect | none (0) | **sourced** — Ch 7 p.176 |
 | `disease-affected-characteristic` | Which characteristic a disease drains | pre-drain | CON | **sourced** — Ch 7 p.170 |
 
@@ -119,9 +124,11 @@ every port with a deterministic stub.
 ## Out of scope (per `orc-scope-filter.md` and the issue)
 
 Not implemented here: the situational-modifier spot rules (ADR 0018); radiation, fire/heat, prone,
-and stake/trap damage; **hit-location** falling damage (Ch 7 p.171: "a fall does damage to 1D4 hit
-locations" — the entire hit-location subsystem is deferred, so the split is **named as discretion**
-and not built); the fumble tables (#97); a **fatigue-point** subsystem (the minor-disease 1D6 fatigue
+and stake/trap damage; **hit-location** falling damage (Ch 7 p.172: "a fall does damage to 1D4 hit
+locations" — the entire hit-location subsystem is **deferred and out of scope**, so this split is
+neither built nor given an adjudicator id; the resolver applies falling damage to total hit points
+only, as the book also does when hit locations are not used); the fumble tables (#97); a
+**fatigue-point** subsystem (the minor-disease 1D6 fatigue
 is rolled and reported but not applied — no fatigue system exists yet); "some diseases may combine the
 effects" (p.170) beyond selecting one affected characteristic; and any fantastical content.
 
@@ -135,7 +142,9 @@ effects" (p.170) beyond selecting one affected characteristic; and any fantastic
   `DefaultInjuryAdjudicator`, and the ruling types.
 - `DamageResolver` gains a public plain-int `ApplyDamage` overload — the non-weapon damage entry
   point falling and poison share, reused rather than reimplemented.
-- The onset delays, the poison hit-location variant, the fatigue subsystem, disease combined-effects,
-  and the falling hit-location split all need caller/round/time state these resolvers do not hold. As
-  in ADR 0018, the resolvers compute and apply the harm and name the open calls; whichever piece
-  orchestrates a running encounter or campaign clock wires the ports and the timing.
+- The poison onset delays, the **disease severity characteristic loss over wall-clock time** (a rate
+  this piece reports and a clock-aware caller applies), the poison hit-location variant, the fatigue
+  subsystem, disease combined-effects, and the deferred falling hit-location damage all need
+  caller/round/time state these resolvers do not hold. As in ADR 0018, the resolvers compute the harm
+  and name the open calls; whichever piece orchestrates a running encounter or campaign clock wires
+  the ports and the timing.

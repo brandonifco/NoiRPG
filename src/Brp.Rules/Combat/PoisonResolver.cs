@@ -7,7 +7,7 @@ using Brp.Rules.Characters;
 namespace Brp.Rules.Combat;
 
 /// <summary>
-/// Resolves and applies Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (pp.175-176): a poison's
+/// Resolves and applies Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (p.176): a poison's
 /// POT is matched against a character's CON on the resistance table
 /// (<see cref="ResistanceResolver"/>); overcoming CON deals the full POT, otherwise half (round up).
 /// The damage lands on hit points (through the non-weapon overload of
@@ -19,7 +19,7 @@ namespace Brp.Rules.Combat;
 /// its POT from the poison POT before the resistance roll and damage are figured; a mismatched
 /// antidote's benefit is a gamemaster call (<see cref="InjuryDecisionId.AntidoteCrossType"/>). Two
 /// doses are two separate <see cref="ResolvePoison"/> calls, each drawing its own resistance roll --
-/// "two doses of a POT 10 poison are not the same as one dose of a POT 20 poison" (p.175).
+/// "two doses of a POT 10 poison are not the same as one dose of a POT 20 poison" (p.176).
 /// </para>
 /// </summary>
 public static class PoisonResolver
@@ -124,7 +124,7 @@ public static class PoisonResolver
     }
 
     /// <summary>
-    /// The onset delay before a resolved poison's damage takes effect, per Ch 7, "Poison" (p.175),
+    /// The onset delay before a resolved poison's damage takes effect, per Ch 7, "Poison" (p.176),
     /// as decided by the gamemaster (<see cref="InjuryDecisionId.PoisonOnset"/>): a bespoke delay if
     /// specified, otherwise the printed default for the poison's onset speed.
     /// </summary>
@@ -157,7 +157,7 @@ public sealed record PoisonOutcome(
     bool Overcame,
     int Damage);
 
-/// <summary>The time unit a <see cref="PoisonOnset"/> delay is measured in (Ch 7, p.175).</summary>
+/// <summary>The time unit a <see cref="PoisonOnset"/> delay is measured in (Ch 7, p.176).</summary>
 public enum PoisonOnsetUnit
 {
     /// <summary>Combat rounds -- the unit for a fast-acting poison's default delay.</summary>
@@ -167,7 +167,7 @@ public enum PoisonOnsetUnit
     FullTurns,
 }
 
-/// <summary>A resolved poison onset delay (Ch 7, p.175).</summary>
+/// <summary>A resolved poison onset delay (Ch 7, p.176).</summary>
 /// <param name="Delay">The number of <paramref name="Unit"/> before the poison's damage takes effect.</param>
 /// <param name="Unit">The time unit the delay is measured in.</param>
 public readonly record struct PoisonOnset(int Delay, PoisonOnsetUnit Unit);

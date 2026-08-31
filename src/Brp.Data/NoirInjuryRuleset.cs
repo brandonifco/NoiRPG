@@ -6,8 +6,8 @@ namespace Brp.Data;
 
 /// <summary>
 /// Loads NoiRPG's injury/effect spot-rule values from embedded JSON. Sourced: Ch 7: Spot Rules --
-/// "Falling" (p.171), "Poison"/"Poison Antidotes" (pp.175-176), and "Disease"/"Illness Severity
-/// Table" (pp.169-170) -- see each field on <see cref="FallingRuleset"/>, <see cref="PoisonRuleset"/>,
+/// "Falling" (pp.171-172), "Poison"/"Poison Antidotes" (p.176), and "Disease"/"Illness Severity
+/// Table" (p.170) -- see each field on <see cref="FallingRuleset"/>, <see cref="PoisonRuleset"/>,
 /// and <see cref="DiseaseRuleset"/> for its exact citation. Recorded in
 /// <c>docs/decisions/0019-injury-spot-rules.md</c>.
 /// </summary>

@@ -7,7 +7,7 @@ using Brp.Rules.Combat;
 namespace Brp.Rules.Tests.Combat;
 
 /// <summary>
-/// Ch 7: Spot Rules, "Disease" (pp.169-170). The Stamina contraction roll, the CON×N recovery
+/// Ch 7: Spot Rules, "Disease" (p.170). The Stamina contraction roll, the CON×N recovery
 /// ladder (rising multiplier, fumble and strenuous-condition reductions), and the Illness Severity
 /// Table drain routed through the characteristic-recompute path. See
 /// <c>docs/decisions/0019-injury-spot-rules.md</c>.
@@ -26,7 +26,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void A_failed_stamina_roll_contracts_the_disease_page_169()
+    public void A_failed_stamina_roll_contracts_the_disease_page_170()
     {
         // CON 10 => Stamina (CON×5) = 50; roll 90 fails => contracted.
         var contraction = DiseaseResolver.RollContraction(MakeTarget(con: 10), new FixedEntropySource(90));
@@ -35,7 +35,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void A_successful_stamina_roll_avoids_the_disease_page_169()
+    public void A_successful_stamina_roll_avoids_the_disease_page_170()
     {
         // CON 10 => 50; roll 10 succeeds => avoided.
         var contraction = DiseaseResolver.RollContraction(MakeTarget(con: 10), new FixedEntropySource(10));
@@ -44,7 +44,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void Recovering_on_the_first_day_yields_no_failures_page_169()
+    public void Recovering_on_the_first_day_yields_no_failures_page_170()
     {
         // Day 0 = CON×2 = 20; roll 10 succeeds.
         var ladder = DiseaseResolver.ResolveRecoveryLadder(
@@ -56,7 +56,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void The_multiplier_rises_by_one_each_day_until_recovery_page_169()
+    public void The_multiplier_rises_by_one_each_day_until_recovery_page_170()
     {
         // Day 0 CON×2=20 roll 50 fails; day 1 CON×3=30 roll 10 succeeds.
         var ladder = DiseaseResolver.ResolveRecoveryLadder(
@@ -69,7 +69,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void A_fumble_reduces_the_multiplier_by_one_page_169()
+    public void A_fumble_reduces_the_multiplier_by_one_page_170()
     {
         // Day 0 CON×2=20 roll 100 fumbles; day 1 base ×3 minus the fumble penalty => ×2; roll 10 succeeds.
         var ladder = DiseaseResolver.ResolveRecoveryLadder(
@@ -81,7 +81,7 @@ public class DiseaseResolverTests
     }
 
     [Fact]
-    public void Each_strenuous_condition_reduces_the_multiplier_by_one_page_169()
+    public void Each_strenuous_condition_reduces_the_multiplier_by_one_page_170()
     {
         // Day 0 base ×2 minus one strenuous condition => ×1 = 10; roll 5 succeeds.
         var ladder = DiseaseResolver.ResolveRecoveryLadder(
@@ -104,33 +104,41 @@ public class DiseaseResolverTests
     }
 
     [Theory]
-    [InlineData(0, IllnessDegree.None, 0)]
-    [InlineData(1, IllnessDegree.Mild, 1)]
-    [InlineData(2, IllnessDegree.Acute, 2)]
-    [InlineData(3, IllnessDegree.Severe, 3)]
-    [InlineData(5, IllnessDegree.Terminal, 5)]
-    public void Severity_drain_loses_one_point_per_failed_roll_at_the_tables_degree_page_170(
-        int failures, IllnessDegree expectedDegree, int expectedPointsLost)
+    [InlineData(0, IllnessDegree.None, IllnessLossPeriod.None)]
+    [InlineData(1, IllnessDegree.Mild, IllnessLossPeriod.Week)]
+    [InlineData(2, IllnessDegree.Acute, IllnessLossPeriod.Day)]
+    [InlineData(3, IllnessDegree.Severe, IllnessLossPeriod.Hour)]
+    [InlineData(5, IllnessDegree.Terminal, IllnessLossPeriod.Minute)]
+    public void Severity_is_a_rate_of_one_point_per_period_not_a_baked_quantity_page_170(
+        int failures, IllnessDegree expectedDegree, IllnessLossPeriod expectedPeriod)
     {
         var target = MakeTarget(con: 12, siz: 12);
+        var before = target.ValueOf(new CharacteristicId("STR"));
 
-        var outcome = DiseaseResolver.ApplySeverityDrain(target, new CharacteristicId("STR"), failures, Disease);
+        var severity = DiseaseResolver.ResolveSeverity(failures, Disease);
 
-        Assert.Equal(expectedDegree, outcome.Degree);
-        Assert.Equal(expectedPointsLost, outcome.PointsLost);
-        Assert.Equal(12 - expectedPointsLost, target.ValueOf(new CharacteristicId("STR")));
+        Assert.Equal(expectedDegree, severity.Degree);
+        Assert.Equal(expectedPeriod, severity.LossPeriod);
+
+        // ResolveSeverity reports the loss rate only -- it drains nothing itself; the wall-clock
+        // point loss is a clock-aware caller's job (ApplyCharacteristicLoss).
+        Assert.Equal(before, target.ValueOf(new CharacteristicId("STR")));
     }
 
     [Fact]
-    public void Severity_drain_recomputes_derived_values_when_it_hits_a_derived_characteristic_page_170()
+    public void A_lost_point_drained_by_a_clock_aware_caller_recomputes_derived_values_page_170()
     {
         var target = MakeTarget(con: 16, siz: 14);
         Assert.Equal(15, target.MaximumHitPoints);
 
-        // 2 failures => Acute => 2 CON points drained via AbilitySet.Set, so hit points recompute.
-        var outcome = DiseaseResolver.ApplySeverityDrain(target, new CharacteristicId("CON"), failures: 2, Disease);
+        // Acute is 1 point/day; a caller two days in has accrued 2 CON points. Applying them via
+        // AbilitySet.Set recomputes hit points -- the loss is not baked at severity-lookup time.
+        var severity = DiseaseResolver.ResolveSeverity(failures: 2, Disease);
+        Assert.Equal(IllnessLossPeriod.Day, severity.LossPeriod);
 
-        Assert.Equal(IllnessDegree.Acute, outcome.Degree);
+        var newValue = DiseaseResolver.ApplyCharacteristicLoss(target, new CharacteristicId("CON"), points: 2);
+
+        Assert.Equal(14, newValue);
         Assert.Equal(14, target.ValueOf(new CharacteristicId("CON")));
         Assert.Equal(14, target.MaximumHitPoints); // ceil((14 + 14) / 2)
     }
@@ -142,14 +150,14 @@ public class DiseaseResolverTests
         var adjudicator = new DefaultInjuryAdjudicator();
         var affected = adjudicator.DecideDiseaseAffectedCharacteristic();
 
-        DiseaseResolver.ApplySeverityDrain(target, affected, failures: 3, Disease);
+        DiseaseResolver.ApplyCharacteristicLoss(target, affected, points: 3);
 
         Assert.Equal(new CharacteristicId("CON"), affected);
         Assert.Equal(9, target.ValueOf(new CharacteristicId("CON")));
     }
 
     [Fact]
-    public void A_minor_disease_costs_hit_points_and_fatigue_page_169()
+    public void A_minor_disease_costs_hit_points_and_fatigue_page_170()
     {
         // 1D2 hit points then 1D6 fatigue.
         var effect = DiseaseResolver.RollMinorDiseaseEffect(Disease, new FixedEntropySource(2, 4));

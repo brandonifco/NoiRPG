@@ -15,7 +15,7 @@ namespace Brp.Core.Contests;
 public enum InjuryDecisionId
 {
     /// <summary>
-    /// Canonical id <c>falling-surface</c>. Ch 7, "Falling" (p.171): "The gamemaster may adjust the
+    /// Canonical id <c>falling-surface</c>. Ch 7, "Falling" (p.172): "The gamemaster may adjust the
     /// damage based on the surface impacted, or any intervening minor obstacles like branches."
     /// How much a soft (or unusually hard) landing surface, or obstacles broken through on the way
     /// down, adjust the rolled falling damage is a gamemaster call. A post-roll ruling: it adjusts
@@ -24,7 +24,7 @@ public enum InjuryDecisionId
     FallingSurface,
 
     /// <summary>
-    /// Canonical id <c>poison-onset</c>. Ch 7, "Poison" (p.175): "Poison damage does not usually
+    /// Canonical id <c>poison-onset</c>. Ch 7, "Poison" (p.176): "Poison damage does not usually
     /// occur on the same combat round in which the character is poisoned... Unless otherwise
     /// specified by the gamemaster, the delay is three combat rounds for fast-acting poisons, or
     /// three full turns for slower poisons." Which onset category a given poison falls in -- and
@@ -74,21 +74,21 @@ public static class InjuryDecisionIds
 
 /// <summary>
 /// Which onset category a poison falls in, for the <see cref="InjuryDecisionId.PoisonOnset"/>
-/// ruling (Ch 7, p.175). The two categories select different default delays and different time
+/// ruling (Ch 7, p.176). The two categories select different default delays and different time
 /// units (combat rounds vs. full turns).
 /// </summary>
 public enum PoisonOnsetSpeed
 {
-    /// <summary>A fast-acting poison: the printed default delay is three combat rounds (p.175).</summary>
+    /// <summary>A fast-acting poison: the printed default delay is three combat rounds (p.176).</summary>
     FastActing,
 
-    /// <summary>A slower poison: the printed default delay is three full turns (p.175).</summary>
+    /// <summary>A slower poison: the printed default delay is three full turns (p.176).</summary>
     SlowActing,
 }
 
 /// <summary>
 /// The gamemaster's ruling on a poison's onset, for the <see cref="InjuryDecisionId.PoisonOnset"/>
-/// port (Ch 7, p.175).
+/// port (Ch 7, p.176).
 /// </summary>
 /// <param name="Speed">Which onset category the poison falls in.</param>
 /// <param name="GamemasterSpecifiedDelay">
@@ -100,7 +100,7 @@ public readonly record struct PoisonOnsetRuling(PoisonOnsetSpeed Speed, int? Gam
 
 /// <summary>
 /// The gamemaster's adjustment to rolled falling damage, for the
-/// <see cref="InjuryDecisionId.FallingSurface"/> port (Ch 7, p.171).
+/// <see cref="InjuryDecisionId.FallingSurface"/> port (Ch 7, p.172).
 /// </summary>
 /// <param name="DamageAdjustment">
 /// A signed adjustment applied to the rolled (and armor-mitigated) falling damage: negative for a

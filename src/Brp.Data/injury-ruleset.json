@@ -2,7 +2,7 @@
   "source": {
     "book": "BasicRoleplaying-ORC-Content-Document.pdf",
     "chapter": "Chapter 7: Spot Rules",
-    "notes": "Injury/effect spot rules that deal damage or characteristic drain: Falling (p.171), Poison and Poison Antidotes (pp.175-176), Disease and the Illness Severity Table (pp.169-170). Sibling of spot-rule-ruleset.json (#50). See docs/decisions/0019-injury-spot-rules.md."
+    "notes": "Injury/effect spot rules that deal damage or characteristic drain: Falling (pp.171-172), Poison and Poison Antidotes (p.176), Disease and the Illness Severity Table (p.170). Sibling of spot-rule-ruleset.json (#50). See docs/decisions/0019-injury-spot-rules.md."
   },
   "falling": {
     "baseDamagePerIncrementFormula": "1D6",
@@ -16,7 +16,7 @@
     "armorHalfProtectionMaxMeters": 3,
     "armorProtectionNumerator": 1,
     "armorProtectionDenominator": 2,
-    "source": "Ch 7, Falling (p.171): '1D6 base damage for every three meters fallen'; 'If thrown with considerable force, the dice rolled may be doubled'; 'if SIZ is 5 or less, reduce the damage from falling by 1D6'; 'adding an extra 1D6 damage if the character's SIZ is over 20 and another 1D6 for every fraction of 20 after that'; 'Armor provides half protection against falling damage up to three meters.'"
+    "source": "Ch 7, Falling: base/force/SIZ on p.171 ('1D6 base damage for every three meters fallen'; 'If thrown with considerable force, the dice rolled may be doubled'; 'if SIZ is 5 or less, reduce the damage from falling by 1D6'; 'adding an extra 1D6 damage if the character's SIZ is over 20 and another 1D6 for every fraction of 20 after that'); armor on p.172 ('Armor provides half protection against falling damage up to three meters.')."
   },
   "poison": {
     "notOvercomeNumerator": 1,
@@ -24,7 +24,7 @@
     "onsetFastActingRounds": 3,
     "onsetSlowActingTurns": 3,
     "antidoteWindowTurns": 6,
-    "source": "Ch 7, Poison (p.175): full POT if it overcomes CON, else 'half the poison's POT in damage (round up)'; 'the delay is three combat rounds for fast-acting poisons, or three full turns for slower poisons'. Poison Antidotes (p.176): 'no more than six full turns before being poisoned, the antidote's POT is subtracted from the poison's POT before damage is figured.'"
+    "source": "Ch 7, Poison (p.176): full POT if it overcomes CON, else 'half the poison's POT in damage (round up)'; 'the delay is three combat rounds for fast-acting poisons, or three full turns for slower poisons'. Poison Antidotes (p.176): 'no more than six full turns before being poisoned, the antidote's POT is subtracted from the poison's POT before damage is figured.'"
   },
   "disease": {
     "minorDiseaseHitPointLossFormula": "1D2",
@@ -33,7 +33,7 @@
     "recoveryLadderMultiplierIncrementPerDay": 1,
     "recoveryLadderFumbleMultiplierPenalty": 1,
     "recoveryLadderStrenuousConditionPenalty": 1,
-    "recoverySource": "Ch 7, Disease (p.169): minor disease costs '1 or 2 hit points and 1D6 fatigue points'; 'On the morning of the second day... roll CON×2'; 'the third day, roll CON×3, continuing by increasing the multiplier... until the disease is finally overcome. A fumble reduces the multiplier by ×1.'; 'Strenuous conditions... reduce this characteristic roll by ×1 per outstanding condition.'",
+    "recoverySource": "Ch 7, Disease (p.170): minor disease costs '1 or 2 hit points and 1D6 fatigue points'; 'On the morning of the second day... roll CON×2'; 'the third day, roll CON×3, continuing by increasing the multiplier... until the disease is finally overcome. A fumble reduces the multiplier by ×1.'; 'Strenuous conditions... reduce this characteristic roll by ×1 per outstanding condition.'",
     "illnessSeverityTable": [
       { "minimumFailures": 0, "maximumFailures": 0, "degree": "None", "lossPeriod": "None" },
       { "minimumFailures": 1, "maximumFailures": 1, "degree": "Mild", "lossPeriod": "Week" },

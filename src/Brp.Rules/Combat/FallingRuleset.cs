@@ -3,7 +3,7 @@ using Brp.Core.Dice;
 namespace Brp.Rules.Combat;
 
 /// <summary>
-/// The data-defined values of Ch 7: Spot Rules, "Falling" (p.171) (AGENTS.md invariant 7: rules
+/// The data-defined values of Ch 7: Spot Rules, "Falling" (pp.171-172) (AGENTS.md invariant 7: rules
 /// values are data, not constants). Loaded from <c>injury-ruleset.json</c> by
 /// <c>Brp.Data.NoirInjuryRuleset.Load()</c>. See <c>docs/decisions/0019-injury-spot-rules.md</c>.
 /// </summary>
@@ -99,13 +99,13 @@ public sealed class FallingRuleset
     public DiceExpression LargeSizeExtraDamage { get; }
 
     /// <summary>
-    /// Ch 7, "Falling" (p.171): "Armor provides half protection against falling damage up to three
+    /// Ch 7, "Falling" (p.172): "Armor provides half protection against falling damage up to three
     /// meters." The maximum fall distance for which armor applies at all.
     /// </summary>
     public int ArmorHalfProtectionMaxMeters { get; }
 
     /// <summary>
-    /// Ch 7, "Falling" (p.171): "half protection." Numerator of the fraction of the armor value that
+    /// Ch 7, "Falling" (p.172): "half protection." Numerator of the fraction of the armor value that
     /// applies within <see cref="ArmorHalfProtectionMaxMeters"/> (1 of 2 = half).
     /// </summary>
     public int ArmorProtectionNumerator { get; }

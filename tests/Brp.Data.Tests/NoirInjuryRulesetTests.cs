@@ -4,8 +4,8 @@ namespace Brp.Data.Tests;
 
 /// <summary>
 /// Confirms the shipped injury ruleset data loads and reproduces Ch 7: Spot Rules -- "Falling"
-/// (p.171), "Poison"/"Poison Antidotes" (pp.175-176), and "Disease"/"Illness Severity Table"
-/// (pp.169-170). The Illness Severity Table is reproduced row by row rather than sampled, per
+/// (pp.171-172), "Poison"/"Poison Antidotes" (p.176), and "Disease"/"Illness Severity Table"
+/// (p.170). The Illness Severity Table is reproduced row by row rather than sampled, per
 /// AGENTS.md's "table-backed rule" convention. See <c>docs/decisions/0019-injury-spot-rules.md</c>.
 /// </summary>
 public class NoirInjuryRulesetTests
@@ -13,7 +13,7 @@ public class NoirInjuryRulesetTests
     private static readonly InjuryRuleset Ruleset = NoirInjuryRuleset.Load();
 
     [Fact]
-    public void Falling_values_match_chapter_7_page_171()
+    public void Falling_values_match_chapter_7_pages_171_to_172()
     {
         var falling = Ruleset.Falling;
 
@@ -31,7 +31,7 @@ public class NoirInjuryRulesetTests
     }
 
     [Fact]
-    public void Poison_values_match_chapter_7_pages_175_to_176()
+    public void Poison_values_match_chapter_7_page_176()
     {
         var poison = Ruleset.Poison;
 
@@ -43,7 +43,7 @@ public class NoirInjuryRulesetTests
     }
 
     [Fact]
-    public void Disease_recovery_ladder_values_match_chapter_7_page_169()
+    public void Disease_recovery_ladder_values_match_chapter_7_page_170()
     {
         var disease = Ruleset.Disease;
 

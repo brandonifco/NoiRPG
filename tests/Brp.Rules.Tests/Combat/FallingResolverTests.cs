@@ -7,7 +7,7 @@ using Brp.Rules.Combat;
 namespace Brp.Rules.Tests.Combat;
 
 /// <summary>
-/// Ch 7: Spot Rules, "Falling" (p.171). Deterministic falling damage by distance, force, and SIZ,
+/// Ch 7: Spot Rules, "Falling" (pp.171-172). Deterministic falling damage by distance, force, and SIZ,
 /// then armor/surface mitigation, applied through the non-weapon <see cref="DamageResolver"/>
 /// overload. See <c>docs/decisions/0019-injury-spot-rules.md</c>.
 /// </summary>
@@ -107,7 +107,7 @@ public class FallingResolverTests
     }
 
     [Fact]
-    public void Armor_gives_half_protection_up_to_three_meters_page_171()
+    public void Armor_gives_half_protection_up_to_three_meters_page_172()
     {
         var roll = new FallingDamageRoll(DamageBeforeMitigation: 6, BaseDiceCount: 1, LargeSizeBands: 0, false, false);
 

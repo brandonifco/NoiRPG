@@ -7,7 +7,7 @@ using Brp.Rules.Combat;
 namespace Brp.Rules.Tests.Combat;
 
 /// <summary>
-/// Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (pp.175-176). POT vs CON on the resistance
+/// Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (p.176). POT vs CON on the resistance
 /// table (full POT if overcome, else half round-up), antidote subtraction, two-dose independence,
 /// and drain routed through the characteristic-recompute path. See
 /// <c>docs/decisions/0019-injury-spot-rules.md</c>.
@@ -28,7 +28,7 @@ public class PoisonResolverTests
     }
 
     [Fact]
-    public void Overcoming_con_deals_the_full_pot_page_175()
+    public void Overcoming_con_deals_the_full_pot_page_176()
     {
         // POT 15 vs CON 10 => chance 75; roll 50 succeeds (poison overcomes CON).
         var outcome = PoisonResolver.ResolvePoison(
@@ -39,7 +39,7 @@ public class PoisonResolverTests
     }
 
     [Fact]
-    public void Failing_to_overcome_con_deals_half_pot_rounded_up_page_175()
+    public void Failing_to_overcome_con_deals_half_pot_rounded_up_page_176()
     {
         // POT 15 vs CON 10 => chance 75; roll 90 fails; half of 15 rounds up to 8.
         var outcome = PoisonResolver.ResolvePoison(
@@ -105,7 +105,7 @@ public class PoisonResolverTests
     }
 
     [Fact]
-    public void Two_doses_are_two_separate_rolls_not_one_of_double_pot_page_175()
+    public void Two_doses_are_two_separate_rolls_not_one_of_double_pot_page_176()
     {
         // Two POT 10 doses vs CON 10 => each chance 50; rolls 90 and 90 both fail => 5 + 5.
         var doses = new FixedEntropySource(90, 90);
@@ -153,7 +153,7 @@ public class PoisonResolverTests
     }
 
     [Fact]
-    public void Onset_uses_the_printed_default_for_the_gamemasters_speed_page_175()
+    public void Onset_uses_the_printed_default_for_the_gamemasters_speed_page_176()
     {
         var fast = PoisonResolver.ResolveOnset(new PoisonOnsetRuling(PoisonOnsetSpeed.FastActing, null), Poison);
         Assert.Equal(new PoisonOnset(3, PoisonOnsetUnit.CombatRounds), fast);

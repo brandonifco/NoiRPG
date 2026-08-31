@@ -1,7 +1,7 @@
 namespace Brp.Rules.Combat;
 
 /// <summary>
-/// The data-defined values of Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (pp.175-176)
+/// The data-defined values of Ch 7: Spot Rules, "Poison" and "Poison Antidotes" (p.176)
 /// (AGENTS.md invariant 7: rules values are data, not constants). Loaded from
 /// <c>injury-ruleset.json</c> by <c>Brp.Data.NoirInjuryRuleset.Load()</c>. See
 /// <c>docs/decisions/0019-injury-spot-rules.md</c>.
@@ -30,7 +30,7 @@ public sealed class PoisonRuleset
     }
 
     /// <summary>
-    /// Ch 7, "Poison" (p.175): "If the poison does not overcome the character's CON, it has a
+    /// Ch 7, "Poison" (p.176): "If the poison does not overcome the character's CON, it has a
     /// lessened effect -- usually only doing half the poison's POT in damage (round up)." Numerator
     /// of the fraction of POT dealt when the poison fails to overcome CON (1 of 2 = half).
     /// </summary>
@@ -40,14 +40,14 @@ public sealed class PoisonRuleset
     public int NotOvercomeDenominator { get; }
 
     /// <summary>
-    /// Ch 7, "Poison" (p.175): "Unless otherwise specified by the gamemaster, the delay is three
+    /// Ch 7, "Poison" (p.176): "Unless otherwise specified by the gamemaster, the delay is three
     /// combat rounds for fast-acting poisons." The default onset delay, in combat rounds, for a
     /// fast-acting poison.
     /// </summary>
     public int OnsetFastActingRounds { get; }
 
     /// <summary>
-    /// Ch 7, "Poison" (p.175): "...or three full turns for slower poisons." The default onset delay,
+    /// Ch 7, "Poison" (p.176): "...or three full turns for slower poisons." The default onset delay,
     /// in full turns, for a slower poison.
     /// </summary>
     public int OnsetSlowActingTurns { get; }
