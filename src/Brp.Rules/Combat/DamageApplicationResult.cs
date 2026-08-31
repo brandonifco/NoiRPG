@@ -4,7 +4,7 @@ namespace Brp.Rules.Combat;
 
 /// <summary>
 /// The result of applying a rolled damage amount to a target's hit points --
-/// <see cref="DamageResolver.ApplyDamage"/>'s output.
+/// the output of <see cref="DamageResolver"/>'s <c>ApplyDamage</c> overloads.
 /// </summary>
 /// <param name="DamageDealt">The hit points actually removed (0 for a Miss).</param>
 /// <param name="ResultingHitPoints">The target's hit points after the change; may be negative.</param>
