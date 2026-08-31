@@ -1,0 +1,62 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 6: Combat (Damage & Healing) and Chapter 3: Skills",
+    "notes": "Healing and recovery (#109): First Aid's per-wound healing (Ch 3, First Aid, p.39), natural healing (Ch 6, Healing Naturally, p.157), the Medicine skill's doubled rate and characteristic restoration (Ch 3, Medicine, p.46; p.157), and the Conditions of Medical Care Table (p.157, reproduced row by row). All values verified against the printed book text. See docs/decisions/0023-healing-and-recovery.md."
+  },
+  "firstAid": {
+    "printedBaseChancePercent": 30,
+    "successHealingFormula": "1D3",
+    "specialHealingFormula": "2D3",
+    "criticalHealingFormula": "3+1D3",
+    "fumbleSelfDamage": 1,
+    "medicineBonusNumerator": 1,
+    "medicineBonusDenominator": 2,
+    "sciencePharmacyBonusNumerator": 1,
+    "sciencePharmacyBonusDenominator": 5,
+    "equipmentBonusMaxPercent": 20,
+    "notes": "Ch 3, First Aid (p.39): Base Chance 30%. Success heals 1D3 to a single wound, Special 2D3, Critical 3+1D3; Fumble deals 1 general hit point; Failure blocks further attempts. May add 1/2 Medicine + 1/5 Science(Pharmacy) + up to +20% equipment to the roll. Healing is capped at the wound's inflicted damage, one attempt per wound (System Notes)."
+  },
+  "naturalHealing": {
+    "weeklyRateFormula": "1D3",
+    "notes": "Ch 6, Healing Naturally (p.157): a flat 1D3 hit points per game week (the normal healing rate), NOT tied to CON. Rolled fresh each week; recovered points removed from wounds, spread as evenly as possible."
+  },
+  "medicine": {
+    "printedBaseChancePercent": 5,
+    "doubledWeeklyRateFormula": "2D3",
+    "characteristicRestorationSuccessFormula": "1D3-1",
+    "characteristicRestorationSpecialFormula": "1D3",
+    "characteristicRestorationCriticalFormula": "1D3+1",
+    "notes": "Ch 3, Medicine (p.46) / Ch 6 (p.157): Base Chance 05%. Success doubles the weekly healing rate from 1D3 to 2D3; a stabilized poisoned/diseased character recovers 1D3-1 hit points or characteristic points per week (Success), 1D3 (Special), or 1D3+1 (Critical)."
+  },
+  "conditionsOfMedicalCareTableSource": "Ch 6, Conditions of Medical Care (p.157), transcribed row by row (three tiers). Each row's effect on the weekly healing rate is data; the descriptive Medical Conditions cell is summarized. Natural healing is 1D3/week on every row.",
+  "conditionsOfMedicalCare": [
+    {
+      "tier": "Poor",
+      "conditions": "Poorly equipped, unsanitary, and/or stressful; patient mobile and exerting heavily (combat, rugged travel); or receiving no medical care.",
+      "requiresCaregiverRoll": true,
+      "caregiverRollDifficulty": "Difficult",
+      "naturalHealingFormula": "1D3",
+      "fumbleAdditionalDamageFormula": "1D3",
+      "allowsAdditionalHealing": false
+    },
+    {
+      "tier": "Decent",
+      "conditions": "Decent and sanitary conditions, restful environment, care provided, only moderate physical exertion.",
+      "requiresCaregiverRoll": false,
+      "caregiverRollDifficulty": "None",
+      "naturalHealingFormula": "1D3",
+      "fumbleAdditionalDamageFormula": null,
+      "allowsAdditionalHealing": false
+    },
+    {
+      "tier": "Excellent",
+      "conditions": "Excellent conditions and equipment, environment conducive to healing, full bedrest and therapy, full-time high-quality medical care.",
+      "requiresCaregiverRoll": false,
+      "caregiverRollDifficulty": "None",
+      "naturalHealingFormula": "1D3",
+      "fumbleAdditionalDamageFormula": null,
+      "allowsAdditionalHealing": true
+    }
+  ]
+}
