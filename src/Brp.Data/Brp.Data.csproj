@@ -14,6 +14,7 @@
   <ItemGroup>
     <EmbeddedResource Include="ability-ruleset.json" />
     <EmbeddedResource Include="skill-ruleset.json" />
+    <EmbeddedResource Include="skill-category-bonus-ruleset.json" />
     <EmbeddedResource Include="character-creation-ruleset.json" />
     <EmbeddedResource Include="background-packages.json" />
     <EmbeddedResource Include="experience-ruleset.json" />
