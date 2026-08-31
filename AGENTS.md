@@ -85,7 +85,7 @@ If you discover unrelated work, file a separate Issue. Do not enlarge the curren
 resolution kernel (`Resolution/`), the modifier pipeline (`Modifiers/`), and resistance
 and opposed rolls (`Contests/`). Layer 1 (`Abilities/`) adds data-defined
 characteristics, characteristic rolls, and live derived values. `Brp.Data` supplies
-the ability ruleset JSON. The solution has 1,573 tests, including printed tables
+the ability ruleset JSON. The solution has 1,972 tests, including printed tables
 reproduced cell by cell.
 
 `tools/Brp.Cli` is the `brp` command line over that kernel — one command, `roll`, which
