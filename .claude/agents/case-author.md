@@ -40,4 +40,5 @@ story, not dead air — every dead end still has to be worth reaching.
 
 ## Output
 
-Valid YAML plus the validator's output, and a per-build coverage summary.
+Valid YAML plus the validator's output, and a per-build coverage summary. Deliver it as
+a PR following `.github/pull_request_template.md`, with `Closes #<n>` naming the Issue.
