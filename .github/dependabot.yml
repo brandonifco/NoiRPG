@@ -1,0 +1,24 @@
+# Dependabot version updates for NoiRPG.
+# Weekly and grouped so updates arrive as one PR per ecosystem rather than
+# one per package. These PRs flow through the same CI gates as any other change.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      nuget:
+        patterns:
+          - "*"
+
+  - package-ecosystem: github-actions
+    directory: "/"
+    schedule:
+      interval: weekly
+    open-pull-requests-limit: 5
+    groups:
+      github-actions:
+        patterns:
+          - "*"
