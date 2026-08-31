@@ -5,6 +5,9 @@ Basic Roleplaying (BRP), plus a game and gamemaster-tooling layer on top.
 
 Read this file, then the one Issue you are working. Do not read the whole repo.
 
+For where the project is and what to build next, see [`ROADMAP.md`](ROADMAP.md) — the
+ordered index of layers, phases, and the next issues.
+
 ## Source-of-truth documents, in order
 
 | Document | Authority over |
