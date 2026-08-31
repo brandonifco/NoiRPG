@@ -1,0 +1,35 @@
+name: pr-policy
+
+# Make the PR machine-readable: validate that the body carries real evidence
+# (not the template's prompts), derive the verification route, and publish a
+# small evidence artifact the orchestrator / state machine (#62) can read.
+on:
+  pull_request:
+    types: [opened, edited, synchronize, reopened]
+
+concurrency:
+  group: pr-policy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  pr-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Validate PR and emit evidence
+        run: python3 .github/workflows/pr_policy.py --out evidence.json
+
+      - name: Upload evidence artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pr-evidence
+          path: evidence.json
+          retention-days: 30
