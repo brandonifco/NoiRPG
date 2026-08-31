@@ -286,9 +286,10 @@ def first_try_metrics(prs: list[dict], ci: dict) -> dict:
 def gate_catch_metrics(prs: list[dict], slug: str | None) -> dict:
     """Gate catches — count `failure` conclusions for gate check-runs on PR heads.
 
-    Requires the orchestrator's gate-poster App (#65) to actually be posting
-    scope-warden / rules-conformance / codex-conformance / architecture-review
-    check-runs. Until it is, this legitimately reads zero and says so."""
+    The gate-poster App and the verification-gate system it fed were removed in
+    #90/#91, so scope-warden / rules-conformance / codex-conformance /
+    architecture-review check-runs are no longer produced. This reads zero and
+    says so; the metric is retained in case gate enforcement is ever rebuilt."""
     if not slug:
         return {"available": False, "note": "no repo slug; skipped"}
     catches = {g: 0 for g in GATE_NAMES}
@@ -323,8 +324,8 @@ def gate_catch_metrics(prs: list[dict], slug: str | None) -> dict:
         "catches": catches,
         "seen": seen,
         "note": (None if any_gate_runs else
-                 "no gate check-runs found on inspected PR heads — the gate-poster App "
-                 "(#65) is not yet posting scope-warden/rules-conformance/etc.; catches read 0"),
+                 "no gate check-runs found on inspected PR heads — the verification-gate "
+                 "system was removed in #90/#91, so none are produced; catches read 0"),
     }
 
 

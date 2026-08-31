@@ -45,4 +45,4 @@ Emits:
 - Issue templates vary; the parser matches section headers by known aliases and
   degrades gracefully when a section is absent.
 - The predicted task route is a hint; the authoritative route is computed from the
-  actual diff at PR time by [`route-gates`](routing.md).
+  actual diff at PR time by [`pr-policy`](routing.md) (via `tools/route.sh`).

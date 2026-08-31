@@ -6,7 +6,11 @@ is the machine-readable form of the pipeline in
 [`docs/agent-team.md`](../agent-team.md): the orchestrator no longer remembers
 which reviewers a change needs; it asks [`tools/route.sh`](../../tools/route.sh).
 
-This is the source of truth consumed by the routing state machine (issue #62).
+Route derivation and labelling are live and consumed by `pr-policy` (which records
+the route in its evidence artifact). The gate **enforcement** that once sat on top of
+this — the `gates-satisfied` aggregator and the gate-poster App — was removed in
+#90/#91; the "required gates" below are the reviewers a change *conceptually* needs,
+no longer an automated check.
 
 ## How a route is derived
 
@@ -73,34 +77,19 @@ tools/route.sh --json --base origin/main
 
 ## Labels
 
-The derived route is surfaced on issues/PRs as a `route:*` label
+The derived route can be surfaced on issues/PRs as a `route:*` label
 (`route:docs`, `route:tooling`, `route:rules`, `route:formulas`,
-`route:architecture`) so the route is visible without running the tool. The
-`route-gates` workflow applies the label automatically on each PR.
+`route:architecture`) so the route is visible without running the tool. These were
+applied automatically by the now-removed `route-gates` workflow; apply them by hand
+(or from a new workflow) if you want them.
 
-## Enforcement — the `gates-satisfied` check
+## Enforcement
 
-The `route-gates` workflow (`.github/workflows/route-gates.py`) is the routing
-state machine. On every PR event — and whenever a check-run lands — it:
-
-1. derives the route and labels the PR;
-2. reads the check-runs on the PR **head commit**;
-3. upserts a single `gates-satisfied` check-run that is:
-   - **success** when every required non-`ci` gate has a passing check-run,
-   - **failure** when any required gate failed,
-   - **in progress** while any required gate has not reported.
-
-`ci` maps to `build-and-test`, which is already a required status check, so it is
-evaluated separately. The individual gate check-runs (`scope-warden`,
-`rules-conformance`, `codex-conformance`, `architecture-review`) are posted by the
-orchestrator through the gate-poster App — see
-[`github-app.md`](github-app.md).
-
-### Making it block merges (phase-2 switch)
-
-`gates-satisfied` is **reported but not yet a required check**, so it cannot
-deadlock a PR before the App is posting gate results. Once the App is registered
-and the orchestrator posts at least one real gate result end-to-end, add
-`gates-satisfied` to the `main` ruleset's required status checks (alongside
-`build-and-test`). From then on a PR cannot merge until its route's gates are green.
+Merges into `main` are gated by `build-and-test` (required status check) plus the
+`pr-policy` and `orchestration-policy` workflows. The model-driven per-route gates
+(`scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review`)
+and the `gates-satisfied` aggregate that once combined them were removed in #90/#91
+— they never posted a result on any PR. The route table above is retained as the
+map of which review a change *should* get; wiring an automated enforcer back up is
+future work under the #53 epic.
 
