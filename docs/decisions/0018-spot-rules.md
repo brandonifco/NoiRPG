@@ -84,6 +84,11 @@ Details worth recording:
   convention for rounding a penalty; ADR 0007). For the printed values (−20→−10, −50→−25) the
   rounding is exact and does not bite. Light sources and Powers that offset darkness are out of
   scope (Powers are cut entirely; Light Sources is a separate rule).
+  - **House generalization (marked):** the book frames the detection halving around *complete*
+    darkness ("To detect an opponent **in complete darkness**…", p.169), but the resolver applies
+    the halving to `SemiDarkness` as well when the caller reports the opponent as detected. This is
+    a deliberate, roller-favoring generalization — the printed text does not forbid it and it yields
+    no value the book contradicts — recorded here rather than left as a silent choice.
 
 ### Firing into combat — reconciling ADR 0007 and `AdditiveModifier` — sourced
 
