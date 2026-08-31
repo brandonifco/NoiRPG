@@ -27,16 +27,39 @@ MAP="$ROOT/.github/route-map"
 
 JSON=0
 BASE=""
+ISSUE_ROUTE=""     # an explicit intent floor, e.g. --issue-route formulas
+ISSUE_NUM=""       # or --issue N, from which we read the issue's route:* label
 FILES=()
 while [ $# -gt 0 ]; do
   case "$1" in
-    --json) JSON=1; shift ;;
-    --base) BASE="${2:-}"; shift 2 ;;
+    --json)        JSON=1; shift ;;
+    --base)        BASE="${2:-}"; shift 2 ;;
+    --issue-route) ISSUE_ROUTE="${2:-}"; shift 2 ;;
+    --issue)       ISSUE_NUM="${2:-}"; shift 2 ;;
     --)     shift; while [ $# -gt 0 ]; do FILES+=("$1"); shift; done ;;
     -*)     echo "unknown option: $1" >&2; exit 2 ;;
     *)      FILES+=("$1"); shift ;;
   esac
 done
+
+# Issue-intent escalation is ASYMMETRIC: a change's declared intent may RAISE its
+# route but never lower it. The diff sees only filenames; an issue's `route:*`
+# label carries the author's knowledge that a change is riskier than it looks.
+# `--issue N` reads that label; `--issue-route R` supplies it directly.
+iprec() { case "$1" in docs) echo 1 ;; tooling) echo 2 ;; rules) echo 3 ;; formulas) echo 4 ;; architecture) echo 5 ;; *) echo 0 ;; esac; }
+if [ -n "$ISSUE_NUM" ] && [ -z "$ISSUE_ROUTE" ]; then
+  # Take the highest-precedence route:* label if the issue carries more than one.
+  while IFS= read -r r; do
+    [ -z "$r" ] && continue
+    [ "$(iprec "$r")" -gt "$(iprec "${ISSUE_ROUTE:-}")" ] && ISSUE_ROUTE="$r"
+  done < <(gh issue view "$ISSUE_NUM" --json labels \
+             --jq '.labels[].name | select(startswith("route:")) | ltrimstr("route:")' \
+             2>/dev/null || true)
+fi
+case "${ISSUE_ROUTE:-}" in
+  ""|docs|tooling|rules|formulas|architecture) ;;
+  *) echo "invalid --issue-route: $ISSUE_ROUTE (docs|tooling|rules|formulas|architecture)" >&2; exit 2 ;;
+esac
 
 if [ ${#FILES[@]} -eq 0 ]; then
   if [ -n "$BASE" ]; then
@@ -121,6 +144,18 @@ if [ "$base" = "rules" ]; then
   fi
 fi
 
+# Issue-intent floor (asymmetric): raise the route to the declared intent, never
+# lower it. `architecture` intent adds the architecture review rather than
+# replacing the base route (it composes, exactly like a changed .csproj would).
+issue_raised=0
+if [ -n "$ISSUE_ROUTE" ]; then
+  if [ "$ISSUE_ROUTE" = "architecture" ]; then
+    [ "$arch" = 0 ] && { arch=1; issue_raised=1; }
+  elif [ "$(prec "$ISSUE_ROUTE")" -gt "$(prec "$base")" ]; then
+    base="$ISSUE_ROUTE"; issue_raised=1
+  fi
+fi
+
 case "$base" in
   docs | tooling) gates="ci scope-warden" ;;
   rules)          gates="ci scope-warden rules-conformance" ;;
@@ -131,11 +166,14 @@ esac
 if [ "$JSON" = 1 ]; then
   gj=""; for x in $gates; do gj+="\"$x\","; done; gj="${gj%,}"
   fj=""; for x in "${FILES[@]}"; do [ -z "$x" ] && continue; fj+="\"$x\","; done; fj="${fj%,}"
-  printf '{"route":"%s","architecture":%s,"escalated":%s,"gates":[%s],"files":[%s]}\n' \
+  printf '{"route":"%s","architecture":%s,"escalated":%s,"issueRoute":%s,"issueRaised":%s,"gates":[%s],"files":[%s]}\n' \
     "$base" "$([ "$arch" = 1 ] && echo true || echo false)" \
-    "$([ "$escalated" = 1 ] && echo true || echo false)" "$gj" "$fj"
+    "$([ "$escalated" = 1 ] && echo true || echo false)" \
+    "$([ -n "$ISSUE_ROUTE" ] && echo "\"$ISSUE_ROUTE\"" || echo null)" \
+    "$([ "$issue_raised" = 1 ] && echo true || echo false)" "$gj" "$fj"
 else
   suffix=""; [ "$arch" = 1 ] && suffix=" (+architecture)"; [ "$escalated" = 1 ] && suffix="$suffix (content-escalated)"
+  [ "$issue_raised" = 1 ] && suffix="$suffix (issue-intent: route:$ISSUE_ROUTE)"
   echo "route: ${base}${suffix}"
   echo "gates: ${gates// /, }"
 fi
