@@ -86,18 +86,23 @@ If you discover unrelated work, file a separate Issue. Do not enlarge the curren
 
 ## State of the code
 
-`Brp.Core` holds Layer 0, complete: seeded dice (`Dice/`, `Randomness/`), the five-grade
-resolution kernel (`Resolution/`), the modifier pipeline (`Modifiers/`), and resistance
-and opposed rolls (`Contests/`). Layer 1 (`Abilities/`) adds data-defined
-characteristics, characteristic rolls, and live derived values. `Brp.Data` supplies
-the ability ruleset JSON. The solution has 1,972 tests, including printed tables
-reproduced cell by cell.
+The BRP engine is built through Layer 4. `Brp.Core` (Layers 0–2) holds seeded dice
+(`Dice/`, `Randomness/`), the five-grade resolution kernel (`Resolution/`), the modifier
+pipeline (`Modifiers/`), resistance and opposed rolls (`Contests/`), data-defined
+characteristics with live-recomputing derived values (`Abilities/`), and the skill system
+(`Skills/`). `Brp.Rules` (Layers 3–4) adds characters — point-buy creation and tick-on-use
+experience — and combat: range bands, the combat round, the attack/defense matrix, gear,
+damage/wounds, and situational spot rules (`Combat/`). `Brp.Data` supplies the ruleset JSON.
+The solution has 2,013 tests, including printed tables reproduced cell by cell.
 
 `tools/Brp.Cli` is the `brp` command line over that kernel — one command, `roll`, which
 resolves a check and prints its whole derivation. It has its own `AGENTS.md`.
 
-Nothing above Layer 1 exists yet. See `engine-implementation-plan.md` §3 for the layer
-map — the *structure* there is sound even though its formulas are not.
+**What's left** — see [`ROADMAP.md`](ROADMAP.md) for the ordered plan. Layer 4 is nearly
+complete: injury/environmental spot rules (#96) and the fumble tables (#97) remain. Layer 5 —
+the noir game layer (cases, clue-routing, interrogation) — has not started (epic #98).
+`engine-implementation-plan.md` §3 has the layer map — the *structure* there is sound even
+though its formulas are not.
 
 ## Commands
 
