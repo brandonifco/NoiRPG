@@ -1,0 +1,14 @@
+{
+  "name": "NoiRPG Gate Poster",
+  "url": "https://github.com/brandonifco/NoiRPG",
+  "hook_attributes": {
+    "active": false
+  },
+  "public": false,
+  "default_permissions": {
+    "checks": "write",
+    "contents": "read",
+    "pull_requests": "write"
+  },
+  "default_events": []
+}
