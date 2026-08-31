@@ -29,50 +29,66 @@ NoiRPG is an **engine** (`Brp.*`, a faithful Basic Roleplaying rules engine) wit
 
 ---
 
-## You are here (2026-08-31)
+## You are here
 
-**Engine — Layers 0–3 complete, Layer 4 nearly complete.**
+**Engine — Layers 0–3 complete; Layer 4 scaffold complete but with an objective completeness backlog.**
 
 | Layer | What | Status |
 |---|---|---|
 | 0 | dice / entropy / resolution kernel / modifier pipeline | ✅ done |
 | 1 | abilities: characteristics-as-data, rolls, recomputing derived values | ✅ done |
-| 2 | skills: definitions, specialties, registry | ✅ done |
+| 2 | skills: definitions, specialties, registry (category-bonus *application* is a gap — #110) | ✅ data done |
 | 3 | characters: aggregate, point-buy, tick-on-use experience | ✅ done |
-| 4 | combat/gear/spot rules: range bands (#21), combat round (#47), attack/defense matrix (#49), gear, damage (#52), **situational spot rules (#50)** | 🚧 nearly done — see next |
-| 5 | the noir game: cases, clue-routing, interrogation | ⬜ not started |
+| 4 | combat: range bands (#21), combat round (#47), attack/defense matrix (#49), gear, damage (#52), spot rules (#50), injury (#96), fumble tables (#97) | 🚧 scaffold done; **completeness backlog open** — see below |
+| 5 | the noir game: cases, clue-routing, interrogation | ⬜ not started (design-led) |
+
+**A 2026-08-31 engine-completeness audit** (six parallel domain auditors vs. the book + `orc-scope-filter.md`)
+found Layers 0–1 and skill *data* complete and correct, but a real backlog of in-scope, book-derivable
+gaps — several of them mechanics the scope filter/ADRs marked **ON** that were never built. So the engine
+is **not** complete; "Layer 4 nearly done" was wrong. The backlog is objective (no playtesting) and tracked
+below.
 
 **Game — Phase 0/1 partially done on paper** (interrogation design, a paper case, the case
-schema, advancement sim), **Phase 2+ (game code) not started.**
+schema, advancement sim), **Phase 2+ (game code) not started, and design-led (needs a human, not agents).**
 
 ---
 
 ## What to build next (ordered)
 
-### 1. Finish Layer 4 (engine — small, well-specified, `ready` now)
-- **[#96] Injury/environmental spot rules** — falling, poison + antidotes, disease ladder. The
-  sibling of #50 (damage/drain, not roll modifiers). Builds on damage #52. `ready`.
-- **[#97] Fumble tables** — the printed fumble-results table as data + resolver; #10/#49/#50 all
-  reference it. `ready`.
+### 1. Complete the engine (objective, book-derivable — no playtesting; the audit's backlog)
 
-Either can be picked up cold by the **engine team** (engine-dev implements; rules-extractor,
-rules-conformance, scope-warden verify) — the same workflow that shipped #50.
+All of these are ideal team work (engine-dev implements; rules-extractor / rules-conformance /
+scope-warden verify — the workflow that shipped #50/#96/#97).
 
-### 2. Start Layer 5 — the game (the priority; `needs-design`)
+**🔴 High** — the four that stand between here and a whole injure→heal→advance engine:
+- **[#110] Skill category bonus** applied in the engine (ADR 0006 mandates it; today it lives only in a Python tool, so player-built characters silently lack it).
+- **[#111] Major Wounds effect** + a damage amount on `Wound` (only the *threshold* exists).
+- **[#112] Hit locations** — formally decided ON (#4), only string scaffolding exists.
+- **[#109] Healing / recovery** — First Aid, natural healing (flat 1D3/week), characteristic restoration.
+
+**🟡 Medium:**
+- **[#113]** special-damage *effects* (crushing stun, impaling lodged) + Fighting Defensively.
+- **[#114]** complimentary/augment skills (+1/5).
+- **[#115]** advancement: Research (self-study) + the default-+3 gain option.
+
+**🟢 Low-Med:**
+- **[#116]** Ch 8 world cluster — equipment quality, gear↔skill, wealth, item HP, vehicles, drugs.
+
+### 2. Then Layer 5 — the game (design-led; the owner drives, agents support)
 - **[#98] Epic: the noir game layer (`Noir.Rules` + `Noir.Scenario`)** — case schema→code, the
   Three Doors clue-routing engine, narrative-state junction budget, and the **interrogation
   minigame**.
 
 > **Read this before choosing.** `development-plan.md` is blunt: *"if interrogations are fun, the
-> game works; if not, nothing else rescues it."* The engine is the well-understood part and it is
-> nearly done; the game's three original systems (clue routing, narrative state, interrogation)
-> are the real risk and the actual product. **#98 is the highest-value frontier.** Its first
-> sub-issue is to confirm the Phase-1 paper gate (interrogation is fun on paper) before committing
-> to heavy code — the assets to judge that already exist in the repo.
+> game works; if not, nothing else rescues it."* The engine is the well-understood, objective part;
+> the game's three original systems (clue routing, narrative state, interrogation) are the real risk
+> and the actual product — and they are **design work that needs a human, not agents** (the #98
+> entry point #101 is a paper playtest only a person can judge). Its sub-issues are decomposed under
+> #98 (#101–#105).
 
-**Recommended sequence:** clear #96 and #97 to close out the engine (fast, low-risk, keeps the
-combat surface complete), then commit the team to **#98**, decomposing it into `blocked_by`
-sub-issues as `development-plan.md` Phase 1→2 describes.
+**Recommended sequence:** finish the engine backlog above (the team, in priority order — start with
+the 🔴 items), which is objective and closable cold; the Layer-5 game (#98) advances when the owner
+runs the Phase-1 playtest and drives the design.
 
 ---
 
