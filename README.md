@@ -41,7 +41,15 @@ in Issues. Neither is duplicated here.
 
 ## Status
 
-Phase 1 validation underway alongside engine Layer 0, which is complete (dice, resolution kernel, modifier pipeline, resistance and opposed rolls; ~890 tests). Phase 0 decisions locked — see the development plan). Decisions made so far: modern-day era, player-created protagonist via point-buy with background packages, open city structured as map nodes with multiple concurrent intersecting cases, junction-only case decay, pre-seeded rolls, tick-on-use advancement, commercial release intent. Platform and engine undecided until the vertical slice.
+The BRP engine is built through Layer 4 (dice and resolution kernel, abilities, skills,
+characters, and combat), with an objective completeness backlog; Layer 5 — the noir game —
+has not started and is design-led. See [`ROADMAP.md`](ROADMAP.md) for the ordered plan and
+GitHub Issues for live status (this section states no counts or per-issue state, which only
+go stale). Phase 0 decisions are locked — see the development plan. Decisions made so far:
+modern-day era, player-created protagonist via point-buy with background packages, open city
+structured as map nodes with multiple concurrent intersecting cases, junction-only case decay,
+pre-seeded rolls, tick-on-use advancement, commercial release intent. Platform and engine
+undecided until the vertical slice.
 
 ## Licensing
 

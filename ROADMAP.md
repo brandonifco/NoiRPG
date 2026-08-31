@@ -37,7 +37,7 @@ NoiRPG is an **engine** (`Brp.*`, a faithful Basic Roleplaying rules engine) wit
 |---|---|---|
 | 0 | dice / entropy / resolution kernel / modifier pipeline | ✅ done |
 | 1 | abilities: characteristics-as-data, rolls, recomputing derived values | ✅ done |
-| 2 | skills: definitions, specialties, registry (category-bonus *application* is a gap — #110) | ✅ data done |
+| 2 | skills: definitions, specialties, registry | ✅ data done |
 | 3 | characters: aggregate, point-buy, tick-on-use experience | ✅ done |
 | 4 | combat: range bands (#21), combat round (#47), attack/defense matrix (#49), gear, damage (#52), spot rules (#50), injury (#96), fumble tables (#97) | 🚧 scaffold done; **completeness backlog open** — see below |
 | 5 | the noir game: cases, clue-routing, interrogation | ⬜ not started (design-led) |
@@ -45,8 +45,8 @@ NoiRPG is an **engine** (`Brp.*`, a faithful Basic Roleplaying rules engine) wit
 **A 2026-08-31 engine-completeness audit** (six parallel domain auditors vs. the book + `orc-scope-filter.md`)
 found Layers 0–1 and skill *data* complete and correct, but a real backlog of in-scope, book-derivable
 gaps — several of them mechanics the scope filter/ADRs marked **ON** that were never built. So the engine
-is **not** complete; "Layer 4 nearly done" was wrong. The backlog is objective (no playtesting) and tracked
-below.
+is **not** complete; "Layer 4 nearly done" was wrong. The backlog is objective (no playtesting); its live
+contents live on GitHub (see below), not in this file.
 
 **Game — Phase 0/1 partially done on paper** (interrogation design, a paper case, the case
 schema, advancement sim), **Phase 2+ (game code) not started, and design-led (needs a human, not agents).**
@@ -55,40 +55,41 @@ schema, advancement sim), **Phase 2+ (game code) not started, and design-led (ne
 
 ## What to build next (ordered)
 
+Two bodies of work remain, and they differ in *kind* — one is objective and closable
+cold, the other is design-led. This section owns the **ordering and the reasons**;
+GitHub owns the live list of what is open. (This file used to enumerate specific
+issues as "still to build" and drifted the moment they merged — don't reintroduce
+that. State lives in the issue tracker; meaning lives here.)
+
 ### 1. Complete the engine (objective, book-derivable — no playtesting; the audit's backlog)
 
-All of these are ideal team work (engine-dev implements; rules-extractor / rules-conformance /
-scope-warden verify — the workflow that shipped #50/#96/#97).
+This is ideal team work: engine-dev implements; rules-extractor / rules-conformance /
+scope-warden verify. It needs no playtesting — where the book prints a table, that
+table is the authority.
 
-**🔴 High** — the four that stand between here and a whole injure→heal→advance engine:
-- **[#110] Skill category bonus** applied in the engine (ADR 0006 mandates it; today it lives only in a Python tool, so player-built characters silently lack it).
-- **[#111] Major Wounds effect** + a damage amount on `Wound` (only the *threshold* exists).
-- **[#112] Hit locations** — formally decided ON (#4), only string scaffolding exists.
-- **[#109] Healing / recovery** — First Aid, natural healing (flat 1D3/week), characteristic restoration.
-
-**🟡 Medium:**
-- **[#113]** special-damage *effects* (crushing stun, impaling lodged) + Fighting Defensively.
-- **[#114]** complimentary/augment skills (+1/5).
-- **[#115]** advancement: Research (self-study) + the default-+3 gain option.
-
-**🟢 Low-Med:**
-- **[#116]** Ch 8 world cluster — equipment quality, gear↔skill, wealth, item HP, vehicles, drugs.
+**The live backlog is on GitHub, not here:** the open `feature` issues labelled
+`rules` / `data`. `tools/ready-issues.sh --ready` selects the next dispatchable one.
+Work it highest-value-first — finish the injure → heal → advance spine (hit locations
+and the remaining combat-completeness and advancement mechanics) before the lower-value
+Ch 8 world cluster (equipment quality, gear↔skill, wealth, item HP, vehicles, drugs).
+The issue labels and `ready-issues.sh` carry the per-item detail and current status.
 
 ### 2. Then Layer 5 — the game (design-led; the owner drives, agents support)
-- **[#98] Epic: the noir game layer (`Noir.Rules` + `Noir.Scenario`)** — case schema→code, the
-  Three Doors clue-routing engine, narrative-state junction budget, and the **interrogation
-  minigame**.
 
-> **Read this before choosing.** `development-plan.md` is blunt: *"if interrogations are fun, the
-> game works; if not, nothing else rescues it."* The engine is the well-understood, objective part;
-> the game's three original systems (clue routing, narrative state, interrogation) are the real risk
-> and the actual product — and they are **design work that needs a human, not agents** (the #98
-> entry point #101 is a paper playtest only a person can judge). Its sub-issues are decomposed under
-> #98 (#101–#105).
+The noir game layer (`Noir.Rules` + `Noir.Scenario`) — case schema → code, the Three
+Doors clue-routing engine, the narrative-state junction budget, and the **interrogation
+minigame** — is the real risk and the actual product.
 
-**Recommended sequence:** finish the engine backlog above (the team, in priority order — start with
-the 🔴 items), which is objective and closable cold; the Layer-5 game (#98) advances when the owner
-runs the Phase-1 playtest and drives the design.
+> **Read this before choosing.** `development-plan.md` is blunt: *"if interrogations are
+> fun, the game works; if not, nothing else rescues it."* The engine is the
+> well-understood, objective part; the game's three original systems (clue routing,
+> narrative state, interrogation) are **design work that needs a human, not agents** —
+> their entry point is a paper playtest only a person can judge. The epic and its
+> sub-issues live on GitHub (labelled `scenario` / `noir`, and `needs-design` where a
+> human gate applies).
+
+**Recommended sequence:** finish the engine backlog first (objective, closable cold);
+the Layer-5 game advances when the owner runs the Phase-1 playtest and drives the design.
 
 ---
 
