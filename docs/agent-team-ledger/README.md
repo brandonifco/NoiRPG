@@ -14,8 +14,27 @@ instrumented tasks would transform C2."* This ledger is that log.
 - [`jobs.csv`](jobs.csv) — one row per **agent job** (a single subagent dispatch).
 - [`findings.csv`](findings.csv) — one row per **finding** a verification stage raised, with
   independent validation and primary-source location. Serves the paper's blocker #3 and its Table 4.
+- [`human-minutes.csv`](human-minutes.csv) — one row per **merged unit**: the wall-clock human
+  minutes and intervention count it cost. This is the headline optimization target and lives in no
+  API — it must be logged by hand. Seeded header-only; **never add a fabricated row.**
 - [`layers.md`](layers.md) — per-layer rollups: build/verify/rework shares plus the §6.5 net-value
   metric skeleton.
+
+## Appending a row
+
+Do not hand-edit the CSVs — one command keeps the columns aligned and the unmeasured fields set to
+`NI` (never `0`):
+
+```bash
+tools/ledger-log.sh job   --layer 4 --issue 112 --pr 130 --seq 1 --phase build \
+                          --agent-role engine-dev-implement --model sonnet --effort medium \
+                          --tokens-total 210000 --tests-after 2260 --outcome "…"
+tools/ledger-log.sh human --issue 112 --pr 130 --merge-sha <sha> --interventions 0 \
+                          --note "one review pass, merged clean"
+```
+
+`ledger-log.sh human` refuses an all-`NI` row, so the file never fills with invented measurements.
+Any field name is a `--kebab-case` flag of its column; omitted fields default to `NI`.
 
 ## Unit of record
 
