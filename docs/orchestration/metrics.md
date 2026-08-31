@@ -68,12 +68,12 @@ first-try, so an aged-out window can't inflate the success count.
 |---|---|---|
 | Gate `failure` counts | `check_run` conclusions on each merged PR's head commit, for `scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review` | **exact when present** |
 
-These check-runs are posted by the orchestrator's gate-poster App (see
-[`github-app.md`](github-app.md), issue #65) via [`tools/gate-check.py`](../../tools/gate-check.py).
-Until that App is live and posting, no gate check-runs exist on PR heads, so this section
-legitimately reports **0 catches** and says so explicitly — it is *not tracked yet*, not
-a claim that verification caught nothing. (The ledger's `findings.csv` records the catches
-the conformance stages actually made; see Cost below.)
+These check-runs were posted by the gate-poster App, which was **removed in #90/#91**
+along with the rest of the verification-gate system (it never posted a result). No gate
+check-runs are produced on PR heads, so this section reports **0 catches** — read it as
+*not instrumented*, never as a claim that verification caught nothing. The ledger's
+`findings.csv` records the catches the conformance stages actually made; see Cost below.
+`orchestration-metrics.py` still queries for these names and degrades to the same note.
 
 ### Cost (agent tokens)
 
