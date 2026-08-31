@@ -38,3 +38,4 @@ supersedes it — the original is not edited or deleted.
 | [0013](0013-gear-definitions.md) | Layer 4 keystone — weapon/armor definition schema and the hand-picked subset | Accepted |
 | [0014](0014-range-bands.md) | Missile/firearm range bands: the four bands, the long-range override, and reconciling three treatments of range | Accepted |
 | [0015](0015-combat-round.md) | Combat round: three phases, DEX-rank ordering, and the weapon-type tiebreak | Accepted |
+| [0016](0016-attack-defense-matrix.md) | Attack/defense matrix: data-driven cells, the undefended case, and the deferred -30% | Accepted |
