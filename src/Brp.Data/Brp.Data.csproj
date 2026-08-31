@@ -24,6 +24,7 @@
     <EmbeddedResource Include="attack-defense-matrix-ruleset.json" />
     <EmbeddedResource Include="damage-ruleset.json" />
     <EmbeddedResource Include="spot-rule-ruleset.json" />
+    <EmbeddedResource Include="injury-ruleset.json" />
   </ItemGroup>
 
 </Project>

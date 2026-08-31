@@ -219,6 +219,40 @@ public static class DamageResolver
     }
 
     /// <summary>
+    /// Applies a flat, already-computed hit-point loss to <paramref name="target"/>, recording it
+    /// as a <see cref="Wound"/> and returning the resulting condition -- the non-weapon damage
+    /// entry point the injury spot rules (#96) use for falling and poison, where the loss comes
+    /// from a distance/SIZ or POT calculation rather than a weapon
+    /// <see cref="DamageRoll"/>. Mirrors the private <see cref="Apply"/> that the weapon-damage
+    /// overload of <see cref="ApplyDamage(AbilitySet, WoundTrack, DamageRoll, DamageRuleset, string)"/>
+    /// reaches, so hit-point tracking (Ch 2, p.13: HP may go negative) and condition classification
+    /// (Ch 2, p.13; Ch 6, p.156) are identical -- there is no fabricated weapon <see cref="DamageRoll"/>.
+    /// </summary>
+    /// <param name="target">The character taking the damage.</param>
+    /// <param name="wounds">The wound track the blow is recorded in.</param>
+    /// <param name="hitPointDamage">
+    /// The hit points to remove, already fully computed by the caller (falling armor/SIZ/force,
+    /// poison POT full-or-half). Must be non-negative; the resolver does not re-clamp or re-mitigate.
+    /// </param>
+    /// <param name="ruleset">Supplies the unconscious/dead thresholds for condition classification.</param>
+    /// <param name="woundDescription">A free-text note describing the injury, for piece E to heal.</param>
+    public static DamageApplicationResult ApplyDamage(
+        AbilitySet target,
+        WoundTrack wounds,
+        int hitPointDamage,
+        DamageRuleset ruleset,
+        string woundDescription)
+    {
+        ArgumentNullException.ThrowIfNull(target);
+        ArgumentNullException.ThrowIfNull(wounds);
+        ArgumentNullException.ThrowIfNull(ruleset);
+        ArgumentOutOfRangeException.ThrowIfNegative(hitPointDamage);
+        ArgumentException.ThrowIfNullOrWhiteSpace(woundDescription);
+
+        return Apply(target, wounds, hitPointDamage, ruleset, new Wound(woundDescription));
+    }
+
+    /// <summary>
     /// Resolves a declared knockout attack (Ch 7: Spot Rules, "Knockout Attacks", p.174). The
     /// caller is responsible for the parts of that spot rule outside this piece's scope: that
     /// the attack was declared at the start of the round, rolled as a Difficult attack against a
@@ -287,7 +321,8 @@ public static class DamageResolver
 
     /// <summary>
     /// Applies a knockout attack's resolved damage to <paramref name="target"/>'s hit points,
-    /// mirroring <see cref="ApplyDamage"/> for the knockout-specific outcome shape. Records no
+    /// mirroring <see cref="ApplyDamage(AbilitySet, WoundTrack, DamageRoll, DamageRuleset, string)"/>
+    /// for the knockout-specific outcome shape. Records no
     /// wound if the attack missed.
     /// </summary>
     public static DamageApplicationResult ApplyKnockoutAttack(
