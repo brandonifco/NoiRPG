@@ -34,9 +34,11 @@ mkfield() { # name  datatype  [comma,options]
   echo "  + field: $name"
 }
 
-# Workflow states from #60; Status is GitHub's built-in, so we add "Stage" to avoid
-# fighting it. Verification Route mirrors tools/route.sh; Agent Role mirrors the roster.
-mkfield "Stage"                       SINGLE_SELECT "Backlog,Specified,Ready,Implementing,PR/Verifying,Merged"
+# Workflow state lives in GitHub's built-in Status field (Todo/In Progress/Done),
+# which the default project workflows maintain automatically (item closed / PR
+# merged -> Done). We do NOT add a custom "Stage" field — a second workflow field
+# the automations would not touch. Verification Route mirrors tools/route.sh;
+# Agent Role mirrors the roster.
 mkfield "Layer"                       SINGLE_SELECT "L0,L1,L2,L3,L4,Orchestration"
 mkfield "Subsystem"                   TEXT
 mkfield "Risk"                        SINGLE_SELECT "low,medium,high"
@@ -53,11 +55,28 @@ for n in 53 54 55 56 57 58 59 60 61 62 63 65 73; do
   fi
 done
 
+# Bootstrap Status. The default "Item closed -> Done" workflow fires on the close
+# EVENT and so does not retroactively touch items added while already closed; set
+# those to Done here. Open items keep the "Item added -> Todo" default.
+echo "setting Status for already-closed items:"
+pid="$(gh project view "$num" --owner "$OWNER" --format json --jq .id)"
+sid="$(gh project field-list "$num" --owner "$OWNER" --format json --jq '.fields[] | select(.name=="Status") | .id')"
+done_opt="$(gh project field-list "$num" --owner "$OWNER" --format json \
+  --jq '.fields[] | select(.name=="Status") | .options[] | select(.name=="Done") | .id')"
+gh project item-list "$num" --owner "$OWNER" --format json \
+  --jq '.items[] | [.id, (.content.number|tostring)] | @tsv' | while IFS=$'\t' read -r iid inum; do
+  [ -z "$inum" ] && continue
+  if [ "$(gh issue view "$inum" --json state --jq .state 2>/dev/null)" = "CLOSED" ]; then
+    gh project item-edit --id "$iid" --project-id "$pid" --field-id "$sid" --single-select-option-id "$done_opt" >/dev/null 2>&1 \
+      && echo "  #$inum -> Done"
+  fi
+done
+
 echo
 echo "Project: https://github.com/users/$OWNER/projects/$num"
 echo
-echo "Finish in the UI (Project -> ... -> Workflows), enabling the built-in automations:"
-echo "  - Auto-add to project: repo items with label 'orchestration'."
-echo "  - Item closed        -> set Stage = Merged."
-echo "  - Item reopened      -> set Stage = Implementing."
-echo "  - Pull request merged -> set Stage = Merged."
+echo "Already-enabled default workflows maintain Status going forward (item closed /"
+echo "PR merged -> Done; item added -> Todo). One optional UI-only step remains, since"
+echo "the Projects v2 API cannot configure workflows:"
+echo "  - Project -> ... -> Workflows -> 'Auto-add to project': repo items with label"
+echo "    'orchestration' (sub-issues of the epic already auto-add)."
