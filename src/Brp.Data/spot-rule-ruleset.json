@@ -1,0 +1,17 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 7: Spot Rules",
+    "notes": "Percentage values for the in-scope situational combat spot rules. Grade-only rules (Ambushes, Backstabs, Cover, firing while engaged) contribute Easy/Difficult grades whose multipliers are data on ModifierPolicy, so they carry no number here. See docs/decisions/0018-spot-rules.md."
+  },
+  "firingIntoCombatModifier": -20,
+  "firingIntoCombatSource": "Ch 7, Firing Into Combat (p.173): 'Firing a missile weapon into combat is modified by -20%.'",
+
+  "darknessSemiDarknessModifier": -20,
+  "darknessPitchBlackModifier": -50,
+  "darknessSource": "Ch 7, Darkness (p.169) directs to the Ch 5 Situational Modifiers 'Environment' row (p.133): darkness/semi-darkness -20%, pitch black -50%.",
+
+  "darknessDetectionHalvingNumerator": 1,
+  "darknessDetectionHalvingDenominator": 2,
+  "darknessDetectionHalvingSource": "Ch 7, Darkness (p.169): 'To detect an opponent in complete darkness, you must make a successful Difficult Sense or Listen roll. If successful, reduce the darkness modifier by half.'"
+}
