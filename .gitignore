@@ -14,6 +14,10 @@ artifacts/
 TestResults/
 *.trx
 
+# Python (tools/*.py, .github/workflows/*.py)
+__pycache__/
+*.py[cod]
+
 # Editors
 .vs/
 .vscode/
