@@ -58,9 +58,12 @@ tools/setup-project.sh
 
 `setup-project.sh` creates the project (idempotently) with these fields:
 
+Workflow state uses GitHub's **built-in `Status`** field (Todo · In Progress · Done),
+because the default project workflows maintain it automatically — a custom field
+would not be touched by them. `setup-project.sh` adds these extra fields:
+
 | Field | Type | Values |
 |---|---|---|
-| Stage | single-select | Backlog · Specified · Ready · Implementing · PR/Verifying · Merged |
 | Layer | single-select | L0–L4 · Orchestration |
 | Subsystem | text | — |
 | Risk | single-select | low · medium · high |
@@ -68,16 +71,16 @@ tools/setup-project.sh
 | Agent Role | single-select | engine-dev · case-author · scope-warden · rules-conformance · design-critic · rules-extractor · codex |
 | Source-Conformance Required | single-select | yes · no |
 
-and adds the epic plus its children.
+then adds the epic plus its children and sets `Status = Done` on the already-closed
+ones (the close-event workflow does not fire retroactively).
 
-### Automations (enable once, in the Project UI → Workflows)
+### Automations
 
-Built-in Project automations finish the loop without code:
+The default Project workflows are **already enabled** and act on `Status`, so the
+loop is maintained without code: **item closed → Done**, **pull request merged →
+Done**, **item added → Todo**, and **sub-issues auto-added** to the board.
 
-- **Auto-add to project** — repo issues/PRs labelled `orchestration`.
-- **Item closed** → Stage = Merged.
-- **Item reopened** → Stage = Implementing.
-- **Pull request merged** → Stage = Merged.
-
-`Backlog → Specified → Ready → Implementing → PR/Verifying → Merged` then tracks work
-without manual bookkeeping, and `BLOCKED` comes from the native dependency state above.
+One workflow the Projects v2 API cannot configure (UI-only, and optional): **Project
+→ ⋯ → Workflows → Auto-add to project**, filtered to repo items labelled
+`orchestration` — needed only for orchestration issues that are not sub-issues of the
+epic (those already auto-add). `BLOCKED` comes from the native dependency state above.
