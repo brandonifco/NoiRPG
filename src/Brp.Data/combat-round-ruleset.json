@@ -1,0 +1,32 @@
+{
+  "combatRoundPhases": [
+    "Statements",
+    "Action",
+    "Resolution"
+  ],
+  "dexRankDerivedFromCharacteristic": "DEX",
+  "dexRankOrderingDirection": "descending",
+  "weaponTypeTiebreakOrder": [
+    "missile",
+    "long",
+    "medium",
+    "short"
+  ],
+  "movementTiers": [
+    {
+      "minMeters": 6,
+      "maxMeters": 15,
+      "dexRankFractionNumerator": 1,
+      "dexRankFractionDenominator": 2
+    },
+    {
+      "minMeters": 16,
+      "maxMeters": 29,
+      "dexRankFractionNumerator": 1,
+      "dexRankFractionDenominator": 4
+    }
+  ],
+  "drawWeaponDexRankPenalty": 5,
+  "multipleActionDexRankPenalty": 5,
+  "dexRankFloor": 0
+}
