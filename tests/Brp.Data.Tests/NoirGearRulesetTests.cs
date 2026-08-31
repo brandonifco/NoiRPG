@@ -151,6 +151,51 @@ public class NoirGearRulesetTests
         Assert.Equal("1 or 2", firearm.AmmoCapacity);
     }
 
+    public static TheoryData<string, SpecialDamageType> SpecialDamageTypesByWeapon => new()
+    {
+        // Ch 6, p.150: "Firearms, arrows, and other pointed weapons inflict impaling damage."
+        { "knifeButcher", SpecialDamageType.Impaling },
+        { "knifePocket", SpecialDamageType.Impaling },
+        { "knifeSwitchblade", SpecialDamageType.Impaling },
+        { "pistolDerringer", SpecialDamageType.Impaling },
+        { "pistolLight", SpecialDamageType.Impaling },
+        { "pistolMedium", SpecialDamageType.Impaling },
+        { "pistolHeavy", SpecialDamageType.Impaling },
+        { "revolverLight", SpecialDamageType.Impaling },
+        { "revolverMedium", SpecialDamageType.Impaling },
+        { "revolverHeavy", SpecialDamageType.Impaling },
+        { "rifleBoltAction", SpecialDamageType.Impaling },
+        { "rifleSniper", SpecialDamageType.Impaling },
+        { "shotgunDoubleBarreled", SpecialDamageType.Impaling },
+        { "shotgunSawedOff", SpecialDamageType.Impaling },
+        { "gunSubmachine", SpecialDamageType.Impaling },
+        // Ch 6, p.149: "Clubs, unarmed strikes, and other blunt weapons can cause crushing damage."
+        { "brassKnuckles", SpecialDamageType.Crushing },
+        { "clubHeavy", SpecialDamageType.Crushing },
+        { "clubLight", SpecialDamageType.Crushing },
+    };
+
+    [Theory]
+    [MemberData(nameof(SpecialDamageTypesByWeapon))]
+    public void Every_weapon_has_the_printed_special_damage_type(string id, SpecialDamageType expected)
+    {
+        var registry = NoirGearRuleset.Load();
+
+        var weapon = registry.WeaponById(new WeaponId(id));
+
+        Assert.Equal(expected, weapon.SpecialDamageType);
+    }
+
+    [Fact]
+    public void The_special_damage_type_table_covers_every_shipped_weapon_exactly_once()
+    {
+        var registry = NoirGearRuleset.Load();
+        var allIds = registry.Weapons.Keys.Select(id => id.Value).OrderBy(id => id, StringComparer.Ordinal).ToList();
+        var coveredIds = SpecialDamageTypesByWeapon.Select(row => (string)row[0]!).OrderBy(id => id, StringComparer.Ordinal).ToList();
+
+        Assert.Equal(allIds, coveredIds);
+    }
+
     private static void AssertIncrement(RangeIncrementDamage increment, int range, string damage)
     {
         Assert.Equal(range, increment.Range);
