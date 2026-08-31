@@ -93,18 +93,21 @@ characteristics with live-recomputing derived values (`Abilities/`), and the ski
 (`Skills/`). `Brp.Rules` (Layers 3–4) adds characters — point-buy creation and tick-on-use
 experience — and combat: range bands, the combat round, the attack/defense matrix, gear,
 damage/wounds, spot rules, injury, and fumble tables (`Combat/`). `Brp.Data` supplies the
-ruleset JSON. The solution has ~2,168 tests, including printed tables reproduced cell by cell.
+ruleset JSON. The test suite reproduces the printed tables cell by cell (`dotnet test`
+reports the live count — it is deliberately not pinned here, where it would only go stale).
 
 `tools/Brp.Cli` is the `brp` command line over that kernel — one command, `roll`, which
 resolves a check and prints its whole derivation. It has its own `AGENTS.md`.
 
 **What's left — the engine is NOT complete.** A 2026-08-31 completeness audit found Layers 0–1
 and skill *data* correct, but a real backlog of in-scope, book-derivable gaps — several marked ON
-by the scope filter/ADRs yet never built. See [`ROADMAP.md`](ROADMAP.md) for the ordered backlog;
-the high-priority ones: skill category bonus not applied in the engine (#110), Major Wounds effect
-(#111), hit locations (#112), healing/recovery (#109). Layer 5 — the noir game (cases, clue-routing,
-interrogation, #98) — has not started and is design-led. `engine-implementation-plan.md` §3 has the
-layer map — the *structure* there is sound even though its formulas are not.
+by the scope filter/ADRs yet never built. See [`ROADMAP.md`](ROADMAP.md) for the ordered *plan*
+(priority and rationale); the live backlog itself is the open `rules`/`data` feature issues —
+`tools/ready-issues.sh --ready` selects the next one. (Specific issue numbers are deliberately not
+listed here; they drift as issues merge. GitHub owns state, this file owns the invariants.) Layer 5
+— the noir game (cases, clue-routing, interrogation) — has not started and is design-led.
+`engine-implementation-plan.md` §3 has the layer map — the *structure* there is sound even though
+its formulas are not.
 
 ## Commands
 
