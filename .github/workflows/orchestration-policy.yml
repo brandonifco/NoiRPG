@@ -1,0 +1,25 @@
+name: orchestration-policy
+
+# The instant-policy tier (#61): fast, mechanical guardrails from AGENTS.md with
+# no build or restore. Complements build-and-test (BannedApiAnalyzers, tests) and
+# scope-warden. Runs in parallel with CI on every PR.
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+concurrency:
+  group: orchestration-policy-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  orchestration-policy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - uses: actions/checkout@v4
+      - name: Run policy checks
+        run: bash tools/orchestration-policy.sh
