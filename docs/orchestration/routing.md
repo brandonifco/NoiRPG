@@ -23,6 +23,12 @@ no longer an automated check.
    to `formulas` when the diff actually touches numeric tables or thresholds — so the
    expensive independent cross-check fires when a *value* could be wrong, not merely
    because a rules file was edited.
+3. **Issue-intent floor (asymmetric).** A change may declare, via its issue's
+   `route:*` label, that it is riskier than its filenames suggest. The label can only
+   *raise* the route — `max(diff-route, issue-route)` — never lower it. Pass it with
+   `tools/route.sh --issue <n>` (reads the label) or `--issue-route <route>` (supplies
+   it directly). A `route:architecture` intent *adds* the architecture review rather
+   than replacing the base route.
 
 ## Routes and required gates
 
@@ -30,8 +36,8 @@ no longer an automated check.
 |---|---|---|
 | `docs` | `*.md`, `docs/**` | `ci`, `scope-warden` |
 | `tooling` | `.github/**`, `tools/**`, `*.sln`, `global.json`, anything unmatched | `ci`, `scope-warden` |
-| `rules` | `src/Brp.Core/**`, `src/Brp.Rules/**` (ordinary implementation) | `ci`, `scope-warden`, `rules-conformance` |
-| `formulas` | `src/Brp.Data/**` ruleset JSON, **or** a `rules` change whose diff touches numeric tables/thresholds | `ci`, `scope-warden`, `rules-conformance`, `codex-conformance` |
+| `rules` | `src/Brp.Core/**`, `src/Brp.Rules/**`, `src/Brp.Data/**/*.cs` (loaders/models — ordinary implementation) | `ci`, `scope-warden`, `rules-conformance` |
+| `formulas` | `src/Brp.Data/**/*.json` (printed numeric tables), **or** a `rules` change whose diff touches numeric tables/thresholds | `ci`, `scope-warden`, `rules-conformance`, `codex-conformance` |
 | `architecture` | `**/*.csproj`, `Directory.Build.props` (project boundaries/refs) | *(above, per the other files)* **+** `architecture-review` |
 
 `formulas` is a strict superset of `rules`. `architecture` composes with whatever
@@ -69,11 +75,21 @@ tools/route.sh --base origin/main
 # Classify specific paths
 tools/route.sh src/Brp.Data/damage-ruleset.json
 
+# Raise the route to a linked issue's declared intent (never lowers it)
+tools/route.sh --base origin/main --issue 112
+tools/route.sh --issue-route formulas src/SomeLoader.cs
+
 # Machine-readable, for the orchestrator / state machine
 tools/route.sh --json --base origin/main
 ```
 
-`--json` emits `{ "route", "architecture", "escalated", "gates": [...], "files": [...] }`.
+`--json` emits
+`{ "route", "architecture", "escalated", "issueRoute", "issueRaised", "gates": [...], "files": [...] }`.
+
+`src/Brp.Data` is split by kind: the `*.json` files are the printed numeric tables
+(route `formulas` — verify every value), while the `*.cs` loaders/models route to
+`rules` and are promoted to `formulas` only when their diff actually touches numeric
+content. So editing a loader no longer triggers the expensive Codex route.
 
 ## Labels
 
@@ -83,10 +99,15 @@ The derived route can be surfaced on issues/PRs as a `route:*` label
 applied automatically by the now-removed `route-gates` workflow; apply them by hand
 (or from a new workflow) if you want them.
 
+A `route:*` label on an **issue** is also an *input*, not just a readout: it declares
+the change's intended risk, and `tools/route.sh --issue <n>` reads it as the
+asymmetric floor described above.
+
 ## Enforcement
 
-Merges into `main` are gated by `build-and-test` (required status check) plus the
-`pr-policy` and `orchestration-policy` workflows. The model-driven per-route gates
+Merges into `main` are gated by three required status checks — `build-and-test`,
+`pr-policy`, and `orchestration-policy` (strict policy: the branch must be current
+with `main`). The model-driven per-route gates
 (`scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review`)
 and the `gates-satisfied` aggregate that once combined them were removed in #90/#91
 — they never posted a result on any PR. The route table above is retained as the

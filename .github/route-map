@@ -29,8 +29,14 @@ global.json                tooling
 src/Brp.Core/**            rules
 src/Brp.Rules/**           rules
 
-# Formula / threshold data — ruleset JSON is printed numeric tables
-src/Brp.Data/**            formulas
+# Ruleset data. Split by kind so a boring loader edit doesn't trigger the
+# expensive independent cross-check:
+#   *.json — printed numeric tables/thresholds -> formulas (verify every value).
+#   *.cs   — loaders/models -> rules; content escalation still promotes a .cs
+#            change to formulas when its diff actually touches numeric content.
+# (Last matching rule wins, so the .json rule must come after the catch-all.)
+src/Brp.Data/**            rules
+src/Brp.Data/**/*.json     formulas
 
 # Architecture — project boundaries and references (last, so they win for these
 # files even under src/**). Adds architecture-review on top of normal gates.
