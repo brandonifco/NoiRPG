@@ -82,6 +82,10 @@ public sealed class CharacterBuilder
                     nameof(request));
             }
 
+            // `total` is the character's BASE rating (printed base chance + points spent), which
+            // is what CharacterSkill stores. The skill category bonus (Ch 2 pp.18-19) is NOT baked
+            // in here: it is added live by CharacterSkill/Character.EffectiveRating so it recomputes
+            // when a characteristic changes (ADR 0006 / ADR 0022). Baking it in would freeze it.
             skills[id] = new CharacterSkill(definition, total);
         }
 

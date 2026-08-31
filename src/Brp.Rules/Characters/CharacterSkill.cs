@@ -23,6 +23,25 @@ public sealed class CharacterSkill
         CurrentRating = currentRating;
     }
 
+    /// <summary>
+    /// Builds a skill from an <em>authored, already-final effective rating</em>, storing its base
+    /// rating by subtraction: base = effective - category bonus (ADR 0006, "applied by
+    /// subtraction"). Reading <see cref="EffectiveRating"/> against the same abilities then
+    /// reproduces <paramref name="effectiveRating"/> exactly -- the category bonus is not added a
+    /// second time. This is the seam Layer 5 authored packages use so that adding the engine's
+    /// category bonus does not perturb ratings that were authored as final (ADR 0022). Contrast
+    /// with the ordinary constructor, whose argument is a <em>base</em> rating the bonus is added
+    /// to.
+    /// </summary>
+    public static CharacterSkill FromEffectiveRating(
+        SkillDefinition definition, int effectiveRating, AbilitySet abilities, SkillCategoryBonusRuleset bonuses)
+    {
+        ArgumentNullException.ThrowIfNull(definition);
+        ArgumentNullException.ThrowIfNull(bonuses);
+        var baseRating = effectiveRating - bonuses.BonusFor(definition.Category, abilities);
+        return new CharacterSkill(definition, baseRating);
+    }
+
     /// <summary>The Layer 2 skill this instance resolves against.</summary>
     public SkillDefinition Definition { get; }
 
@@ -43,6 +62,33 @@ public sealed class CharacterSkill
 
     /// <summary>This skill's printed base chance, evaluated against a character's abilities.</summary>
     public Percent PrintedBaseChance(AbilitySet abilities) => Definition.BaseChanceFor(abilities);
+
+    /// <summary>
+    /// This skill's category bonus (Ch 2: Characters, "Skill Category Bonuses (Option)",
+    /// pp.18-19), read live from <paramref name="abilities"/> through
+    /// <paramref name="bonuses"/> using this skill's <see cref="SkillDefinition.Category"/>.
+    /// Recomputes on every call, so a characteristic change is reflected immediately.
+    /// </summary>
+    public int CategoryBonus(AbilitySet abilities, SkillCategoryBonusRuleset bonuses)
+    {
+        ArgumentNullException.ThrowIfNull(bonuses);
+        return bonuses.BonusFor(Definition.Category, abilities);
+    }
+
+    /// <summary>
+    /// This skill's effective rating = <see cref="CurrentRating"/> (the base rating) + its
+    /// category bonus. This is the number a skill roll resolves against; ADR 0006 mandates
+    /// effective = base + category bonus, and ADR 0022 applies it here. Because the bonus is a
+    /// live read of <paramref name="abilities"/>, the effective rating "recomputes whenever a
+    /// characteristic changes" (ADR 0006) rather than being baked in at creation.
+    /// <para>
+    /// The category bonus is <em>not</em> applied on top of an already-final authored rating:
+    /// an authored skill built through <see cref="FromEffectiveRating"/> stored its base by
+    /// subtraction, so base + bonus reproduces the authored number exactly (no double-apply).
+    /// </para>
+    /// </summary>
+    public int EffectiveRating(AbilitySet abilities, SkillCategoryBonusRuleset bonuses) =>
+        CurrentRating + CategoryBonus(abilities, bonuses);
 
     /// <summary>Sets the current rating directly. Creation-time only; advancement uses <see cref="Improve"/>.</summary>
     internal void SetRating(int rating) => CurrentRating = rating;

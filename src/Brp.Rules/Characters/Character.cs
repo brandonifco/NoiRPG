@@ -73,6 +73,20 @@ public sealed class Character
         ? skill
         : throw new KeyNotFoundException($"Character '{Name}' has no skill '{id}'.");
 
+    /// <summary>
+    /// The live effective rating of one skill: its base rating plus its category bonus (Ch 2:
+    /// Characters, "Skill Category Bonuses (Option)", pp.18-19), read against this character's
+    /// current <see cref="Abilities"/>. ADR 0006 mandates effective = base + category bonus and
+    /// ADR 0022 applies it; because the bonus is read live, this recomputes when a characteristic
+    /// changes, exactly like <see cref="MaximumHitPoints"/>.
+    /// </summary>
+    public int EffectiveRating(SkillId id, SkillCategoryBonusRuleset bonuses) =>
+        Skill(id).EffectiveRating(Abilities, bonuses);
+
+    /// <summary>This character's category bonus for one skill, read live against <see cref="Abilities"/>.</summary>
+    public int CategoryBonus(SkillId id, SkillCategoryBonusRuleset bonuses) =>
+        Skill(id).CategoryBonus(Abilities, bonuses);
+
     /// <summary>Whether this character has a given skill at all -- the "has / does not have" question (#6).</summary>
     public bool HasSkill(SkillId id) => Skills.ContainsKey(id);
 }

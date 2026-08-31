@@ -1,0 +1,20 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 2: Characters",
+    "section": "Skill Category Bonuses (Option) -- 'Skill Category Modifiers' and 'Skill Bonus Table'",
+    "pages": "18-19",
+    "notes": "Primary: +/-1% per point from 10. Secondary: +/-1% per 2 points from 10, magnitude rounded down. Negative: inverted primary (subtracted). The category-to-characteristic map is the printed 'Skill Category Modifiers' table (p.18); Mental's second secondary is EDU per docs/decisions/0006-skill-bonus-system.md. Applied to the engine by docs/decisions/0022-skill-category-bonus-application.md; book-verified against tools/skill_bonus.py."
+  },
+  "neutralCharacteristicValue": 10,
+  "primaryPointsPerModifier": 1,
+  "secondaryPointsPerModifier": 2,
+  "categories": [
+    { "category": "Combat", "primary": "DEX", "secondary": ["INT", "STR"], "negative": [] },
+    { "category": "Communication", "primary": "INT", "secondary": ["POW", "CHA"], "negative": [] },
+    { "category": "Manipulation", "primary": "DEX", "secondary": ["INT", "STR"], "negative": [] },
+    { "category": "Mental", "primary": "INT", "secondary": ["POW", "EDU"], "negative": [] },
+    { "category": "Perception", "primary": "INT", "secondary": ["POW", "CON"], "negative": [] },
+    { "category": "Physical", "primary": "DEX", "secondary": ["STR", "CON"], "negative": ["SIZ"] }
+  ]
+}
