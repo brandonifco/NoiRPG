@@ -22,6 +22,7 @@
     <EmbeddedResource Include="range-band-ruleset.json" />
     <EmbeddedResource Include="combat-round-ruleset.json" />
     <EmbeddedResource Include="attack-defense-matrix-ruleset.json" />
+    <EmbeddedResource Include="damage-ruleset.json" />
   </ItemGroup>
 
 </Project>

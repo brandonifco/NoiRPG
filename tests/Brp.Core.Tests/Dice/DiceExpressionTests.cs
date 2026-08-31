@@ -350,4 +350,40 @@ public class DiceExpressionTests
         var expression = DiceExpression.Parse("1D6");
         Assert.Throws<ArgumentNullException>(() => expression.Roll(null!));
     }
+
+    // Ch 6: Combat, "Critical Success" (p.146): "the maximum possible damage for the weapon
+    // used (6 for 1D6, 9 for 1D8+1, etc.)" -- the book's own two worked examples, plus enough
+    // additional notation shapes to pin the general min/max arithmetic (multi-die, multi-term,
+    // and negative-signed terms).
+    public static TheoryData<string, int, int> MaximumAndMinimumPossible => new()
+    {
+        { "1D6", 1, 6 }, // book example: max 6 for 1D6
+        { "1D8+1", 2, 9 }, // book example: max 9 for 1D8+1
+        { "2D8", 2, 16 },
+        { "1D10+2", 3, 12 },
+        { "2D6+4", 6, 16 },
+        { "1D10+1D4", 2, 14 },
+        { "1D6-2", -1, 4 }, // pre-floor: MinimumPossible is not the Roll()-floored value
+    };
+
+    [Theory]
+    [MemberData(nameof(MaximumAndMinimumPossible))]
+    public void MaximumPossible_and_MinimumPossible_match_the_expression_bounds(string notation, int min, int max)
+    {
+        var expression = DiceExpression.Parse(notation);
+
+        Assert.Equal(min, expression.MinimumPossible());
+        Assert.Equal(max, expression.MaximumPossible());
+    }
+
+    [Theory]
+    [InlineData("1D8+DB")]
+    [InlineData("DB/2")]
+    public void MaximumPossible_and_MinimumPossible_reject_damage_bonus_terms(string notation)
+    {
+        var expression = DiceExpression.Parse(notation);
+
+        Assert.Throws<NotSupportedException>(() => expression.MaximumPossible());
+        Assert.Throws<NotSupportedException>(() => expression.MinimumPossible());
+    }
 }

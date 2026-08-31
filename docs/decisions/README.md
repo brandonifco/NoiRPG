@@ -39,3 +39,4 @@ supersedes it — the original is not edited or deleted.
 | [0014](0014-range-bands.md) | Missile/firearm range bands: the four bands, the long-range override, and reconciling three treatments of range | Accepted |
 | [0015](0015-combat-round.md) | Combat round: three phases, DEX-rank ordering, and the weapon-type tiebreak | Accepted |
 | [0016](0016-attack-defense-matrix.md) | Attack/defense matrix: data-driven cells, the undefended case, and the deferred -30% | Accepted |
+| [0017](0017-damage.md) | Damage: normal/special/critical arithmetic, hit-point conditions, and knockout attacks | Accepted |

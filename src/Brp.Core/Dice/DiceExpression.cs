@@ -108,6 +108,30 @@ public sealed class DiceExpression
         return new DiceRoll(total, rawTotal, results);
     }
 
+    /// <summary>
+    /// The highest total this expression can produce, with no entropy consumed -- e.g. Ch 6:
+    /// Combat, "Critical Success" (p.146): "the maximum possible damage for the weapon used
+    /// (6 for 1D6, 9 for 1D8+1, etc.)". Dice terms contribute their highest face when positively
+    /// signed and their lowest (1) when negatively signed, since a negative term's least-negative
+    /// contribution to the total is what a die of 1 gives it.
+    /// </summary>
+    /// <exception cref="NotSupportedException">
+    /// The expression contains a <c>db</c> or half-<c>db</c> term. Weapon damage notation never
+    /// embeds these (the damage bonus is rolled and added separately -- Ch 6, p.147 footnote
+    /// **), so this is a caller-misuse guard rather than a rule this type needs to model.
+    /// </exception>
+    public int MaximumPossible() => _terms.Sum(term => term.MaximumPossible());
+
+    /// <summary>
+    /// The lowest total this expression can produce (before the zero floor <see cref="Roll"/>
+    /// applies to a rolled total), with no entropy consumed -- e.g. Ch 7: Spot Rules, "Knockout
+    /// Attacks" (p.174): "the target is dealt the minimum damage for the weapon."
+    /// </summary>
+    /// <exception cref="NotSupportedException">
+    /// The expression contains a <c>db</c> or half-<c>db</c> term. See <see cref="MaximumPossible"/>.
+    /// </exception>
+    public int MinimumPossible() => _terms.Sum(term => term.MinimumPossible());
+
     private static bool TryParseCore(string? notation, out DiceExpression? expression, out string error)
     {
         expression = null;
@@ -314,6 +338,22 @@ public sealed class DiceExpression
                     throw new InvalidOperationException($"Unknown term kind {Kind}.");
             }
         }
+
+        public int MaximumPossible() => Kind switch
+        {
+            TermKind.Dice => Sign > 0 ? Sign * Count * Sides : Sign * Count,
+            TermKind.Constant => Sign * Constant,
+            _ => throw new NotSupportedException(
+                $"'{Bare}' has no context-free maximum -- damage-bonus terms are rolled and added separately."),
+        };
+
+        public int MinimumPossible() => Kind switch
+        {
+            TermKind.Dice => Sign > 0 ? Sign * Count : Sign * Count * Sides,
+            TermKind.Constant => Sign * Constant,
+            _ => throw new NotSupportedException(
+                $"'{Bare}' has no context-free minimum -- damage-bonus terms are rolled and added separately."),
+        };
 
         private static (int RawTotal, IReadOnlyList<int> Faces) RollDamageBonus(
             DiceExpression? damageBonus, IEntropySource entropy)
