@@ -1,0 +1,74 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 6: Combat",
+    "notes": "The four printed D100 fumble consequence tables: Melee Weapon Attack Fumbles (p.148), Melee Weapon Parry Fumbles (p.148), Missile Weapon Attack Fumbles (p.148), and Natural Weapon Attack and Parry Fumbles (p.149). A fumble (SuccessLevel.Fumble, kernel #10) forces a roll on the relevant table (Ch 6, p.146). Weapon malfunctions are a separate, out-of-scope weapon-data concern. A percentile roll of 00 is read as 100. See docs/decisions/0020-fumble-tables.md."
+  },
+  "tables": {
+    "MeleeAttack": {
+      "page": "148",
+      "rows": [
+        { "minRoll": 1, "maxRoll": 15, "kind": "LoseNextCombatRound", "effect": "Lose the next combat round; effectively helpless." },
+        { "minRoll": 16, "maxRoll": 25, "kind": "LoseMultipleCombatRounds", "amount": "1D3", "effect": "Lose the next 1D3 combat rounds; effectively helpless." },
+        { "minRoll": 26, "maxRoll": 40, "kind": "FallProne", "effect": "Fall prone." },
+        { "minRoll": 41, "maxRoll": 50, "kind": "DropWeapon", "effect": "Drop the weapon being used." },
+        { "minRoll": 51, "maxRoll": 60, "kind": "ThrowWeapon", "amount": "1D10", "effect": "Throw weapon 1D10 meters away." },
+        { "minRoll": 61, "maxRoll": 65, "kind": "LoseWeaponHitPoints", "amount": "1D10", "effect": "Lose 1D10 points of weapon's hit points." },
+        { "minRoll": 66, "maxRoll": 75, "kind": "VisionObscured", "amount": "1D3", "magnitude": -30, "effect": "Vision obscured; -30% to all appropriate skills for 1D3 combat rounds." },
+        { "minRoll": 76, "maxRoll": 85, "kind": "HitNearestAlly", "hitGrade": "Normal", "fallback": { "condition": "NoAllyNearby", "minRoll": 41, "maxRoll": 50 }, "effect": "Hit nearest ally for normal damage, or use result 41-50 if no ally nearby." },
+        { "minRoll": 86, "maxRoll": 90, "kind": "HitNearestAlly", "hitGrade": "Special", "fallback": { "condition": "NoAllyNearby", "minRoll": 51, "maxRoll": 60 }, "effect": "Hit nearest ally for special damage, or use result 51-60 if no ally nearby." },
+        { "minRoll": 91, "maxRoll": 98, "kind": "HitNearestAlly", "hitGrade": "Critical", "fallback": { "condition": "NoAllyNearby", "minRoll": 61, "maxRoll": 65 }, "effect": "Hit nearest ally for critical damage, or use result 61-65 if no ally nearby." },
+        { "minRoll": 99, "maxRoll": 99, "kind": "Reroll", "rerollCount": 2, "effect": "Blow it; roll twice more on this table (cumulative if rolled again)." },
+        { "minRoll": 100, "maxRoll": 100, "kind": "Reroll", "rerollCount": 3, "effect": "Blow it badly; roll three times more on this table (cumulative if rolled again)." }
+      ]
+    },
+    "MeleeParry": {
+      "page": "148",
+      "rows": [
+        { "minRoll": 1, "maxRoll": 20, "kind": "LoseNextCombatRound", "effect": "Lose the next combat round (or this one if no action taken); effectively helpless." },
+        { "minRoll": 21, "maxRoll": 40, "kind": "FallProne", "effect": "Fall prone." },
+        { "minRoll": 41, "maxRoll": 50, "kind": "DropWeapon", "effect": "Drop weapon being used." },
+        { "minRoll": 51, "maxRoll": 60, "kind": "ThrowWeapon", "amount": "1D10", "effect": "Throw weapon 1D10 meters away." },
+        { "minRoll": 61, "maxRoll": 75, "kind": "VisionObscured", "amount": "1D3", "magnitude": -30, "effect": "Vision obscured; -30% to all appropriate skills for 1D3 combat rounds." },
+        { "minRoll": 76, "maxRoll": 85, "kind": "FoeAutomaticHit", "hitGrade": "Normal", "effect": "Wide open; foe automatically hits with normal hit." },
+        { "minRoll": 86, "maxRoll": 90, "kind": "FoeAutomaticHit", "hitGrade": "Special", "effect": "Wide open; foe automatically hits with special hit." },
+        { "minRoll": 91, "maxRoll": 93, "kind": "FoeAutomaticHit", "hitGrade": "Critical", "effect": "Wide open; foe automatically hits with critical hit." },
+        { "minRoll": 94, "maxRoll": 98, "kind": "Reroll", "rerollCount": 2, "effect": "Blow it; roll twice more on this table (cumulative)." },
+        { "minRoll": 99, "maxRoll": 100, "kind": "Reroll", "rerollCount": 3, "effect": "Blow it badly; roll three times more on this table (cumulative)." }
+      ]
+    },
+    "MissileAttack": {
+      "page": "148",
+      "rows": [
+        { "minRoll": 1, "maxRoll": 15, "kind": "LoseNextCombatRound", "effect": "Lose the next attack or other activity." },
+        { "minRoll": 16, "maxRoll": 25, "kind": "LoseMultipleCombatRounds", "amount": "1D3", "effect": "Lose the next 1D3 combat rounds or other activity." },
+        { "minRoll": 26, "maxRoll": 40, "kind": "FallProne", "effect": "Fall prone." },
+        { "minRoll": 41, "maxRoll": 55, "kind": "VisionObscured", "amount": "1D3", "magnitude": -30, "effect": "Vision obscured; -30% to all appropriate skills for 1D3 combat rounds." },
+        { "minRoll": 56, "maxRoll": 65, "kind": "DropWeaponAndScatter", "amount": "1D6-1", "effect": "Drop weapon; slides/bounces 1D6-1 meters away." },
+        { "minRoll": 66, "maxRoll": 80, "kind": "LoseWeaponHitPoints", "amount": "1D6", "fallback": { "condition": "WeaponHasNoHitPoints", "minRoll": 81, "maxRoll": 85 }, "effect": "Do 1D6 damage to weapon's hit points (or use 81-85 if the weapon has no hit points)." },
+        { "minRoll": 81, "maxRoll": 85, "kind": "BreakWeapon", "effect": "Break weapon; regardless of current hit points." },
+        { "minRoll": 86, "maxRoll": 90, "kind": "HitNearestAlly", "hitGrade": "Normal", "fallback": { "condition": "NoAllyNearby", "minRoll": 56, "maxRoll": 65 }, "effect": "Hit nearest ally for normal damage, or use 56-65 if no ally nearby." },
+        { "minRoll": 91, "maxRoll": 95, "kind": "HitNearestAlly", "hitGrade": "Special", "fallback": { "condition": "NoAllyNearby", "minRoll": 66, "maxRoll": 80 }, "effect": "Hit nearest ally for special damage, or use 66-80 if no ally nearby." },
+        { "minRoll": 96, "maxRoll": 98, "kind": "HitNearestAlly", "hitGrade": "Critical", "fallback": { "condition": "NoAllyNearby", "minRoll": 81, "maxRoll": 85 }, "effect": "Hit nearest ally for critical damage, or use 81-85 if no ally nearby." },
+        { "minRoll": 99, "maxRoll": 99, "kind": "Reroll", "rerollCount": 2, "effect": "Blow it; roll twice more on this table (cumulative)." },
+        { "minRoll": 100, "maxRoll": 100, "kind": "Reroll", "rerollCount": 3, "effect": "Blow it badly; roll three times more on this table (cumulative)." }
+      ]
+    },
+    "Natural": {
+      "page": "149",
+      "rows": [
+        { "minRoll": 1, "maxRoll": 25, "kind": "LoseNextCombatRound", "effect": "Lose the next combat round (or this one if no action taken)." },
+        { "minRoll": 26, "maxRoll": 30, "kind": "LoseMultipleCombatRounds", "amount": "1D3", "effect": "Lose the next 1D3 combat rounds (including this one if no action taken)." },
+        { "minRoll": 31, "maxRoll": 50, "kind": "FallProne", "effect": "Fall prone." },
+        { "minRoll": 51, "maxRoll": 60, "kind": "FallProneAndTwistAnkle", "amount": "1D10", "magnitude": -1, "effect": "Fall prone and twist ankle; -1 MOV for 1D10 full turns (and combat turns within them)." },
+        { "minRoll": 61, "maxRoll": 75, "kind": "VisionObscured", "amount": "1D3", "magnitude": -30, "effect": "Vision obscured; -30% to all appropriate skills for 1D3 combat rounds." },
+        { "minRoll": 76, "maxRoll": 85, "kind": "StrainSelf", "magnitude": 1, "effect": "Miss and strain something; lose 1 hit point (in the attacking limb if hit locations used)." },
+        { "minRoll": 86, "maxRoll": 90, "kind": "HitNearestAlly", "hitGrade": "Normal", "fallback": { "condition": "NoAllyNearby", "minRoll": 76, "maxRoll": 85 }, "effect": "Hit nearest ally for normal damage, or use 76-85 if no ally nearby." },
+        { "minRoll": 91, "maxRoll": 94, "kind": "HitNearestAlly", "hitGrade": "Special", "fallback": { "condition": "NoAllyNearby", "minRoll": 76, "maxRoll": 85 }, "effect": "Hit nearest ally for special damage, or use 76-85 if no ally nearby." },
+        { "minRoll": 95, "maxRoll": 98, "kind": "HitHardSurface", "hitGrade": "Normal", "effect": "Hit hard surface; do normal damage to self (in the attacking limb if hit locations used)." },
+        { "minRoll": 99, "maxRoll": 99, "kind": "Reroll", "rerollCount": 2, "effect": "Blow it; roll twice more on this table (cumulative)." },
+        { "minRoll": 100, "maxRoll": 100, "kind": "Reroll", "rerollCount": 3, "effect": "Blow it badly; roll three times more on this table (cumulative)." }
+      ]
+    }
+  }
+}

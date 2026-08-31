@@ -25,6 +25,7 @@
     <EmbeddedResource Include="damage-ruleset.json" />
     <EmbeddedResource Include="spot-rule-ruleset.json" />
     <EmbeddedResource Include="injury-ruleset.json" />
+    <EmbeddedResource Include="fumble-ruleset.json" />
   </ItemGroup>
 
 </Project>

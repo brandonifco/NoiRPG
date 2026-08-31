@@ -42,3 +42,4 @@ supersedes it — the original is not edited or deleted.
 | [0017](0017-damage.md) | Damage: normal/special/critical arithmetic, hit-point conditions, and knockout attacks | Accepted |
 | [0018](0018-spot-rules.md) | Situational combat spot rules: five modifier producers and named adjudication ports | Accepted |
 | [0019](0019-injury-spot-rules.md) | Injury/effect spot rules: falling, poison, and disease through the damage and characteristic-drain paths | Accepted |
+| [0020](0020-fumble-tables.md) | Combat fumble tables: the four D100 consequence tables, a context-selecting resolver, and the ally/reroll seams | Accepted |
