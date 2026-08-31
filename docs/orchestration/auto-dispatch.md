@@ -47,14 +47,20 @@ self-hosted orchestrator host. The gate-poster App is still the publishing
 identity — check-runs are posted with its installation token, not the workflow's
 `GITHUB_TOKEN`.
 
-It needs three repository **secrets**; without them the workflow skips cleanly
+It needs repository **secrets**; without them the workflow skips cleanly
 (a warning, no failure):
 
 | Secret | Purpose |
 |---|---|
 | `GH_APP_ID` | the gate-poster App id |
 | `GH_APP_PRIVATE_KEY` | the App private-key PEM contents |
-| `ANTHROPIC_API_KEY` | auth for the `claude` gate agents |
+| `CLAUDE_CODE_OAUTH_TOKEN` *or* `ANTHROPIC_API_KEY` | auth for the `claude` gate agents (see below) |
+
+The `claude` CLI credential can be **either**: a subscription token from
+`claude setup-token` (run it where you are already logged into Claude Code on a
+Pro/Max plan) stored as `CLAUDE_CODE_OAUTH_TOKEN` — no Anthropic Console account
+needed — **or** a pay-as-you-go `ANTHROPIC_API_KEY` from the Console. Set one; the
+token is preferred if both are present.
 
 `codex-conformance` (formulas route) still needs the Codex CLI, which is not
 installed in this workflow; until it is, that gate reports `neutral` in CI.

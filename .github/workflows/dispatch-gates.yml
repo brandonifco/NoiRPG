@@ -37,16 +37,23 @@ jobs:
           # merge-base in dispatch-gates.sh needs full history.
           fetch-depth: 0
 
-      # Skip cleanly (no red X) until the owner has added the three secrets.
+      # Skip cleanly (no red X) until the owner has added the secrets. The claude
+      # CLI credential can be EITHER a subscription token from `claude setup-token`
+      # (CLAUDE_CODE_OAUTH_TOKEN) or a pay-as-you-go console key (ANTHROPIC_API_KEY);
+      # one of the two is enough.
       - name: Check gate-poster secrets
         id: guard
         env:
           GH_APP_ID: ${{ secrets.GH_APP_ID }}
           GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
-          if [ -z "$GH_APP_ID" ] || [ -z "$GH_APP_PRIVATE_KEY" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
-            echo "::warning title=dispatch-gates::Secrets not configured (GH_APP_ID / GH_APP_PRIVATE_KEY / ANTHROPIC_API_KEY) — skipping gate dispatch. See docs/orchestration/auto-dispatch.md."
+          if [ -z "$GH_APP_ID" ] || [ -z "$GH_APP_PRIVATE_KEY" ]; then
+            echo "::warning title=dispatch-gates::App secrets not configured (GH_APP_ID / GH_APP_PRIVATE_KEY) — skipping gate dispatch. See docs/orchestration/auto-dispatch.md."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          elif [ -z "$CLAUDE_CODE_OAUTH_TOKEN" ] && [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning title=dispatch-gates::No claude credential (set CLAUDE_CODE_OAUTH_TOKEN from 'claude setup-token', or ANTHROPIC_API_KEY) — skipping gate dispatch. See docs/orchestration/auto-dispatch.md."
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
             echo "run=true" >> "$GITHUB_OUTPUT"
@@ -70,6 +77,9 @@ jobs:
           # The gate-poster App identity used by tools/gate-check.py.
           GH_APP_ID: ${{ secrets.GH_APP_ID }}
           GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
-          # Auth for the `claude -p` gate agents.
+          # Auth for the `claude -p` gate agents. The CLI uses whichever is set;
+          # CLAUDE_CODE_OAUTH_TOKEN (a Pro/Max subscription token from
+          # `claude setup-token`) is preferred over a console ANTHROPIC_API_KEY.
+          CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: tools/dispatch-gates.sh "${{ github.event.pull_request.number }}"
