@@ -1,6 +1,9 @@
 ## Linked Issue
 
-Closes #
+<!-- Required. Put the issue number after the # below, turning `#<n>` into a real
+     reference. pr-policy (CI) fails this PR while it stays blank. Every PR needs one —
+     docs, tooling, and orchestration included; open an issue first if none fits. -->
+Closes #<n>
 
 ## Exact behavioral claim
 

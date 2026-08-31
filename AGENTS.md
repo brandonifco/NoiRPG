@@ -73,7 +73,9 @@ One concern, one Issue, one branch, one pull request.
 1. Pick one Issue labelled `ready`.
 2. Branch from `main`.
 3. Implement only that Issue.
-4. Open a PR with `Closes #<n>`.
+4. Open a PR with `Closes #<n>` — a real issue number, never a blank `#`. This holds
+   for every PR, docs and tooling and orchestration included; `pr-policy` rejects a
+   body with no `Closes #<n>` / `Fixes #<n>`.
 5. Automated checks and review.
 6. Merge; the Issue closes automatically.
 
