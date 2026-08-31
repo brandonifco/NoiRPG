@@ -1,0 +1,75 @@
+name: dispatch-gates
+
+# Runs the routing state machine's verification gates for a PR and posts each
+# result as a check-run through the gate-poster App, so `gates-satisfied`
+# (aggregated by route-gates) reflects real per-PR verification instead of
+# hanging in_progress forever.
+#
+# The original design ran these agents in a separate self-hosted orchestrator,
+# not in Actions (docs/orchestration/auto-dispatch.md). This workflow is the
+# owner's decision to run them in CI instead, so the loop closes without a
+# standing orchestrator host. The gate-poster App remains the publishing
+# identity — check-runs are posted with its short-lived installation token
+# (via tools/gate-check.py), never with this workflow's GITHUB_TOKEN.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+
+# Do not cancel a run mid-dispatch: a cancelled run could leave a gate posted
+# while a sibling gate never posts. Let each dispatch finish.
+concurrency:
+  group: dispatch-gates-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+# This workflow needs only to read the repo and the PR; it does NOT post checks
+# itself. gate-check.py mints an App installation token for that.
+permissions:
+  contents: read
+  pull-requests: read
+
+jobs:
+  dispatch-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # merge-base in dispatch-gates.sh needs full history.
+          fetch-depth: 0
+
+      # Skip cleanly (no red X) until the owner has added the three secrets.
+      - name: Check gate-poster secrets
+        id: guard
+        env:
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$GH_APP_ID" ] || [ -z "$GH_APP_PRIVATE_KEY" ] || [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::warning title=dispatch-gates::Secrets not configured (GH_APP_ID / GH_APP_PRIVATE_KEY / ANTHROPIC_API_KEY) — skipping gate dispatch. See docs/orchestration/auto-dispatch.md."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Set up Node (for the claude CLI)
+        if: steps.guard.outputs.run == 'true'
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install the claude CLI
+        if: steps.guard.outputs.run == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Dispatch verification gates
+        if: steps.guard.outputs.run == 'true'
+        env:
+          # `gh` inside dispatch-gates.sh authenticates with this.
+          GH_TOKEN: ${{ github.token }}
+          # The gate-poster App identity used by tools/gate-check.py.
+          GH_APP_ID: ${{ secrets.GH_APP_ID }}
+          GH_APP_PRIVATE_KEY: ${{ secrets.GH_APP_PRIVATE_KEY }}
+          # Auth for the `claude -p` gate agents.
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: tools/dispatch-gates.sh "${{ github.event.pull_request.number }}"

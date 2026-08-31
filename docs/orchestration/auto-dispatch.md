@@ -32,9 +32,32 @@ DRY_RUN=1 tools/dispatch-gates.sh 76      # print what would run; post nothing
 ## Requirements for a live run
 
 - **App env** for posting: `GH_APP_ID`, `GH_APP_PRIVATE_KEY` (see [github-app.md](github-app.md)).
-- **Authenticated runners on the host**: the `claude` CLI logged in, and `codex-agent.sh`
-  configured (`CODEX_BIN`). These run where the orchestrator runs, not in Actions.
+- **Authenticated runners**: the `claude` CLI logged in (or `ANTHROPIC_API_KEY` set), and
+  `codex-agent.sh` configured (`CODEX_BIN`) for the Codex gate.
 - `DRY_RUN=1` needs none of the above — it prints the plan and posts nothing.
+
+## Running in GitHub Actions
+
+The dispatcher runs automatically in CI via
+[`.github/workflows/dispatch-gates.yml`](../../.github/workflows/dispatch-gates.yml),
+which fires on every `pull_request` event, installs the `claude` CLI, and runs
+`tools/dispatch-gates.sh <pr>`. This is a deliberate change from the original
+off-Actions design: the gates run in CI so the loop closes without a standing
+self-hosted orchestrator host. The gate-poster App is still the publishing
+identity — check-runs are posted with its installation token, not the workflow's
+`GITHUB_TOKEN`.
+
+It needs three repository **secrets**; without them the workflow skips cleanly
+(a warning, no failure):
+
+| Secret | Purpose |
+|---|---|
+| `GH_APP_ID` | the gate-poster App id |
+| `GH_APP_PRIVATE_KEY` | the App private-key PEM contents |
+| `ANTHROPIC_API_KEY` | auth for the `claude` gate agents |
+
+`codex-conformance` (formulas route) still needs the Codex CLI, which is not
+installed in this workflow; until it is, that gate reports `neutral` in CI.
 
 ## Closing the loop (phase-2 enforcement)
 
