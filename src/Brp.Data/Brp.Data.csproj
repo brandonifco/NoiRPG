@@ -23,6 +23,7 @@
     <EmbeddedResource Include="combat-round-ruleset.json" />
     <EmbeddedResource Include="attack-defense-matrix-ruleset.json" />
     <EmbeddedResource Include="damage-ruleset.json" />
+    <EmbeddedResource Include="spot-rule-ruleset.json" />
   </ItemGroup>
 
 </Project>

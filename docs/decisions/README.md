@@ -40,3 +40,4 @@ supersedes it — the original is not edited or deleted.
 | [0015](0015-combat-round.md) | Combat round: three phases, DEX-rank ordering, and the weapon-type tiebreak | Accepted |
 | [0016](0016-attack-defense-matrix.md) | Attack/defense matrix: data-driven cells, the undefended case, and the deferred -30% | Accepted |
 | [0017](0017-damage.md) | Damage: normal/special/critical arithmetic, hit-point conditions, and knockout attacks | Accepted |
+| [0018](0018-spot-rules.md) | Situational combat spot rules: five modifier producers and named adjudication ports | Accepted |
