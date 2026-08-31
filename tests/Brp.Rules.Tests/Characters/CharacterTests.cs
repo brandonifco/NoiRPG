@@ -70,7 +70,7 @@ public class CharacterTests
         Assert.Empty(character.Wounds.Wounds);
         Assert.Empty(character.Equipment.Items);
 
-        character.Wounds.Add(new Wound("grazed by a bullet"));
+        character.Wounds.Add(new Wound("grazed by a bullet", DamageAmount: 1));
         character.Equipment.Add(new EquipmentItem("revolver"));
 
         Assert.Single(character.Wounds.Wounds);

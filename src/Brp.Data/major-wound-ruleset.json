@@ -1,0 +1,28 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 6: Combat",
+    "notes": "Major Wounds and Fatal Wounds (pp.155-156): the immediate shock, the Luck roll deciding permanence, the Major Wounds Table (1D100 -> characteristic loss / MOV / fight flag), the cumulative-minor-wound Luck-or-unconscious rule, and the fatal-wound rescue window. The book notes (p.156) that Major Wounds are incompatible with the optional hit location system (#112). See docs/decisions/0021-major-wounds.md."
+  },
+  "fatalWoundRescueWindowRounds": 1,
+  "collapseUnconsciousHours": 1,
+  "fatalWoundSource": "Ch 6, Fatal Wounds (p.156): survives if medical attention 'in the round they received the fatal wound or the round immediately after' brings hit points to 1 or more (window offset 1). Collapse: Ch 6, Major Wounds (p.155): '2 or fewer hit points after suffering a major wound collapses immediately... unconscious for an hour.'",
+  "majorWoundTableSource": "Ch 6, Major Wounds Table (pp.155-156), transcribed row by row. Each row's mechanical result (dice loss, MOV effect, still-able-to-fight flag) is data; the illustrative example causes are not modeled. A printed 00 is represented as 100.",
+  "majorWoundTable": [
+    { "minimum": 1, "maximum": 10, "losses": [{ "characteristic": "DEX", "diceFormula": "1D3" }], "reducesMovement": true, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 11, "maximum": 20, "losses": [{ "characteristic": "CHA", "diceFormula": "1D3" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 21, "maximum": 30, "losses": [{ "characteristic": "STR", "diceFormula": "1D3" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 31, "maximum": 40, "losses": [{ "characteristic": "CON", "diceFormula": "1D3" }], "reducesMovement": true, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 41, "maximum": 50, "losses": [{ "characteristic": "INT", "diceFormula": "1D3" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 51, "maximum": 60, "losses": [{ "characteristic": "DEX", "diceFormula": "1D6" }], "reducesMovement": true, "requiresLimbSide": false, "ableToFight": false },
+    { "minimum": 61, "maximum": 70, "losses": [{ "characteristic": "CHA", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 71, "maximum": 80, "losses": [{ "characteristic": "STR", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 81, "maximum": 90, "losses": [{ "characteristic": "CON", "diceFormula": "1D6" }], "reducesMovement": true, "requiresLimbSide": false, "ableToFight": false },
+    { "minimum": 91, "maximum": 92, "losses": [{ "characteristic": "CHA", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 93, "maximum": 94, "losses": [{ "characteristic": "DEX", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": true },
+    { "minimum": 95, "maximum": 96, "losses": [{ "characteristic": "DEX", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": true, "ableToFight": true },
+    { "minimum": 97, "maximum": 98, "losses": [{ "characteristic": "DEX", "diceFormula": "1D6" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": false },
+    { "minimum": 99, "maximum": 99, "losses": [{ "characteristic": "CHA", "diceFormula": "1D3" }, { "characteristic": "DEX", "diceFormula": "1D3" }, { "characteristic": "CON", "diceFormula": "1D3" }], "reducesMovement": false, "requiresLimbSide": false, "ableToFight": false },
+    { "minimum": 100, "maximum": 100, "losses": [], "gamemasterChoice": { "count": 4, "diceFormula": "1D4" }, "reducesMovement": false, "requiresLimbSide": false, "ableToFight": false }
+  ]
+}

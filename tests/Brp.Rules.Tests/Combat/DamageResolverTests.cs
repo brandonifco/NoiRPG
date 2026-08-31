@@ -271,6 +271,8 @@ public class DamageResolverTests
         Assert.Equal(target.CurrentHitPoints, result.ResultingHitPoints);
         Assert.Single(wounds.Wounds);
         Assert.Equal("Struck by a test weapon.", wounds.Wounds[0].Description);
+        // #111: the wound records the hit points it dealt (the Major Wounds trigger / First Aid cap figure).
+        Assert.Equal(4, wounds.Wounds[0].DamageAmount);
         Assert.Same(wounds.Wounds[0], result.Wound);
     }
 

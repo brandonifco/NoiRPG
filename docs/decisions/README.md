@@ -43,3 +43,4 @@ supersedes it — the original is not edited or deleted.
 | [0018](0018-spot-rules.md) | Situational combat spot rules: five modifier producers and named adjudication ports | Accepted |
 | [0019](0019-injury-spot-rules.md) | Injury/effect spot rules: falling, poison, and disease through the damage and characteristic-drain paths | Accepted |
 | [0020](0020-fumble-tables.md) | Combat fumble tables: the four D100 consequence tables, a context-selecting resolver, and the ally/reroll seams | Accepted |
+| [0021](0021-major-wounds.md) | Major Wounds: the wound damage amount, the shock/Luck/table effect, cumulative minors, and the fatal-wound rescue window | Accepted |

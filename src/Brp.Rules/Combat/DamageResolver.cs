@@ -215,7 +215,7 @@ public static class DamageResolver
             return new DamageApplicationResult(0, target.CurrentHitPoints, ClassifyHitPoints(target.CurrentHitPoints, ruleset), Wound: null);
         }
 
-        return Apply(target, wounds, damage.DamageDealt, ruleset, new Wound(woundDescription));
+        return Apply(target, wounds, damage.DamageDealt, ruleset, woundDescription);
     }
 
     /// <summary>
@@ -249,7 +249,7 @@ public static class DamageResolver
         ArgumentOutOfRangeException.ThrowIfNegative(hitPointDamage);
         ArgumentException.ThrowIfNullOrWhiteSpace(woundDescription);
 
-        return Apply(target, wounds, hitPointDamage, ruleset, new Wound(woundDescription));
+        return Apply(target, wounds, hitPointDamage, ruleset, woundDescription);
     }
 
     /// <summary>
@@ -343,7 +343,7 @@ public static class DamageResolver
             return new DamageApplicationResult(0, target.CurrentHitPoints, ClassifyHitPoints(target.CurrentHitPoints, ruleset), Wound: null);
         }
 
-        return Apply(target, wounds, knockout.DamageDealt, ruleset, new Wound(woundDescription));
+        return Apply(target, wounds, knockout.DamageDealt, ruleset, woundDescription);
     }
 
     /// <summary>
@@ -365,8 +365,12 @@ public static class DamageResolver
     }
 
     private static DamageApplicationResult Apply(
-        AbilitySet target, WoundTrack wounds, int damageDealt, DamageRuleset ruleset, Wound wound)
+        AbilitySet target, WoundTrack wounds, int damageDealt, DamageRuleset ruleset, string woundDescription)
     {
+        // The wound records the hit points this blow dealt (#111) -- the figure the Major Wounds
+        // trigger (Ch 6, p.155) and the First Aid cap (#109) compare against -- so it is built here,
+        // where the applied damage is known, rather than by the caller.
+        var wound = new Wound(woundDescription, damageDealt);
         var resultingHitPoints = target.CurrentHitPoints - damageDealt;
         target.SetCurrentHitPoints(resultingHitPoints);
         wounds.Add(wound);
