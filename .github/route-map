@@ -1,0 +1,38 @@
+# NoiRPG route map — maps a changed path to a coarse verification route.
+#
+# Format:  <glob>  <route>        (one rule per line; "#" starts a comment)
+# Routes:  docs | tooling | rules | formulas | architecture
+# Matching: CODEOWNERS-style — LAST matching rule wins for a given file.
+# Globs:   *  matches within one path segment; **  matches across segments;
+#          **/ matches zero or more leading directories.
+#
+# This is the SIMPLE, deterministic baseline. A separate CONTENT escalation
+# (in tools/route.sh) promotes a `rules` change to `formulas` when the diff
+# actually touches numeric tables / thresholds. See docs/orchestration/routing.md
+# for the route -> required-gates table and the escalation patterns.
+
+# Catch-all: anything unmatched routes to tooling (CI + scope-warden).
+*                          tooling
+
+# Documentation
+**/*.md                    docs
+docs/**                    docs
+LICENSE                    docs
+
+# Tooling / infrastructure
+.github/**                 tooling
+tools/**                   tooling
+*.sln                      tooling
+global.json                tooling
+
+# Rules engine (ordinary implementation)
+src/Brp.Core/**            rules
+src/Brp.Rules/**           rules
+
+# Formula / threshold data — ruleset JSON is printed numeric tables
+src/Brp.Data/**            formulas
+
+# Architecture — project boundaries and references (last, so they win for these
+# files even under src/**). Adds architecture-review on top of normal gates.
+Directory.Build.props      architecture
+**/*.csproj                architecture
