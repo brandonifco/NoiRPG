@@ -111,6 +111,11 @@ with `main`). The model-driven per-route gates
 (`scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review`)
 and the `gates-satisfied` aggregate that once combined them were removed in #90/#91
 — they never posted a result on any PR. The route table above is retained as the
-map of which review a change *should* get; wiring an automated enforcer back up is
-future work under the #53 epic.
+map of which review a change *should* get.
+
+The enforcer is now [`tools/agent-verify.sh`](../../tools/agent-verify.sh): the local
+orchestrator runs the route's gates for a PR head SHA and posts a single
+`agent-verification` commit status (success only if every required gate passed). It is
+an informative, non-blocking status until deliberately added to the required set — see
+[`agent-verification.md`](agent-verification.md) for how it works and how to require it.
 
