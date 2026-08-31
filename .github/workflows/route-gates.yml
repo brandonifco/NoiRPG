@@ -1,0 +1,35 @@
+name: route-gates
+
+# The routing state machine (phase 1: evidence verification). Derives the route,
+# labels the PR, and upserts a single `gates-satisfied` check-run that is green
+# only when every required non-CI gate has a passing check-run on the head commit.
+# Individual gate results are posted by the orchestrator via the gate-poster App
+# (#65); this job aggregates them.
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  check_run:
+    types: [completed, rerequested]
+
+concurrency:
+  group: route-gates-${{ github.event.pull_request.number || github.event.check_run.head_sha }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+jobs:
+  route-gates:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Derive route and update gates-satisfied
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 .github/workflows/route_gates.py
