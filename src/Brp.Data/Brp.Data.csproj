@@ -27,6 +27,7 @@
     <EmbeddedResource Include="spot-rule-ruleset.json" />
     <EmbeddedResource Include="injury-ruleset.json" />
     <EmbeddedResource Include="major-wound-ruleset.json" />
+    <EmbeddedResource Include="healing-ruleset.json" />
     <EmbeddedResource Include="fumble-ruleset.json" />
   </ItemGroup>
 
