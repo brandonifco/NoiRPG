@@ -99,12 +99,20 @@ many minutes a human spent, or how many times they had to step in. The tool read
 optional log if present, and otherwise prints `(not tracked / needs manual input)` so the
 target stays visible on every report even before it is instrumented.
 
-## The optional `human-minutes.csv`
+## The `human-minutes.csv`
 
-To start capturing the headline metric, create
-`docs/agent-team-ledger/human-minutes.csv` with this header (one row per merged
-issue/PR). **Do not commit fabricated rows** — add a row only when you have actually
-measured the time:
+The headline metric is captured one row per merged issue/PR in
+`docs/agent-team-ledger/human-minutes.csv` (seeded header-only). **Do not commit
+fabricated rows** — add a row only when you have actually measured the time. Append
+with the ledger helper rather than editing the CSV by hand:
+
+```bash
+tools/ledger-log.sh human --issue 112 --pr 130 --merge-sha <sha> \
+                          --human-minutes 6 --interventions 0 --note "merged clean"
+```
+
+The helper refuses an all-`NI` row, so a real measurement (`--human-minutes` and/or
+`--interventions`) is required. The header is:
 
 ```csv
 issue,pr,merge_sha,human_minutes,interventions,note
