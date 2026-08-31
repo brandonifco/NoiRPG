@@ -4,8 +4,8 @@ namespace Brp.Rules.Combat;
 /// Models one combat round, per Ch 6: Combat, "Combat Round Phases" (p.142) and "Action" (p.143):
 /// the round's phases, and the Action phase's ordered sequence of combatant turns. Deliberately
 /// does not resolve any turn -- attacks, parries, and dodges are piece C's concern
-/// (<c>AttackDefenseMatrix</c>). See <c>docs/decisions/0015-combat-round.md</c> for the full
-/// rationale, including the 3-phase scope decision and the weapon-type tiebreak reading.
+/// (<see cref="AttackDefenseResolver"/>). See <c>docs/decisions/0015-combat-round.md</c> for the
+/// full rationale, including the 3-phase scope decision and the weapon-type tiebreak reading.
 /// </summary>
 public sealed class CombatRound
 {

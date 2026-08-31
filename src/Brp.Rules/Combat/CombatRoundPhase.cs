@@ -31,7 +31,7 @@ public enum CombatRoundPhase
     /// <summary>
     /// Ch 6, "Resolution" (p.145): attack, parry, and dodge rolls are compared on the Attack and
     /// Defense Matrix to determine the result of the round's actions. Resolving those rolls is
-    /// piece C's concern (<c>AttackDefenseMatrix</c>, Issue #48+); this phase is modelled here
+    /// piece C's concern (<see cref="AttackDefenseResolver"/>, #49); this phase is modelled here
     /// only as a named step a round passes through.
     /// </summary>
     Resolution,

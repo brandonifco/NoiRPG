@@ -1,0 +1,227 @@
+{
+  "matrixSource": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 6: Combat",
+    "sectionTitle": "Attack and Defense Matrix",
+    "printedPage": 147
+  },
+  "matrixCells": [
+    {
+      "attackerGrade": "critical",
+      "defenderGrade": "critical",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender parries or dodges damage, no other result."
+    },
+    {
+      "attackerGrade": "critical",
+      "defenderGrade": "special",
+      "landedGrade": "normal",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": { "damagedParty": "defender", "points": 2 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack partially deflected or dodged and achieves a success. Attacker strikes defender and rolls damage normally. Defender's armor value subtracted from damage. Parrying weapon or shield takes 2 points of damage.*"
+    },
+    {
+      "attackerGrade": "critical",
+      "defenderGrade": "success",
+      "landedGrade": "special",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": { "damagedParty": "defender", "points": 4 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack marginally deflected and achieves a special success. Attack does full damage** plus normal damage modifier and appropriate special result. Defender's armor value subtracted from damage. Parrying weapon or shield takes 4 points of damage.*"
+    },
+    {
+      "attackerGrade": "critical",
+      "defenderGrade": "failure",
+      "landedGrade": "critical",
+      "armorTreatment": "bypassed",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack achieves a critical success. Attack does full damage** plus normal damage modifier (or attacker may choose a special success instead). Defender's armor value is bypassed."
+    },
+    {
+      "attackerGrade": "critical",
+      "defenderGrade": "fumble",
+      "landedGrade": "critical",
+      "armorTreatment": "doesNotApply",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": true,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack achieves a critical success. Attack does full damage** plus normal damage modifier (or attacker may choose a special success instead). Defender's armor value does not apply. Defender rolls on the appropriate fumble table."
+    },
+    {
+      "attackerGrade": "special",
+      "defenderGrade": "critical",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": { "damagedParty": "attacker", "points": 1 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender parries or dodges attack; no other result. If attack is parried, attacking weapon takes 1 point of damage.*"
+    },
+    {
+      "attackerGrade": "special",
+      "defenderGrade": "special",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender parries or dodges attack, no other result."
+    },
+    {
+      "attackerGrade": "special",
+      "defenderGrade": "success",
+      "landedGrade": "normal",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": { "damagedParty": "defender", "points": 2 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack partially parried or dodged and achieves a normal success. Defender's armor value subtracted from damage. Parrying weapon or shield takes 2 points of damage.*"
+    },
+    {
+      "attackerGrade": "special",
+      "defenderGrade": "failure",
+      "landedGrade": "special",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack achieves a special success. Attack does full damage** plus normal damage modifier and appropriate special result. Defender's armor value subtracted from damage."
+    },
+    {
+      "attackerGrade": "special",
+      "defenderGrade": "fumble",
+      "landedGrade": "special",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": true,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack achieves a special success. Attack does full damage** plus normal damage modifier and appropriate special result. Defender's armor value subtracted from damage. Defender rolls on the appropriate fumble table."
+    },
+    {
+      "attackerGrade": "success",
+      "defenderGrade": "critical",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": { "damagedParty": "attacker", "points": 2 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender blocks or dodges damage; no other result. If parried in melee combat, attacker's weapon takes 2 points of damage.*"
+    },
+    {
+      "attackerGrade": "success",
+      "defenderGrade": "special",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": { "damagedParty": "attacker", "points": 1 },
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender blocks or dodges damage; no other result. If parried in melee combat, attacker's weapon takes 1 point of damage.*"
+    },
+    {
+      "attackerGrade": "success",
+      "defenderGrade": "success",
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Defender blocks or dodges damage, no other result."
+    },
+    {
+      "attackerGrade": "success",
+      "defenderGrade": "failure",
+      "landedGrade": "normal",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack strikes defender and rolls damage normally. Defender's armor value subtracted from damage."
+    },
+    {
+      "attackerGrade": "success",
+      "defenderGrade": "fumble",
+      "landedGrade": "normal",
+      "armorTreatment": "subtracted",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": true,
+      "attackerRollsOnFumbleTable": false,
+      "result": "Attack strikes defender and rolls damage normally. Defender's armor value subtracted from damage. Defender rolls on the appropriate fumble table."
+    },
+    {
+      "attackerGrade": "failure",
+      "defenderGrade": null,
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": false,
+      "result": "No damage; no effect."
+    },
+    {
+      "attackerGrade": "fumble",
+      "defenderGrade": null,
+      "landedGrade": "miss",
+      "armorTreatment": "notApplicable",
+      "parryWeaponDamage": null,
+      "defenderRollsOnFumbleTable": false,
+      "attackerRollsOnFumbleTable": true,
+      "result": "Attack misses completely and attacker rolls on the appropriate fumble table. Defender unharmed."
+    }
+  ],
+  "undefendedOutcomes": [
+    {
+      "attackerGrade": "critical",
+      "landedGrade": "critical",
+      "armorTreatment": "bypassed",
+      "sourceNote": "Modelled as equivalent to the printed Critical-attack/Failure-defense cell (p.147): a defender who takes no defensive action contributes the same zero degree of success as one who rolled a defense and failed. Corroborated by the general rule that a critical attack always ignores armor (Ch 6, 'Critical Success', p.146)."
+    },
+    {
+      "attackerGrade": "special",
+      "landedGrade": "special",
+      "armorTreatment": "subtracted",
+      "sourceNote": "Modelled as equivalent to the printed Special-attack/Failure-defense cell (p.147): a defender who takes no defensive action contributes the same zero degree of success as one who rolled a defense and failed."
+    },
+    {
+      "attackerGrade": "success",
+      "landedGrade": "normal",
+      "armorTreatment": "subtracted",
+      "sourceNote": "Modelled as equivalent to the printed Success-attack/Failure-defense cell (p.147), and to the Combat Summary table's 'Success / Fails -> Defender is hit and may lose hit points' row (p.145)."
+    }
+  ],
+  "resultVocabulary": {
+    "parryVsDodgeDistinction": "Both parry and dodge use the same five grades of success (Critical, Special, Success, Failure, Fumble) on the resolution table. The result of the matrix cell applies equally to both defensive options, except where the result text explicitly notes a parry-specific effect (e.g., 'parrying weapon takes damage' or 'If parried, attacking weapon takes damage'). Dodge results do not involve weapon damage.",
+    "weaponDamageOnParry": "When a result specifies damage to a parrying weapon or shield (e.g., '2 points of damage' or '4 points of damage'), this applies only to parry actions. Dodge actions do not cause the defender's weapon to take damage. Shields are cut from scope (orc-scope-filter.md); the engine models this as 'defending weapon takes damage' with no shield concept.",
+    "footnoteExplanations": {
+      "*": "If the parrying weapon or shield is destroyed during the parry attempt, roll the attacking weapon's normal damage and subtract the points of damage used in destroying the parrying weapon or shield. The remaining damage penetrates the parry attempt to damage the defender (armor still protects). If the attacking weapon is destroyed during a successful attack, damage is still inflicted on the defender and the weapon is broken at that moment.",
+      "**": "This is the damage which that type of attack would normally do. This is not the same as 'maximum damage'. For a greatsword, full damage is 2D8 on a normal success, 2D8 bleeding damage on a special success, and on a critical success it does 16 damage ignoring armor. Damage modifier, in all cases, is rolled separately and added afterwards."
+    }
+  },
+  "defensiveActionsDefinition": {
+    "parry": "Anyone armed with a parrying weapon or shield (or using their own body in Martial Arts) can block the damage from an attack. Roll against the relevant combat skill to parry a blow. A successful parry usually deflects all damage from the incoming attack, reducing successful attacks to misses or reducing the severity of special or critical attacks accordingly. Each successive parry attempt after the first is modified by -30% to the skill rating, cumulative. Certain attacks cannot be parried (e.g., from a vastly larger attacker or area/sweep attacks).",
+    "dodge": "Dodge can be attempted against all melee attacks or thrown weapons. Dodges do not need to be announced beforehand but are attempted in reaction to a successful attack roll. Each successive dodge attempt after the first is at a -30% modifier to the skill rating, cumulative. Normally, a character cannot dodge against bullets or high-speed projectile weapons (arrows, lasers, etc.)—such defense attempts are Difficult and only against the first such missile weapon in a combat round where the attacker and weapon are visible. (Dodging Missile Weapons is a deferred rule, excluded from this extraction per orc-scope-filter.md.)"
+  },
+  "deferred": [
+    "Attacks and Parries over 100%",
+    "Dodging Missile Weapons",
+    "Shields (Shield skill is cut from scope)",
+    "The -30% cumulative successive parry/dodge penalty (a modifier on the defense roll that produces the defender's grade, not part of the matrix lookup itself -- consumed as an already-computed grade by AttackDefenseResolver)"
+  ],
+  "notes": [
+    "This matrix represents the base case: attacker success grade x defender success grade -> combat outcome. The over-100% splitting rule is deferred (orc-scope-filter.md).",
+    "When an attacker fails (Failure grade), no defender roll is required; the attack has no effect. defenderGrade is null for this row.",
+    "When an attacker fumbles (Fumble grade), no defender roll is required; the attacker rolls on the appropriate fumble table regardless of the defender's action. defenderGrade is null for this row.",
+    "Parry-specific mechanics (weapon damage) are noted per-cell; AttackDefenseResolver strips them when the defense used is a Dodge.",
+    "Fumbles by the defender are included in the matrix (Critical/Special/Success/Failure/Fumble columns). Defender fumble consequences are determined by rolling on the appropriate fumble table as specified in the result -- the table itself is a later piece (F).",
+    "Armor subtraction is mentioned in many results; full armor mechanics (the arithmetic) are deferred to piece D (damage computation) -- this ruleset only names the treatment.",
+    "undefendedOutcomes covers the defense-type-None case for attacker grades Critical/Special/Success (Failure/Fumble need no defender grade regardless and are covered by matrixCells directly)."
+  ]
+}
