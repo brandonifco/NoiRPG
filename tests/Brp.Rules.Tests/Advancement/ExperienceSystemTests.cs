@@ -496,7 +496,7 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating: 20);
         var entropy = new FixedEntropySource(21, 6);
 
-        var gain = ExperienceSystem.Research(skill, entropy);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset);
 
         Assert.Equal(4, gain);
         Assert.Equal(24, skill.CurrentRating);
@@ -509,7 +509,7 @@ public class ExperienceSystemTests
         // One value only: a failed experience roll draws no gain die.
         var entropy = new FixedEntropySource(20);
 
-        var gain = ExperienceSystem.Research(skill, entropy);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset);
 
         Assert.Equal(0, gain);
         Assert.Equal(20, skill.CurrentRating);
@@ -523,7 +523,7 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating: 20);
         var entropy = new FixedEntropySource(21);
 
-        var gain = ExperienceSystem.Research(skill, entropy, useDefaultGain: true);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset, useDefaultGain: true);
 
         Assert.Equal(2, gain);
         Assert.Equal(22, skill.CurrentRating);
@@ -537,7 +537,7 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating: 20);
         var entropy = new FixedEntropySource(21, 1);
 
-        var gain = ExperienceSystem.Research(skill, entropy);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset);
 
         Assert.Equal(0, gain);
         Assert.Equal(20, skill.CurrentRating);
@@ -551,7 +551,7 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating: 74);
         var entropy = new FixedEntropySource(75, 6); // experience roll succeeds, then a full +4 (6-2)
 
-        var gain = ExperienceSystem.Research(skill, entropy);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset);
 
         Assert.Equal(4, gain);
         Assert.Equal(78, skill.CurrentRating);
@@ -565,7 +565,7 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating: 20);
         var entropy = new FixedEntropySource(19, 5); // 19 alone fails; +2 bonus succeeds
 
-        var gain = ExperienceSystem.Research(skill, entropy, experienceBonus: 2);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset, experienceBonus: 2);
 
         Assert.Equal(3, gain);
         Assert.Equal(23, skill.CurrentRating);
@@ -581,9 +581,44 @@ public class ExperienceSystemTests
         var skill = MakeSkill(rating);
         var entropy = new FixedEntropySource(100, 5); // natural 100, then a gain of 5-2=3
 
-        var gain = ExperienceSystem.Research(skill, entropy);
+        var gain = ExperienceSystem.Research(skill, entropy, Ruleset);
 
         Assert.Equal(3, gain);
         Assert.Equal(rating + 3, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Shipped_experience_ruleset_data_reproduces_ch5_p139s_research_gain_values()
+    {
+        Assert.Equal(6, Ruleset.ResearchGainDieSides);
+        Assert.Equal(-2, Ruleset.ResearchGainOffset);
+        Assert.Equal(2, Ruleset.ResearchDefaultGain);
+    }
+
+    [Fact]
+    public void Research_reads_its_gain_values_from_ruleset_data_not_hardcoded_constants()
+    {
+        // Ch 5 p.139 prints research as a fixed 1D6-2 (or a flat +2) -- unlike the general
+        // experience gain, it is not scaled for epic/superhuman campaigns. Even so,
+        // AGENTS.md invariant 7 requires these to be ruleset data, not constants baked
+        // into ExperienceSystem: a ruleset with different research values must produce a
+        // different result, proving Research reads them rather than hardcoding 1D6-2/+2.
+        var houseRuleset = new ExperienceRuleset(
+            trainingCapPercent: 75, researchGainDieSides: 4, researchGainOffset: -1, researchDefaultGain: 5);
+        var skill = MakeSkill(rating: 20);
+        var entropy = new FixedEntropySource(21, 4); // experience roll succeeds, then a 1D4 draw of 4
+
+        var gain = ExperienceSystem.Research(skill, entropy, houseRuleset);
+
+        Assert.Equal(3, gain); // 4 - 1 (the house ruleset's offset), not 4 - 2 (the book's)
+        Assert.Equal(23, skill.CurrentRating);
+
+        var defaultSkill = MakeSkill(rating: 20);
+        var defaultEntropy = new FixedEntropySource(21);
+
+        var defaultGain = ExperienceSystem.Research(defaultSkill, defaultEntropy, houseRuleset, useDefaultGain: true);
+
+        Assert.Equal(5, defaultGain); // the house ruleset's flat 5, not the book's 2
+        Assert.Equal(25, defaultSkill.CurrentRating);
     }
 }

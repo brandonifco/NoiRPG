@@ -24,11 +24,18 @@ public static class NoirExperienceRuleset
         var data = JsonSerializer.Deserialize<ExperienceRulesetData>(stream, SerializerOptions)
             ?? throw new InvalidOperationException("The experience ruleset data is empty.");
 
-        return new ExperienceRuleset(data.TrainingCapPercent);
+        return new ExperienceRuleset(
+            data.TrainingCapPercent, data.ResearchGainDieSides, data.ResearchGainOffset, data.ResearchDefaultGain);
     }
 
     private sealed class ExperienceRulesetData
     {
         public required int TrainingCapPercent { get; init; }
+
+        public required int ResearchGainDieSides { get; init; }
+
+        public required int ResearchGainOffset { get; init; }
+
+        public required int ResearchDefaultGain { get; init; }
     }
 }

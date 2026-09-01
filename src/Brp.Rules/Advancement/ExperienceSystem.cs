@@ -137,7 +137,9 @@ public static class ExperienceSystem
     /// <paramref name="gainDieSides"/> rather than a lookup table over a fixed set of dice
     /// -- the campaign-level dice already vary via <see cref="ImprovementRoll"/>'s own
     /// <c>gainDieSides</c> parameter (p.138, "epic" 1D8 / "superhuman" 1D10), and this
-    /// default tracks whichever one a table is using.
+    /// default tracks whichever one a table is using. Only defined for the book's own even
+    /// gain dice (1D6/1D8/1D10) -- the book names no odd gain die, so an odd
+    /// <paramref name="gainDieSides"/> is not a case this formula needs to round for.
     /// </summary>
     public static int DefaultGain(int gainDieSides) => gainDieSides / 2;
 
@@ -253,13 +255,29 @@ public static class ExperienceSystem
     /// skill rating" (p.139) -- <paramref name="useDefaultGain"/> is that choice,
     /// announced before rolling exactly as the general default-gain option is (see
     /// <see cref="DefaultGain"/>), except research's flat alternative is a book-printed 2,
-    /// not half of a die maximum. Unlike <see cref="Teach"/>, research has no training-cap
-    /// ceiling: "Unlike training, researching allows your character to improve more than
-    /// 75% in a skill" (p.139), so it never reads
-    /// <see cref="ExperienceRuleset.TrainingCapPercent"/>. A negative roll (1D6-2 on a 1)
-    /// is passed through to <see cref="CharacterSkill.Improve(int)"/> unchanged, which
-    /// floors any negative amount to no change -- the book does not contemplate research
-    /// ever lowering a skill.
+    /// not half of a die maximum, and unlike <see cref="ImprovementRoll"/>'s gain die,
+    /// research's die is not scaled for epic/superhuman campaigns -- the book prints it as
+    /// a fixed "1D6-2" with no such clause. Both numbers therefore come from
+    /// <paramref name="ruleset"/> (<see cref="ExperienceRuleset.ResearchGainDieSides"/>,
+    /// <see cref="ExperienceRuleset.ResearchGainOffset"/>,
+    /// <see cref="ExperienceRuleset.ResearchDefaultGain"/> -- AGENTS.md invariant 7: rules
+    /// values are data, not caller-tunable parameters) rather than method parameters the
+    /// way <see cref="Teach"/>'s gain/fumble dice are: a caller must not be able to pass,
+    /// say, <c>defaultGain: 3</c> and get a result the book does not allow. Unlike
+    /// <see cref="Teach"/>, research has no training-cap ceiling: "Unlike training,
+    /// researching allows your character to improve more than 75% in a skill" (p.139), so
+    /// it never reads <see cref="ExperienceRuleset.TrainingCapPercent"/>.
+    /// </para>
+    /// <para>
+    /// House rule (owner-approved; the book is silent on this case): a negative roll
+    /// (1D6-2 on a natural 1) is passed through to <see cref="CharacterSkill.Improve(int)"/>
+    /// unchanged, which floors any negative amount to no change rather than lowering the
+    /// skill. The book prints "<em>increase</em> the skill by 1D6-2 points" -- an increase
+    /// cannot itself be negative -- and elsewhere, when it does mean a decrease, it says so
+    /// explicitly: a teaching fumble "reduc[es] the skill by -1D3" (p.139). The absence of
+    /// that "reducing" language for research is read here as deliberate: research can fail
+    /// to help (gain 0), but unlike a bad teacher, self-study is never worse than doing
+    /// nothing.
     /// </para>
     /// <para>
     /// Returns the change actually applied to the skill's rating (0 on a failed experience
@@ -269,14 +287,13 @@ public static class ExperienceSystem
     public static int Research(
         CharacterSkill skill,
         IEntropySource entropy,
+        ExperienceRuleset ruleset,
         int experienceBonus = 0,
-        bool useDefaultGain = false,
-        int gainDieSides = 6,
-        int gainOffset = -2,
-        int defaultGain = 2)
+        bool useDefaultGain = false)
     {
         ArgumentNullException.ThrowIfNull(skill);
         ArgumentNullException.ThrowIfNull(entropy);
+        ArgumentNullException.ThrowIfNull(ruleset);
 
         var roll = entropy.NextD100() + experienceBonus;
 
@@ -291,7 +308,9 @@ public static class ExperienceSystem
         }
 
         var before = skill.CurrentRating;
-        var gain = useDefaultGain ? defaultGain : entropy.NextDie(gainDieSides) + gainOffset;
+        var gain = useDefaultGain
+            ? ruleset.ResearchDefaultGain
+            : entropy.NextDie(ruleset.ResearchGainDieSides) + ruleset.ResearchGainOffset;
         skill.Improve(gain);
         return skill.CurrentRating - before;
     }

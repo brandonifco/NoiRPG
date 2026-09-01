@@ -8,9 +8,16 @@ namespace Brp.Rules.Advancement;
 public sealed class ExperienceRuleset
 {
     /// <summary>Creates an experience ruleset from data-defined values.</summary>
-    public ExperienceRuleset(int trainingCapPercent)
+    public ExperienceRuleset(
+        int trainingCapPercent,
+        int researchGainDieSides = 6,
+        int researchGainOffset = -2,
+        int researchDefaultGain = 2)
     {
         TrainingCapPercent = trainingCapPercent;
+        ResearchGainDieSides = researchGainDieSides;
+        ResearchGainOffset = researchGainOffset;
+        ResearchDefaultGain = researchDefaultGain;
     }
 
     /// <summary>
@@ -28,4 +35,32 @@ public sealed class ExperienceRuleset
     /// </para>
     /// </summary>
     public int TrainingCapPercent { get; }
+
+    /// <summary>
+    /// Ch 5: System, "Researching" (p.139): the gain die research rolls after a successful
+    /// experience roll, "1D6-2 points." Unlike <see cref="ExperienceSystem.ImprovementRoll"/>'s
+    /// <c>gainDieSides</c> (which the book explicitly scales to 1D8/1D10 for epic/superhuman
+    /// campaigns), research's die is printed as a fixed 1D6 with no such scaling clause -- so
+    /// this is ruleset data a campaign could still override (AGENTS.md invariant 7), but
+    /// <see cref="ExperienceSystem.Research"/> itself takes no caller-supplied override the way
+    /// <see cref="ExperienceSystem.Teach"/> does for its own dice.
+    /// </summary>
+    public int ResearchGainDieSides { get; }
+
+    /// <summary>
+    /// Ch 5: System, "Researching" (p.139): the fixed offset subtracted from the research gain
+    /// die -- "1D6-2 points." Read by <see cref="ExperienceSystem.Research"/> together with
+    /// <see cref="ResearchGainDieSides"/>.
+    /// </summary>
+    public int ResearchGainOffset { get; }
+
+    /// <summary>
+    /// Ch 5: System, "Researching" (p.139): the flat alternative a researcher may announce
+    /// before rolling instead of drawing the gain die -- "or choose to add 2 to the current
+    /// skill rating." Distinct from <see cref="ExperienceSystem.DefaultGain"/> (the general
+    /// "+3 instead of rolling" option for the ordinary experience-roll gain, p.138), which is
+    /// half the gain die's maximum and does not apply here -- research's default is this
+    /// separately book-printed flat 2, not a formula.
+    /// </summary>
+    public int ResearchDefaultGain { get; }
 }

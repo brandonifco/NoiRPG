@@ -1,3 +1,6 @@
 {
-  "trainingCapPercent": 75
+  "trainingCapPercent": 75,
+  "researchGainDieSides": 6,
+  "researchGainOffset": -2,
+  "researchDefaultGain": 2
 }
