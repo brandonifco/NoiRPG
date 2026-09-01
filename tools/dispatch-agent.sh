@@ -34,7 +34,8 @@
 #
 # Usage:
 #   tools/dispatch-agent.sh <issue#>            # create/verify + print path,branch
-#   tools/dispatch-agent.sh --assert-isolated   # exit 1 in the primary worktree
+#   tools/dispatch-agent.sh --assert-isolated [PATH]  # exit 1 if PATH (default cwd)
+#                                                     # is in the primary worktree
 #   tools/dispatch-agent.sh --cleanup <issue#>  # remove the worktree if clean
 #   tools/dispatch-agent.sh --print-path <issue#>  # just the worktree path (no create)
 #
@@ -48,22 +49,34 @@ die() { echo "dispatch-agent: $*" >&2; exit 2; }
 command -v git >/dev/null 2>&1 || die "git not found"
 git rev-parse --is-inside-work-tree >/dev/null 2>&1 || die "not inside a git repository"
 
-# --- primary vs linked worktree (mechanical, not path-string heuristics) ----- #
-# In the PRIMARY worktree, the absolute git dir IS the common git dir. In a
-# LINKED worktree, the git dir is <common>/worktrees/<name>, so the two differ.
 abs() { (cd "$1" 2>/dev/null && pwd) || return 1; }
-git_dir_abs="$(git rev-parse --absolute-git-dir)"
-common_dir_abs="$(abs "$(git rev-parse --git-common-dir)")" \
-  || die "cannot resolve --git-common-dir"
 
-is_primary_worktree() { [ "$git_dir_abs" = "$common_dir_abs" ]; }
+# --- primary vs linked worktree (mechanical, not path-string heuristics) ----- #
+# `git worktree list` always names the MAIN worktree first. If the worktree
+# containing DIR (its --show-toplevel) is that same path, DIR is in the PRIMARY
+# checkout. Works for an arbitrary DIR and across git versions, so the same
+# detector serves both the cwd self-check and tools/dispatch-write-guard.sh
+# classifying a write TARGET.
+#   returns 0 = primary, 1 = linked, 2 = DIR is not in a git worktree
+is_primary_worktree() {
+  local dir="${1:-.}" top main
+  top="$(git -C "$dir" rev-parse --show-toplevel 2>/dev/null)" || return 2
+  main="$(git -C "$dir" worktree list --porcelain 2>/dev/null | awk '/^worktree /{print $2; exit}')"
+  [ -n "$top" ] && [ -n "$main" ] || return 2
+  [ "$top" = "$main" ]
+}
 
-# --- --assert-isolated: the implementer's first-action self-check ------------ #
+# --- --assert-isolated [PATH]: the implementer's first-action self-check, also
+# reused by tools/dispatch-write-guard.sh to classify a write TARGET ---------- #
+# Exit 0 = isolated (a linked worktree, or PATH not in any repo); exit 1 = PATH
+# is in the PRIMARY checkout. PATH defaults to the current directory.
 if [ "${1:-}" = "--assert-isolated" ]; then
-  [ $# -eq 1 ] || die "--assert-isolated takes no other arguments"
-  if is_primary_worktree; then
+  shift
+  check_dir="${1:-.}"
+  [ $# -le 1 ] || die "--assert-isolated takes at most one PATH argument"
+  if is_primary_worktree "$check_dir"; then
     cat >&2 <<EOF
-dispatch-agent: NOT ISOLATED — this is the PRIMARY checkout ($(git rev-parse --show-toplevel)).
+dispatch-agent: NOT ISOLATED — this is the PRIMARY checkout ($(git -C "$check_dir" rev-parse --show-toplevel)).
 An implementer/writeup agent must run in a dedicated worktree so it can never
 strand the primary tree on a feature branch (burn-in F12). Stop and report a
 dispatch error; the orchestrator should create your workspace with:
@@ -72,7 +85,7 @@ and dispatch you with that path as your working directory.
 EOF
     exit 1
   fi
-  echo "dispatch-agent: isolated worktree OK ($(git rev-parse --show-toplevel))"
+  echo "dispatch-agent: isolated worktree OK ($(git -C "$check_dir" rev-parse --show-toplevel 2>/dev/null || echo "$check_dir"))"
   exit 0
 fi
 
