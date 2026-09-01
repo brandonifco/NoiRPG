@@ -11,3 +11,5 @@ orch,136,146,2,2026-08-31,verify,scope-warden,haiku,low,NI,NI,11628,NI,NI,NI,1,1
 orch,137,147,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,99675,NI,NI,NI,58,435380,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,route.sh single authority: --diff-file external-patch classification; 4 consumers unified; 9 acceptance tests
 orch,137,147,2,2026-08-31,verify,scope-warden,haiku,low,NI,NI,13395,NI,NI,NI,1,17095,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,tooling-route scope check: all pass
 orch,138,148,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,67104,NI,NI,NI,40,234198,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,scope-warden residual semantic gate; docs/tooling route -> ci only; labels updated
+orch,139,151,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,82233,NI,NI,NI,49,331876,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,packet-first mandatory; reproducible packet-sha256; broad-discovery budget + packet-required in all 7 roles
+orch,140,152,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,58442,NI,NI,NI,36,248417,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,source-slice.py: deterministic ORC page extraction w/ SHA gate; poppler backend; source-handling.md
