@@ -39,7 +39,11 @@ namespace Brp.Rules.Gear;
 /// tables' slash-separated pairs mean different things.
 /// </param>
 /// <param name="Siz">The car's apparent SIZ value ("SIZ", p.217).</param>
-/// <param name="HitPoints">The car's hit points ("HP", p.217); see the Vehicle Damage rule (p.220) for how these are spent.</param>
+/// <param name="HitPoints">
+/// The car's hit points ("HP", p.217); see the Vehicle Damage rule under "Chases", Ch 6: Combat
+/// -- a different chapter than the Ch 8 Vehicles section this record sources, and not yet
+/// implemented in this engine -- for how these are spent.
+/// </param>
 /// <param name="Crew">The number of characters required to drive the car at full efficiency ("Crew", p.217).</param>
 /// <param name="Passengers">
 /// The number of passengers the car normally carries ("Passengers", p.217). Kept as the book's

@@ -12,7 +12,8 @@ namespace Brp.Rules.Gear;
 /// </summary>
 /// <param name="GeneralArmor">
 /// The vehicle's own armor value -- what its hull/body/structure absorbs before hit points are
-/// spent (see the Vehicle Damage rule, "Chases", p.220).
+/// spent (see the Vehicle Damage rule under "Chases", Ch 6: Combat -- a different chapter than
+/// the Ch 8 Vehicles section this record sources, and not yet implemented in this engine).
 /// </param>
 /// <param name="OccupantProtection">
 /// The protection the vehicle affords to crew or passengers riding inside it, typically lower
