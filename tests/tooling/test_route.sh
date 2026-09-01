@@ -58,6 +58,36 @@ assert_eq "case3: BRP C# impl -> rules" "rules" "$(route_of "$j3")"
 j4="$("$SCRIPT" --json -- src/Brp.Data/damage-ruleset.json)"
 assert_eq "case4: ruleset JSON -> formulas" "formulas" "$(route_of "$j4")"
 
+# --- Layer 5 route taxonomy (Issue #143) ------------------------------------- #
+# gameplay — original Noir mechanics, design-led, NOT auto BRP conformance.
+j10="$("$SCRIPT" --json -- src/Noir.Rules/Foo.cs)"
+assert_eq "case10: original Noir mechanics -> gameplay" "gameplay" "$(route_of "$j10")"
+assert_eq "case10: gameplay gate set is ci-only (no design-critic on routine PRs)" \
+  "['ci']" "$(gates_of "$j10")"
+
+# scenario — authored case content, machine-enforced by case_validator.py.
+j11="$("$SCRIPT" --json -- cases/case01.yaml)"
+assert_eq "case11: authored case YAML -> scenario" "scenario" "$(route_of "$j11")"
+assert_eq "case11: scenario gate set is ci-only (case-author is not a second reviewer)" \
+  "['ci']" "$(gates_of "$j11")"
+
+j12="$("$SCRIPT" --json -- src/Noir.Scenario/Model.cs)"
+assert_eq "case12: case-schema engine -> scenario" "scenario" "$(route_of "$j12")"
+assert_eq "case12: scenario engine gate set is ci-only" "['ci']" "$(gates_of "$j12")"
+
+# presentation — game/client/presentation code, an explicit route instead of
+# falling through to the tooling catch-all.
+j13="$("$SCRIPT" --json -- src/Noir.Game/Ui.cs)"
+assert_eq "case13: game/client code -> presentation" "presentation" "$(route_of "$j13")"
+assert_eq "case13: presentation gate set is ci-only" "['ci']" "$(gates_of "$j13")"
+
+# architecture still composes on top of a gameplay-routed .csproj change.
+j14="$("$SCRIPT" --json -- src/Noir.Rules/Foo.cs src/Noir.Rules/Noir.Rules.csproj)"
+assert_eq "case14: base route unaffected by the architecture file" "gameplay" "$(route_of "$j14")"
+assert_eq "case14: architecture flag set for a .csproj under src/Noir.Rules" "True" "$(arch_of "$j14")"
+assert_eq "case14: gate set composes (architecture-review added, gameplay gates kept)" \
+  "['architecture-review', 'ci']" "$(gates_of "$j14")"
+
 # --- fixture diffs ----------------------------------------------------------- #
 NUMERIC_DIFF="$WORKDIR/numeric.diff"
 cat > "$NUMERIC_DIFF" <<'EOF'
@@ -113,6 +143,10 @@ assert_eq "case6: issue label route:formulas raises a boring diff -> formulas" "
 # --- case 7: issue label route:docs CANNOT lower an actual formulas diff --- #
 j7="$(PATH="$MOCKBIN:$PATH" MOCK_ROUTE_LABELS="docs" "$SCRIPT" --json --diff-file "$NUMERIC_DIFF" --issue 999)"
 assert_eq "case7: route:docs cannot lower a real formulas diff" "formulas" "$(route_of "$j7")"
+
+# --- case 7b: issue label route:gameplay CANNOT lower a real formulas diff -- #
+j7b="$(PATH="$MOCKBIN:$PATH" MOCK_ROUTE_LABELS="gameplay" "$SCRIPT" --json --diff-file "$NUMERIC_DIFF" --issue 999)"
+assert_eq "case7b: route:gameplay cannot lower a real formulas diff" "formulas" "$(route_of "$j7b")"
 
 # --- case 8: architecture composes with another route ----------------------- #
 j8="$("$SCRIPT" --json -- src/Brp.Rules/Combat/RangeBands.cs Directory.Build.props)"
