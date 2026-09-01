@@ -191,16 +191,32 @@ def route_for(files: list[str], base: str | None = None, issue: int | None = Non
     # escalation, and (via --issue) the issue-intent floor the same way for
     # every consumer — the review packet must never approximate this itself.
     cmd = ["bash", str(ROOT / "tools" / "route.sh"), "--json"]
+    empty_diff = None
     if base:
         cmd += ["--base", base]
-    else:
+    elif files:
         cmd += files
+    elif issue:
+        # No known files and no base ref: route.sh's "neither" fallback reads
+        # the local working tree's `git diff HEAD`, which has nothing to do
+        # with a not-yet-started Issue and would make the prediction depend on
+        # whatever happens to be dirty in this checkout. Feed it an explicit
+        # empty diff instead, so the path baseline stays "tooling" and only
+        # the Issue's `route:*` floor (still applied independently of the
+        # file list) can raise it.
+        import tempfile
+        empty_diff = tempfile.NamedTemporaryFile(mode="w", suffix=".diff", delete=False)
+        empty_diff.close()
+        cmd += ["--diff-file", empty_diff.name]
     if issue:
         cmd += ["--issue", str(issue)]
     try:
         return json.loads(sh(cmd).strip().splitlines()[-1])
     except Exception:
         return {"route": "unknown", "gates": []}
+    finally:
+        if empty_diff:
+            Path(empty_diff.name).unlink(missing_ok=True)
 
 
 def render(schema: str, lines: list[str]) -> str:
@@ -226,7 +242,7 @@ def cmd_task(num: int) -> None:
 
     files_text = first_of(sec, "likely files or subsystem", "workspace", "likely files")
     ws_lines, derived = workspace(files_text, body)
-    route = route_for(derived) if derived else {"route": "?", "gates": []}
+    route = route_for(derived, issue=num)
 
     src = first_of(sec, "rules source")
     focus = f"{d['title']} {labels} {src}"
