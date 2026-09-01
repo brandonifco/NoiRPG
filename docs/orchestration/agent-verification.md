@@ -35,21 +35,59 @@ its numeric content-escalation — is derived from the PR's own diff):
 # 1. See what the route requires and what's missing (dry run).
 tools/agent-verify.sh <PR#>
 
-# 2. Post the aggregate status + a per-gate evidence block in the PR body.
+# 2. For each semantic gate, record a verdict BOUND to the head + review packet.
+#    (build the review packet the reviewer actually saw first)
+tools/agent-brief.py review <PR#> > /tmp/review.md
+tools/gate-evidence.sh --pr <PR#> --gate scope-warden --verdict pass \
+  --review-packet /tmp/review.md --model haiku --out /tmp/sw.json
+tools/gate-evidence.sh --pr <PR#> --gate rules-conformance --verdict pass \
+  --review-packet /tmp/review.md --model opus --out /tmp/rc.json
+
+# 3. Post the aggregate status + a per-gate evidence block in the PR body.
 tools/agent-verify.sh <PR#> \
-  --gate scope-warden=pass \
-  --gate rules-conformance=pass \
+  --gate-evidence /tmp/sw.json \
+  --gate-evidence /tmp/rc.json \
   --post --evidence
 ```
 
 - `ci` is **read from GitHub** (the `build-and-test` check-run on the head SHA), never
   supplied by hand.
-- Every *other* required gate must be supplied via `--gate NAME=pass|fail|skip`. A
-  gate the route does not require is rejected (a typo or a stale assumption); a
-  required gate left unsupplied leaves the aggregate `pending`, so **success is never
-  posted on incomplete evidence**.
+- Every *other* required gate must be supplied via `--gate-evidence FILE` (preferred)
+  or `--gate NAME=pass|fail|skip`. A gate the route does not require is rejected (a
+  typo or a stale assumption); a required gate left unsupplied leaves the aggregate
+  `pending`, so **success is never posted on incomplete evidence**.
 - Default is a dry run. `--post` posts the status; `--evidence` also writes a managed
-  `<!-- agent-verification -->` block into the PR body for humans.
+  `<!-- agent-verification -->` block into the PR body for humans (now with a per-gate
+  binding column).
+
+## Binding a semantic verdict to the head + review packet (#205)
+
+`agent-verification` is bound to the SHA by construction, but a verdict fed in as a
+naked `--gate scope-warden=pass` is an *unverifiable assertion*: nothing proves it was
+produced against **this** head and **this** review packet, so an accidentally reused
+pass could ride onto a new commit. That was the review's remaining accidental-error
+hole — a tired orchestrator, not a malicious one, is enough to trigger it.
+
+[`tools/gate-evidence.sh`](../../tools/gate-evidence.sh) closes it by recording a
+verdict as `{gate, verdict, headSha, reviewPacketSha256, sourcePacketSha256, reviewer,
+model}`, and `agent-verify.sh --gate-evidence FILE` **refuses** the verdict unless:
+
+- `headSha` still equals the current PR head; and
+- a freshly regenerated `agent-brief.py review <pr>` reproduces the recorded
+  `reviewPacketSha256` (agent-brief is deterministic — no timestamp — and the appended
+  `<!-- agent-verification -->` body block is section-less, so it does not perturb the
+  hash). A changed diff/claim/issue changes the hash, which correctly forces a re-review.
+
+`sourcePacketSha256` (codex conformance) is **recorded** for provenance but not
+re-validated: the source PDF is pinned by `orchestration-policy`, but the page range
+is not recoverable at verify time. Bound gates are `bound:true` in the evidence object;
+naked `--gate` gates are `bound:false`. `--post` will **not** mint `success` while any
+required non-`ci` pass gate is unbound, unless `--allow-unbound-gates` is passed —
+which is itself recorded as `unboundGatesAllowed:true`, so the override is never silent.
+
+`gate-evidence.sh` builds input only; it mints nothing. `agent-verify.sh` remains the
+one dynamic verification-evidence authority (#136) — this is a tightening of that
+interface, not a second authority or new control plane.
 - Works from any branch. When the working tree is on the PR head it routes from the
   local diff (`route.sh --base`); otherwise it fetches the full PR patch with
   `gh pr diff` and classifies it via `route.sh --diff-file`, so the `rules → formulas`

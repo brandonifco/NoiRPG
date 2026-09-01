@@ -3,10 +3,12 @@
 # canonical verification-evidence object (Issue #136).
 #
 # agent-verify.sh is the ONE dynamic verification-evidence authority: it reads
-# the real build-and-test check-run from GitHub, combines it with the --gate
-# evidence supplied for the route's other required gates, and must render the
-# same {schemaVersion, pr, issue, headSha, route, requiredGates, gates, aggregate}
-# object through --json/--json-out AND the human --evidence PR-body block.
+# the real build-and-test check-run from GitHub, combines it with the --gate /
+# --gate-evidence verdicts supplied for the route's other required gates, and must
+# render the same {schemaVersion, pr, issue, headSha, route, requiredGates, gates,
+# gateEvidence, unboundGatesAllowed, aggregate} object through --json/--json-out
+# AND the human --evidence PR-body block. Semantic-verdict head/packet binding
+# (Issue #205) is exercised by test_gate_evidence.sh and cases 10–13 below.
 #
 # No `gh` CLI network access is available in this environment (or in CI), so
 # this stubs `gh` with a fixture script that answers the exact calls
@@ -140,7 +142,7 @@ ev = json.load(sys.stdin)
 print(ev["schemaVersion"], ev["pr"], ev["issue"], ev["headSha"], ev["route"],
       ev["aggregate"], ev["gates"]["ci"], ev["gates"]["scope-warden"])
 ')"
-assert_eq "case1: schemaVersion" "1" "$schema"
+assert_eq "case1: schemaVersion" "2" "$schema"
 assert_eq "case1: pr number"     "999" "$pr"
 assert_eq "case1: linked issue"  "136" "$issue"
 assert_eq "case1: aggregate"     "success" "$agg"
@@ -149,7 +151,7 @@ assert_eq "case1: scope-warden gate" "pass" "$gate_sw"
 
 keys="$(printf '%s' "$json" | python3 -c 'import json,sys; print(sorted(json.load(sys.stdin).keys()))')"
 assert_eq "case1: exact canonical key set" \
-  "['aggregate', 'gates', 'headSha', 'issue', 'pr', 'requiredGates', 'route', 'schemaVersion']" \
+  "['aggregate', 'gateEvidence', 'gates', 'headSha', 'issue', 'pr', 'requiredGates', 'route', 'schemaVersion', 'unboundGatesAllowed']" \
   "$keys"
 
 rc=0; MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass >/dev/null || rc=$?
@@ -250,15 +252,96 @@ assert_contains "case9: refusal message names the mismatch" "$err9" "refusing to
 assert_contains "case9: refusal message cites F10" "$err9" "F10"
 
 # --- case 10: converged-head guard is a no-op when gh and git agree -------- #
+# Gates are naked --gate here (unbound), so posting success now requires the
+# explicit --allow-unbound-gates override (Issue #205); this case tests the
+# convergence no-op, not binding. Cases 11–14 test the bound path.
 git -C "$ROOT" update-ref "$FIXTURE_REF" "$PR_HEAD_SHA"
 out10="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
-  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post)"
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --allow-unbound-gates --post)"
 assert_contains "case10: --post proceeds and posts when heads converge" "$out10" "posted: agent-verification = success"
 
 rc10=0
 MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
-  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post >/dev/null || rc10=$?
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --allow-unbound-gates --post >/dev/null || rc10=$?
 assert_eq "case10: exit 0 when converged heads and gates all pass" "0" "$rc10"
+
+# =========================================================================== #
+# Issue #205 — semantic-verdict head/packet binding via --gate-evidence.
+# A stub agent-brief.py (AGENT_VERIFY_AGENT_BRIEF) emits a review packet whose
+# packet-sha256 footer we control; evidence files carry a headSha + a
+# reviewPacketSha256 that agent-verify must re-validate against the current PR
+# head + the freshly regenerated packet hash.
+# =========================================================================== #
+STUB_RPS="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+STUB_BRIEF="$WORKDIR/agent-brief-stub.sh"
+cat > "$STUB_BRIEF" <<STUB
+#!/usr/bin/env bash
+# emits a deterministic review packet with a controllable footer hash
+cat <<BODY
+# REVIEW BRIEF — stub
+BODY
+printf -- '---\npacket-schema: review-packet/1\npacket-version: 1\npacket-sha256: %s\n' "\${STUB_PACKET_SHA:-$STUB_RPS}"
+STUB
+chmod +x "$STUB_BRIEF"
+
+# helper: write a gate-evidence JSON file
+write_ev() { # $1=path $2=gate $3=verdict $4=headSha $5=reviewPacketSha256
+  cat > "$1" <<EV
+{ "schemaVersion": 1, "gate": "$2", "verdict": "$3", "pr": 999,
+  "headSha": "$4", "reviewPacketSha256": "$5", "sourcePacketSha256": null,
+  "reviewer": "$2", "model": "test" }
+EV
+}
+
+SW_EV="$WORKDIR/sw.json"; RC_EV="$WORKDIR/rc.json"
+
+# --- case 11: fresh bound evidence -> success, bound:true, posts ------------ #
+git -C "$ROOT" update-ref "$FIXTURE_REF" "$PR_HEAD_SHA"
+write_ev "$SW_EV" scope-warden     pass "$PR_HEAD_SHA" "$STUB_RPS"
+write_ev "$RC_EV" rules-conformance pass "$PR_HEAD_SHA" "$STUB_RPS"
+json11="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  AGENT_VERIFY_AGENT_BRIEF="$STUB_BRIEF" \
+  run_verify 999 --gate-evidence "$SW_EV" --gate-evidence "$RC_EV" --json)"
+agg11="$(printf '%s' "$json11" | python3 -c 'import json,sys; print(json.load(sys.stdin)["aggregate"])')"
+assert_eq "case11: fresh bound evidence -> aggregate success" "success" "$agg11"
+bound11="$(printf '%s' "$json11" | python3 -c 'import json,sys; ev=json.load(sys.stdin); print(ev["gateEvidence"]["scope-warden"]["bound"], ev["gateEvidence"]["rules-conformance"]["bound"])')"
+assert_eq "case11: both gates marked bound" "True True" "$bound11"
+rps11="$(printf '%s' "$json11" | python3 -c 'import json,sys; print(json.load(sys.stdin)["gateEvidence"]["scope-warden"]["reviewPacketSha256"])')"
+assert_eq "case11: recorded review packet hash" "$STUB_RPS" "$rps11"
+
+out11="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  AGENT_VERIFY_AGENT_BRIEF="$STUB_BRIEF" \
+  run_verify 999 --gate-evidence "$SW_EV" --gate-evidence "$RC_EV" --post)"
+assert_contains "case11: bound evidence posts success without --allow-unbound-gates" "$out11" "posted: agent-verification = success"
+
+# --- case 12: unbound --gate + --post (converged) is REFUSED --------------- #
+rc12=0
+err12="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post 2>&1 1>/dev/null)" || rc12=$?
+assert_eq "case12: unbound --gate --post refused (exit 2)" "2" "$rc12"
+assert_contains "case12: refusal cites unbound" "$err12" "UNBOUND"
+assert_contains "case12: refusal cites Issue #205" "$err12" "#205"
+
+# --- case 13: stale head in evidence is refused ---------------------------- #
+write_ev "$SW_EV" scope-warden pass "$STALE_SHA" "$STUB_RPS"
+write_ev "$RC_EV" rules-conformance pass "$PR_HEAD_SHA" "$STUB_RPS"
+rc13=0
+err13="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  AGENT_VERIFY_AGENT_BRIEF="$STUB_BRIEF" \
+  run_verify 999 --gate-evidence "$SW_EV" --gate-evidence "$RC_EV" --json 2>&1 1>/dev/null)" || rc13=$?
+assert_eq "case13: stale-head evidence refused (exit 2)" "2" "$rc13"
+assert_contains "case13: refusal names stale head" "$err13" "STALE"
+
+# --- case 14: stale review-packet hash in evidence is refused -------------- #
+# Evidence records the old hash; the stub now regenerates a DIFFERENT hash.
+write_ev "$SW_EV" scope-warden pass "$PR_HEAD_SHA" "$STUB_RPS"
+write_ev "$RC_EV" rules-conformance pass "$PR_HEAD_SHA" "$STUB_RPS"
+rc14=0
+err14="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  AGENT_VERIFY_AGENT_BRIEF="$STUB_BRIEF" STUB_PACKET_SHA="bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb" \
+  run_verify 999 --gate-evidence "$SW_EV" --gate-evidence "$RC_EV" --json 2>&1 1>/dev/null)" || rc14=$?
+assert_eq "case14: stale-packet evidence refused (exit 2)" "2" "$rc14"
+assert_contains "case14: refusal names packet-hash mismatch" "$err14" "reviewPacketSha256"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then

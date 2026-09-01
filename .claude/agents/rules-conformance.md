@@ -64,4 +64,8 @@ casual testing, and silently corrupts every layer above. Two documented near-mis
 For each rule checked: the rule, the section it comes from, how many rows or values
 you verified, and a verdict of CONFIRMED or a specific defect with the input that
 breaks it. Rank defects most severe first. Say plainly when something is correct —
-a clean verdict is a real result.
+a clean verdict is a real result. End with a single clear overall verdict line
+(`VERDICT: pass` or `VERDICT: fail`): the orchestrator records it with
+`tools/gate-evidence.sh`, which binds your verdict to the exact head SHA and
+review-packet hash you saw, so it cannot ride onto a later commit (Issue #205). A
+`BRIEF DEFICIENCY` return is not a pass — no verdict is recorded.

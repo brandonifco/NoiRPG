@@ -31,6 +31,12 @@
 #   --source-packet   tools/source-slice.py --pages A-B    (authoritative source text)
 #   --packet          any single bounded file, for simcheck (e.g. a source-slice packet)
 #
+# Recording the codex-conformance verdict: after this run, the orchestrator records
+# the verdict with tools/gate-evidence.sh, passing the SAME --review-packet and
+# --source-packet, so the verdict is bound to {head SHA + review-packet hash} and the
+# source-packet hash is recorded for provenance (Issue #205). agent-verify.sh then
+# refuses that gate if the packet the diff no longer regenerates to the same hash.
+#
 # Env overrides: CODEX_BIN, CODEX_MODEL, OUT.
 # LEDGER_LOG=1 additionally appends one job row via tools/ledger-log.sh (never
 # fabricated — set ISSUE/PR/SEQ/LAYER/PHASE to whatever is actually known; unset

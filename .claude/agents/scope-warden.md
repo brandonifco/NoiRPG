@@ -59,4 +59,9 @@ enforcement working, not a bug; do not attempt to route around it.
 ## Output
 
 A short pass/fail per applicable item, with file and line for any failure. If
-nothing in the diff raises a semantic question, say so in one line and stop.
+nothing in the diff raises a semantic question, say so in one line and stop. End
+with a single clear overall verdict line (`VERDICT: pass` or `VERDICT: fail`): the
+orchestrator records it with `tools/gate-evidence.sh`, which binds your verdict to
+the exact head SHA and review-packet hash you saw, so it cannot be reused on a later
+commit (Issue #205). If you returned `BRIEF DEFICIENCY`, that is not a pass — no
+verdict is recorded.
