@@ -9,6 +9,20 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 You author and repair case data. Read `cases/SCHEMA.md` first, and `cases/overpass.yaml`
 as the reference implementation.
 
+## Worktree isolation (run this FIRST)
+
+You write files, so you must run in a dedicated worktree, never the primary checkout
+(burn-in F12). Before reading or editing anything else, run:
+
+```bash
+tools/dispatch-agent.sh --assert-isolated
+```
+
+If it exits non-zero you are in the primary checkout — **stop immediately and return a
+dispatch error** ("not dispatched into an isolated worktree"); do not `Write`/`Edit`.
+The orchestrator creates your workspace with `tools/dispatch-agent.sh <issue#>` and
+dispatches you with that path as your working directory.
+
 ## Packet-first
 
 A generated TASK packet (`tools/agent-brief.py task <issue>`) is your starting
