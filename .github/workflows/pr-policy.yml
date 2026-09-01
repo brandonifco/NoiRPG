@@ -2,7 +2,9 @@ name: pr-policy
 
 # Make the PR machine-readable: validate that the body carries real evidence
 # (not the template's prompts), derive the verification route, and publish a
-# small evidence artifact the orchestrator / state machine (#62) can read.
+# small STATIC-metadata evidence artifact the orchestrator can read. Dynamic
+# verification state (did each gate pass for this SHA) is owned solely by
+# tools/agent-verify.sh, not this job.
 on:
   pull_request:
     types: [opened, edited, synchronize, reopened]
