@@ -58,6 +58,37 @@ jobs:
         if: always()
         run: dotnet format --verify-no-changes --no-restore
 
+      # Deterministic scenario gate. The `scenario` route (tools/route.sh) is
+      # CI-only precisely because tools/case_validator.py mechanically enforces
+      # the case schema, the Three Doors rule, the junction budget, and the
+      # canonical skill list — so that validator must actually RUN in the
+      # required job, not merely be pointed at. Runs regardless of earlier
+      # failures (if: always()) and hard-fails the job on any FAIL, so a
+      # malformed case can never merge behind a green build-and-test.
+      - name: Install Python (case validator)
+        if: always()
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate case data
+        id: cases
+        if: always()
+        run: |
+          python3 -m pip install --quiet pyyaml
+          shopt -s nullglob
+          files=(cases/*.yaml cases/*.yml)
+          if [ ${#files[@]} -eq 0 ]; then
+            echo "No case files to validate."
+            exit 0
+          fi
+          rc=0
+          for f in "${files[@]}"; do
+            echo "== $f =="
+            python3 tools/case_validator.py "$f" || rc=1
+          done
+          exit "$rc"
+
       # The summary is the point of this workflow. It exists so an agent can decide
       # its next action from tens of lines instead of thousands. It is deliberately
       # not a second copy of the log.

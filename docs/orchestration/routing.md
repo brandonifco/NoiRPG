@@ -74,9 +74,13 @@ against a printed source table, so none of them needs `rules-conformance` or
 - **`scenario`** is authored case/scenario content. Its correctness is machine-checked
   by [`tools/case_validator.py`](../../tools/case_validator.py) — schema, the Three
   Doors rule, the junction budget, canonical skill names, and load/parse validity — all
-  deterministic. `case-author` (Sonnet, see [`agent-team.md`](../agent-team.md)) is a
-  content-producing role, not a second reviewer; it does not get paired with an Opus
-  review on ordinary case YAML.
+  deterministic. That validator is not merely *pointed at* this route: the required
+  `build-and-test` job runs it over every `cases/*.yaml` on every PR (see
+  [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml), "Validate case data"),
+  so a malformed case fails a required check and cannot merge behind a green build —
+  which is what makes `ci`-only a sufficient gate for this route. `case-author` (Sonnet,
+  see [`agent-team.md`](../agent-team.md)) is a content-producing role, not a second
+  reviewer; it does not get paired with an Opus review on ordinary case YAML.
 - **`presentation`** is game engine / client / presentation code. It gets its own route
   rather than the generic `tooling` catch-all so its gate set is legible on its own
   terms, even though none of `src/Noir.Game/**` or `src/Noir.Client/**` exists yet —
