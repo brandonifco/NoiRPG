@@ -11,7 +11,7 @@
 # actually touches numeric tables / thresholds. See docs/orchestration/routing.md
 # for the route -> required-gates table and the escalation patterns.
 
-# Catch-all: anything unmatched routes to tooling (CI + scope-warden).
+# Catch-all: anything unmatched routes to tooling (CI only).
 *                          tooling
 
 # Documentation
