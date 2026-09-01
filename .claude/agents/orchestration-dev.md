@@ -31,11 +31,16 @@ writing routine Bash, Python, YAML, or docs.
 
 ## Packet-first
 
-A generated TASK packet is your starting context: the Issue, the exact outcome,
-acceptance criteria, exclusions, likely files, predicted route, and required gates.
-Read the named files and their necessary one-hop neighbors. Do not conduct an
-open-ended repository survey. If a working TASK packet was not provided, treat that as
-a process error and say so rather than reconstructing the whole context by hand.
+A generated TASK packet (`tools/agent-brief.py task <issue>`) is your starting
+context: the Issue, the exact outcome, acceptance criteria, exclusions, likely
+files, predicted route, and required gates. Read the named files and their
+necessary one-hop neighbors. Do not conduct an open-ended repository survey. If
+more than five broad discovery operations (repo-wide grep/glob/history searches)
+appear necessary, stop and return `BRIEF DEFICIENCY` describing what the packet
+failed to provide. Normal reads, edits, targeted compilation/tests, and inspection
+of explicitly named files do not count as broad discovery. If a working TASK
+packet was not provided at all, treat that as a process error and say so rather
+than reconstructing the whole context by hand.
 
 ## Non-negotiable invariants
 

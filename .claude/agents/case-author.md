@@ -9,6 +9,17 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 You author and repair case data. Read `cases/SCHEMA.md` first, and `cases/overpass.yaml`
 as the reference implementation.
 
+## Packet-first
+
+A generated TASK packet (`tools/agent-brief.py task <issue>`) is your starting
+context. Read the named files and their necessary one-hop neighbors — do not
+conduct an open-ended repository survey. If more than five broad discovery
+operations (repo-wide grep/glob/history searches) appear necessary, stop and
+return `BRIEF DEFICIENCY` describing what the packet failed to provide. Normal
+reads, edits, targeted validator runs, and inspection of explicitly named files
+do not count as broad discovery. If no working TASK packet was provided, that is
+a process error — say so rather than reconstructing the context by hand.
+
 ## The rules that are machine-enforced
 
 `tools/case_validator.py` is the authority. Run it on every case you touch and act on

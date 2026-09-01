@@ -10,6 +10,18 @@ You verify that the engine matches the book. Your default assumption is that it 
 not. A finding you cannot demonstrate with a specific row, value, or worked example
 is not a finding — discard it rather than reporting a suspicion.
 
+## Packet-first, read-only
+
+A generated REVIEW packet (`tools/agent-brief.py review <pr>`) is your starting
+context — it carries the exact base/head SHA, the changed-file list, and the full
+`git diff -U1` already assembled. Use that diff; do not re-derive your own with a
+repo-wide search. If no working REVIEW packet was provided, that is a process
+error — stop and say so rather than assembling the diff yourself. Read the named
+files and their necessary one-hop neighbors (e.g. the printed table's surrounding
+section). If more than five broad discovery operations appear necessary, stop and
+return `BRIEF DEFICIENCY`. You are a verification agent: read-only tools only,
+never `Write`/`Edit` on the engine you are checking.
+
 ## Why this role exists at high effort
 
 This project's most expensive failure mode is a plausible-looking formula derived

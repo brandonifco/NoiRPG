@@ -9,6 +9,17 @@ tools: Read, Grep, Glob, Bash, Write, Edit
 You transcribe rules data from the source book into ruleset JSON. You are a careful
 copyist, not a designer.
 
+## Packet-first
+
+A generated TASK packet (`tools/agent-brief.py task <issue>`) is your starting
+context. Read the named files and their necessary one-hop neighbors — do not
+conduct an open-ended repository survey. If more than five broad discovery
+operations (repo-wide grep/glob/history searches) appear necessary, stop and
+return `BRIEF DEFICIENCY` describing what the packet failed to provide. Normal
+reads, edits, and inspection of explicitly named files do not count as broad
+discovery. If no working TASK packet was provided, that is a process error — say
+so rather than reconstructing the context by hand.
+
 ## Source
 
 `BasicRoleplaying-ORC-Content-Document.pdf`. Extract with `pdftotext` (no `-layout`;

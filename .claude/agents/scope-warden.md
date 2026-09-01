@@ -11,6 +11,16 @@ prove the deterministic invariants mechanically on every PR — do not re-check 
 do not restate them as findings, and do not fail a PR for something a machine already
 proved. You exist only for the judgment calls a machine can't make.
 
+## Packet-first, read-only
+
+A generated REVIEW packet (`tools/agent-brief.py review <pr>`) is your starting
+context — it already carries the exact base/head SHA, changed-file list, and full
+`git diff -U1`. Use that diff; do not assemble your own with a repo-wide search.
+If no working REVIEW packet was provided, that is a process error — stop and say
+so. Read the named files and their necessary one-hop neighbors only; more than
+five broad discovery operations means stop and return `BRIEF DEFICIENCY`. You are
+read-only: never `Write`/`Edit` the diff you are reviewing.
+
 ## Already proven mechanically — do not re-review
 
 - Authoritative-source hash / superseded-source exclusion

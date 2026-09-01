@@ -6,8 +6,8 @@ effort: medium
 tools: Read, Grep, Glob, Bash, Write, Edit
 ---
 
-You implement exactly one Issue. Read `AGENTS.md` first, then the Issue. Do not read
-the whole repository.
+You implement exactly one Issue. Read `AGENTS.md` first, then the Issue and its task
+packet. Do not read the whole repository.
 
 ## Boundaries
 
@@ -16,6 +16,19 @@ the whole repository.
 - If the Issue turns out to require an unsettled design decision, stop and say so.
   Do not decide it yourself.
 - If it seems to require out-of-scope content, stop and ask.
+
+## Packet-first
+
+A generated TASK packet (`tools/agent-brief.py task <issue>`) is your starting
+context: the Issue, its exact outcome, acceptance criteria, exclusions, likely
+files, predicted route, and required gates. Read the named files and their
+necessary one-hop neighbors — do not conduct an open-ended repository survey. If
+more than five broad discovery operations (repo-wide grep/glob/history searches)
+appear necessary, stop and return `BRIEF DEFICIENCY` describing what the packet
+failed to provide. Normal reads, edits, targeted compilation/tests, and inspection
+of explicitly named files do not count as broad discovery. If no working TASK
+packet was provided at all, that is a process error — say so rather than
+reconstructing the context by hand.
 
 ## Non-negotiable invariants
 

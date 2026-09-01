@@ -16,6 +16,7 @@ to be pasted directly into an agent prompt.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -24,6 +25,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 DECISIONS = ROOT / "docs" / "decisions"
+
+# Packet schema/hash version. Bump this whenever a section is added, removed, or
+# reordered in a way that changes what a consumer can rely on being present —
+# NOT on every cosmetic wording change. The hash footer this stamps is
+# reproducible: it covers only the packet's semantic content, never a
+# timestamp or other wall-clock value (there is deliberately none in this
+# file), so two runs against identical repo/issue/PR state produce the same
+# packet-sha256.
+PACKET_VERSION = 1
 
 # Foundational authority that applies to essentially all engine work.
 ALWAYS_AUTHORITY = ["AGENTS.md", "orc-scope-filter.md", "docs/source-handling.md"]
@@ -193,6 +203,20 @@ def route_for(files: list[str], base: str | None = None, issue: int | None = Non
         return {"route": "unknown", "gates": []}
 
 
+def render(schema: str, lines: list[str]) -> str:
+    """Join packet lines and append a deterministic version/hash footer.
+
+    The hash covers exactly the rendered body (schema line included) — no
+    timestamp, hostname, or other nondeterministic value is ever part of it,
+    so re-running the same command against the same repo/issue/PR state
+    reproduces the identical `packet-sha256`.
+    """
+    body = "\n".join(lines).rstrip() + "\n"
+    digest = hashlib.sha256(body.encode("utf-8")).hexdigest()
+    footer = f"\n---\npacket-schema: {schema}/{PACKET_VERSION}\npacket-version: {PACKET_VERSION}\npacket-sha256: {digest}\n"
+    return body + footer
+
+
 def cmd_task(num: int) -> None:
     d = gh_json(["issue", "view", str(num), "--json", "title,body,labels,number,url"])
     body = d.get("body") or ""
@@ -220,8 +244,7 @@ def cmd_task(num: int) -> None:
     if acc:
         p.append(f"\n**Acceptance criteria.**\n{acc}")
     excl = first_of(sec, "out of scope", "exclusions")
-    if excl:
-        p.append(f"\n**Explicitly out of scope.**\n{excl}")
+    p.append(f"\n**Explicitly out of scope.**\n{excl or '(none stated in the issue body)'}")
 
     p.append("\n## AUTHORITY (read these, in this order)")
     for f in ALWAYS_AUTHORITY:
@@ -243,11 +266,12 @@ def cmd_task(num: int) -> None:
     p.append("\n## DO NOT REVISIT (locked decisions)")
     for a in adr_pick:
         p.append(f"- {adrs[a][0]} (`{adrs[a][1].name}`)")
-    dead = first_of(sec, "known dead ends", "dead ends")
-    if dead:
-        p.append(f"- Rejected approaches: {dead}")
 
-    print("\n".join(p))
+    p.append("\n## KNOWN DEAD ENDS")
+    dead = first_of(sec, "known dead ends", "dead ends")
+    p.append(dead if dead else "(none recorded in the issue; if you hit one, note it in the PR for the next agent.)")
+
+    sys.stdout.write(render("task-packet", p))
 
 
 def cmd_review(args: argparse.Namespace) -> None:
@@ -269,34 +293,74 @@ def cmd_review(args: argparse.Namespace) -> None:
     diff = sh(["git", "diff", "-U1", f"{base}...{head}"])
     route = route_for(names, base=base, issue=issue)
 
-    claim = first_of(split_sections(body), "exact behavioral claim", "behavioral claim") or "(none stated)"
+    sec = split_sections(body)
+    claim = first_of(sec, "exact behavioral claim", "behavioral claim") or "(none stated)"
+
+    focus = f"{title} {sec.get('rules source', '')}"
+    adrs = adr_titles()
+    adr_pick = relevant_adrs(focus) if title != "(explicit range)" else list(ALWAYS_ADRS)
+
+    reasons = []
+    if route.get("escalated"):
+        reasons.append("content escalation: the diff touches a numeric table/threshold, "
+                        "so `rules` was promoted to `formulas`")
+    if route.get("issueRaised"):
+        reasons.append(f"issue-intent floor: Issue #{issue} carries `route:{route.get('issueRoute')}`, "
+                        "which raises (never lowers) the route")
+    if route.get("architecture"):
+        reasons.append("architecture review added: the diff touches project references/layering")
+    escalation_reason = "; ".join(reasons) if reasons else "none — plain path-based route, no escalation"
 
     p = []
     p.append(f"# REVIEW BRIEF — {title}")
-    if issue:
-        p.append(f"Closes/related Issue: #{issue}")
+    p.append(f"\n## PR")
+    if args.pr is not None:
+        p.append(f"- PR: #{args.pr}")
+    else:
+        p.append("- PR: (explicit range, no PR)")
     if url:
-        p.append(f"<{url}>")
-    p.append(f"\n## RANGE\n- base `{base[:12]}`\n- head `{head[:12]}`")
+        p.append(f"- <{url}>")
+
+    p.append("\n## ISSUE")
+    if issue:
+        p.append(f"- Closes/related: #{issue}")
+        p.append(f"- Source task packet: `tools/agent-brief.py task {issue}`")
+    else:
+        p.append("- (none referenced — no `Closes #<n>` found; not applicable)")
+
+    p.append(f"\n## RANGE\n- base `{base}`\n- head `{head}`")
 
     p.append("\n## CHANGED FILES")
     p.extend([f"- `{f}`" for f in names] or ["- (none)"])
+
+    p.append("\n## AUTHORITY (read these, in this order)")
+    for f in ALWAYS_AUTHORITY:
+        p.append(f"- `{f}`")
+    for a in adr_pick:
+        if a in adrs:
+            p.append(f"- `docs/decisions/{adrs[a][1].name}` — {adrs[a][0]}")
 
     p.append("\n## IMPLEMENTER CLAIM (verify — do not assume true)")
     p.append(claim)
 
     p.append(f"\n## REQUIRED REVIEW — route **{route.get('route')}**"
              + (" (content-escalated)" if route.get("escalated") else ""))
+    p.append("Checklist — every listed gate must return a verdict before this PR can merge:")
     for g in route.get("gates", []):
         if g in GATE_REVIEW:
-            p.append(f"- **{g}** — {GATE_REVIEW[g]}")
+            p.append(f"- [ ] **{g}** — {GATE_REVIEW[g]}")
+        else:
+            p.append(f"- [ ] **{g}**")
+
+    p.append("\n## ESCALATION REASON")
+    p.append(escalation_reason)
 
     p.append("\n## DIFF (`git diff -U1`)")
     p.append("```diff")
     p.append(diff.rstrip())
     p.append("```")
 
-    print("\n".join(p))
+    sys.stdout.write(render("review-packet", p))
 
 
 def main() -> int:
