@@ -11,6 +11,7 @@ reasoning for the two places where being wrong is costly and hard to detect.
 | `rules-extractor` | Haiku | medium | Transcribing tables and stat blocks from the source PDF into ruleset JSON | Cheap, high volume |
 | `scope-warden` | Haiku | low | One checklist against a diff — out-of-scope content, wrong source, era baselines, determinism | Cheapest gate; run first |
 | `engine-dev` | Sonnet | medium | Implementing one settled Issue in C# | Workhorse |
+| `orchestration-dev` | Sonnet | medium | Implementing one settled Issue in the orchestration/tooling layer — workflows, Bash/Python tools, evidence schemas, metrics, packets, orchestration docs | Workhorse (control plane) |
 | `case-author` | Sonnet | medium | Case YAML, Three Doors compliance, build coverage | Workhorse |
 | `rules-conformance` | Opus | high | Adversarially verifying implemented mechanics against printed tables | Expensive, narrow |
 | `design-critic` | Opus | xhigh | Phase-gate design review | Expensive, rare |
@@ -48,10 +49,18 @@ after.
 `rules-conformance` and a Codex cross-check. A three-hundred-line change to CLI
 formatting deserves neither.
 
-**Never route an open design question to an implementation agent.** `engine-dev`
-stops and reports when it hits one. That is correct behavior, not a failure —
-deciding it inside an implementation PR is how decisions get buried where no later
-agent will find them.
+**Route by layer, not by who is holding the context.** BRP C# implementation goes to
+`engine-dev`; orchestration/tooling implementation — workflows, Bash/Python tools,
+evidence schemas, metrics, packet tooling, orchestration docs — goes to
+`orchestration-dev`; case/scenario content goes to `case-author`. The main
+orchestrator loop is the *dispatcher*, not the default implementer: it should not
+spend its own high-capability context writing routine Bash, Python, YAML, or docs when
+a Sonnet worker can. Do not route routine implementation to Opus.
+
+**Never route an open design question to an implementation agent.** `engine-dev` and
+`orchestration-dev` both stop and report when they hit one. That is correct behavior,
+not a failure — deciding it inside an implementation PR is how decisions get buried
+where no later agent will find them.
 
 **Verification agents get read-only tools.** An agent that can edit what it is checking
 will eventually make the check pass instead of making the code right.

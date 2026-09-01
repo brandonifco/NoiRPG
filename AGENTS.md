@@ -143,7 +143,9 @@ Work is routed to the smallest model that can do it correctly. See
 `docs/agent-team.md` for the roster and routing rules, and `docs/decisions/0004-agent-team.md`
 for why. In short: cheap gates before expensive ones, escalate on risk rather than
 diff size, verification agents get read-only tools, and Codex is a cross-vendor
-verification instrument rather than a second workhorse.
+verification instrument rather than a second workhorse. Route implementation by layer:
+BRP C# to `engine-dev`, orchestration/tooling to `orchestration-dev`, case content to
+`case-author` — the main loop dispatches rather than implementing routine work itself.
 
 ## Where deeper guidance lives
 
