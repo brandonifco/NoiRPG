@@ -85,11 +85,13 @@ case "$1 $2" in
     # to route.sh --diff-file, never a path-only degrade (#137). MOCK_PR_DIFF
     # supplies a real unified diff verbatim; otherwise synthesize one non-numeric
     # hunk per MOCK_PR_FILES entry so the default fixture still behaves like a
-    # boring change.
+    # boring change. The default file routes to `rules` (ci + scope-warden +
+    # rules-conformance) rather than `tooling`, since #138 made the `tooling`
+    # route ci-only and these cases exist to exercise a non-ci required gate.
     if [ -n "${MOCK_PR_DIFF:-}" ]; then
       printf '%s\n' "$MOCK_PR_DIFF"
     else
-      for f in ${MOCK_PR_FILES:-tools/agent-verify.sh}; do
+      for f in ${MOCK_PR_FILES:-src/Brp.Rules/Combat/Foo.cs}; do
         printf 'diff --git a/%s b/%s\nindex 1111111..2222222 100644\n--- a/%s\n+++ b/%s\n@@ -1,1 +1,1 @@\n-old line\n+new line\n' \
           "$f" "$f" "$f" "$f"
       done
@@ -122,7 +124,7 @@ export PATH="$MOCKBIN:$PATH"
 run_verify() { "$SCRIPT" "$@"; }
 
 # --- case 1: all gates pass -> aggregate success, canonical shape ---------- #
-json="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --json)"
+json="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --json)"
 printf '%s\n' "$json" | python3 -m json.tool >/dev/null \
   && ok "case1: --json is valid JSON" || fail "case1: --json is valid JSON"
 
@@ -144,7 +146,7 @@ assert_eq "case1: exact canonical key set" \
   "['aggregate', 'gates', 'headSha', 'issue', 'pr', 'requiredGates', 'route', 'schemaVersion']" \
   "$keys"
 
-rc=0; MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass >/dev/null || rc=$?
+rc=0; MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass >/dev/null || rc=$?
 assert_eq "case1: exit 0 on success" "0" "$rc"
 
 # --- case 2: a required gate never supplied -> pending, never success ------ #
@@ -156,7 +158,7 @@ rc2=0; MOCK_CI_CONCLUSION=success run_verify 999 >/dev/null || rc2=$?
 assert_eq "case2: exit non-zero when pending" "1" "$rc2"
 
 # --- case 3: ci fails on GitHub -> aggregate failure, ci fabricated never --- #
-json3="$(MOCK_CI_CONCLUSION=failure run_verify 999 --gate scope-warden=pass --json || true)"
+json3="$(MOCK_CI_CONCLUSION=failure run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --json || true)"
 agg3="$(printf '%s' "$json3" | python3 -c 'import json,sys; print(json.load(sys.stdin)["aggregate"])')"
 gate_ci3="$(printf '%s' "$json3" | python3 -c 'import json,sys; print(json.load(sys.stdin)["gates"]["ci"])')"
 assert_eq "case3: real ci failure -> gates.ci = fail" "fail" "$gate_ci3"
@@ -164,13 +166,13 @@ assert_eq "case3: real ci failure -> aggregate failure" "failure" "$agg3"
 
 # --- case 4: --json-out writes the same object to a file ------------------- #
 OUT="$WORKDIR/evidence.json"
-MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --json-out "$OUT" >/dev/null
+MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --json-out "$OUT" >/dev/null
 [ -f "$OUT" ] && ok "case4: --json-out wrote a file" || fail "case4: --json-out wrote a file"
 python3 -m json.tool "$OUT" >/dev/null && ok "case4: --json-out file is valid JSON" \
   || fail "case4: --json-out file is valid JSON"
 
 # --- case 5: --evidence PR-body block renders from the SAME object -------- #
-evidence_out="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --evidence)"
+evidence_out="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --evidence)"
 assert_contains "case5: evidence block has managed start marker" \
   "$evidence_out" "<!-- agent-verification:start -->"
 assert_contains "case5: evidence block has managed end marker" \
@@ -183,7 +185,7 @@ assert_contains "case5: evidence block reports the same per-gate results" \
   "$evidence_out" '| `scope-warden` | pass |'
 
 # --- case 6: --json mode leaves stdout as pure JSON, even with --evidence -- #
-combined="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --json --evidence)"
+combined="$(MOCK_CI_CONCLUSION=success run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --json --evidence)"
 printf '%s\n' "$combined" | python3 -m json.tool >/dev/null \
   && ok "case6: --json + --evidence still leaves stdout pure JSON" \
   || fail "case6: --json + --evidence still leaves stdout pure JSON"

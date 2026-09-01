@@ -41,10 +41,14 @@ gates_of()     { printf '%s' "$1" | python3 -c 'import json,sys; print(sorted(js
 # --- case 1: ordinary docs file -> docs ------------------------------------ #
 j1="$("$SCRIPT" --json -- README.md)"
 assert_eq "case1: docs file -> docs" "docs" "$(route_of "$j1")"
+assert_eq "case1: docs gate set is ci-only (no semantic AI reviewer)" \
+  "['ci']" "$(gates_of "$j1")"
 
 # --- case 2: ordinary tooling file -> tooling ------------------------------ #
 j2="$("$SCRIPT" --json -- tools/some-script.sh)"
 assert_eq "case2: tooling file -> tooling" "tooling" "$(route_of "$j2")"
+assert_eq "case2: tooling gate set is ci-only (no semantic AI reviewer)" \
+  "['ci']" "$(gates_of "$j2")"
 
 # --- case 3: ordinary BRP C# implementation -> rules ----------------------- #
 j3="$("$SCRIPT" --json -- src/Brp.Rules/Combat/RangeBands.cs)"
