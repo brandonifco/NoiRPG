@@ -33,6 +33,7 @@
     <EmbeddedResource Include="complementary-skills-ruleset.json" />
     <EmbeddedResource Include="special-damage-effects-ruleset.json" />
     <EmbeddedResource Include="poison-catalog.json" />
+    <EmbeddedResource Include="wealth-ruleset.json" />
   </ItemGroup>
 
 </Project>
