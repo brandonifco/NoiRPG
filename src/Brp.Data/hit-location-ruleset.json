@@ -1,0 +1,62 @@
+{
+  "hitLocationTable": [
+    {
+      "minimum": 1,
+      "maximum": 4,
+      "location": "RightLeg",
+      "description": "Right leg from hip to bottom of foot",
+      "source": "Ch 6, Hit Locations (p.145)"
+    },
+    {
+      "minimum": 5,
+      "maximum": 8,
+      "location": "LeftLeg",
+      "description": "Left leg from hip to bottom of foot",
+      "source": "Ch 6, Hit Locations (p.145)"
+    },
+    {
+      "minimum": 9,
+      "maximum": 11,
+      "location": "Abdomen",
+      "description": "Hip joint to bottom rib cage",
+      "source": "Ch 6, Hit Locations (p.145). Printed as '8-11', overlapping the Left Leg row's own printed '5-8' at 8 -- a misprint corrected to '9-11' here. See HitLocationTable's remarks and docs/decisions/0024-hit-locations.md."
+    },
+    {
+      "minimum": 12,
+      "maximum": 12,
+      "location": "Chest",
+      "description": "Ribcage up to neck and shoulders",
+      "source": "Ch 6, Hit Locations (p.145)"
+    },
+    {
+      "minimum": 13,
+      "maximum": 15,
+      "location": "RightArm",
+      "description": "Entire right arm",
+      "source": "Ch 6, Hit Locations (p.145)"
+    },
+    {
+      "minimum": 16,
+      "maximum": 18,
+      "location": "LeftArm",
+      "description": "Entire left arm",
+      "source": "Ch 6, Hit Locations (p.145)"
+    },
+    {
+      "minimum": 19,
+      "maximum": 20,
+      "location": "Head",
+      "description": "Neck and Head",
+      "source": "Ch 6, Hit Locations (p.145)"
+    }
+  ],
+  "perLocationHitPoints": {
+    "limbHeadAbdomenDivisor": 3,
+    "chestNumerator": 4,
+    "chestDenominator": 10,
+    "armDivisor": 4,
+    "source": "Ch 2: Characters, Hit Points by Hit Location (p.14): 'Leg, Abdomen, Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit points.' Rounded up."
+  },
+  "limbDamageCapMultiplier": 2,
+  "limbDamageCapMultiplierSource": "Ch 6, Damage Equals or Exceeds Double the Location's Hit Points (p.157): 'cannot take more than twice the possible points of damage in an arm or leg from a single blow.'"
+}

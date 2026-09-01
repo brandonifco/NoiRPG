@@ -9,7 +9,7 @@ scheduler picks independent leaves of the graph.
 ## The graph
 
 Each issue's blockers are recorded as native **`blocked_by`** dependencies, and the
-epic's children as native **sub-issues**. For epic #53:
+epic's children as native **sub-issues**. For epic #53, as originally planned:
 
 ```
 #54 route metadata ──┬── #58 pr-policy ──┐
@@ -22,6 +22,15 @@ epic's children as native **sub-issues**. For epic #53:
 #57 dependabot (no deps)
 ```
 
+**This diagram is historical, not the live target.** #62 (agent-routing state machine)
+and #65 (gate-posting GitHub App) were both closed in favor of a simpler delivered
+design: `tools/agent-verify.sh` posts a single `agent-verification` commit status on
+the PR head SHA, success only when `ci` passed and every other required gate for the
+route was supplied as `pass` (see #90 / #91, which removed the App/state-machine
+fan-out as the wrong shape). There is no separate gate-App or state-machine component
+to build; the scheduler question this doc answers (which issues are dispatchable) is
+independent of that decision and is unaffected.
+
 ## The scheduler query
 
 ```bash
@@ -29,9 +38,23 @@ tools/ready-issues.sh            # classify every open issue READY / blocked
 tools/ready-issues.sh --ready    # just the ready issue numbers, one per line
 ```
 
-An issue is **READY** when none of its `blocked_by` dependencies are still open. The
-orchestrator can feed `--ready` straight into work selection; `BLOCKED` is derived
-from the graph, never a manual judgment.
+An issue is **READY** (dispatchable for autonomous work) only when it is open and
+**all** of the following hold — mirroring `tools/ready-issues.sh`, the sole authority
+for this query:
+
+- it carries **`label:ready`** (otherwise: "not approved (no label:ready)");
+- it carries none of the human-gate labels `blocked` or `needs-design` (otherwise:
+  "human-gated (label:...)");
+- it is not an **epic** — by `label:epic` or an `Epic:` title — since an umbrella is
+  never itself implementable (otherwise: "epic (umbrella, not implementable)");
+- none of its native `blocked_by` dependencies are still open (otherwise:
+  "blocked_by: <numbers>").
+
+Mechanical unblocking (the last bullet, a GitHub-graph fact) and approval-for-autonomous-work
+(the first three, label-gated) are deliberately kept as separate checks — see the
+comment at the top of `tools/ready-issues.sh` for why a purely dependency-based query
+used to misreport epics and human-gated issues as ready (#124). The orchestrator can
+feed `--ready` straight into work selection; nothing here is a manual judgment.
 
 Editing the graph (ids are the REST database id, not the issue number):
 
