@@ -195,6 +195,21 @@ class PrPolicyOneClosingIssueTests(unittest.TestCase):
         self.assertEqual(evidence["prPolicy"], "pass")
         self.assertEqual(evidence["issue"], 136)
 
+    def test_closing_keyword_in_code_is_ignored(self) -> None:
+        """A code-span/fenced-block example of the syntax is not a real link."""
+        body = COMPLETE_BODY.replace(
+            "Closes #136",
+            "Closes #136\n\n"
+            "Example inline syntax: `Closes #5`\n\n"
+            "```\nCloses #999\n```\n",
+        )
+        result = run_pr_policy(body, self.out_path, self.head, self.head)
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+
+        evidence = json.loads(self.out_path.read_text())
+        self.assertEqual(evidence["prPolicy"], "pass")
+        self.assertEqual(evidence["issue"], 136)
+
     def test_zero_closing_issues_still_fails_with_existing_message(self) -> None:
         body = COMPLETE_BODY.replace("Closes #136\n", "")
         result = run_pr_policy(body, self.out_path, self.head, self.head)
