@@ -106,7 +106,9 @@ content and its schema engine, `cases/**` and `src/Noir.Scenario/**`), and
 against a printed BRP table, so none of them gets `rules-conformance` or
 `codex-conformance`; instead each relies on a deterministic, code-level gate:
 CI plus the layer's own tests for `gameplay`, and `tools/case_validator.py` (schema,
-the Three Doors rule, junction budget, canonical skills) for `scenario`. `design-critic`
+the Three Doors rule, junction budget, canonical skills) for `scenario` — the latter
+run over every `cases/*.yaml` inside the required `build-and-test` job, so a malformed
+case fails a required check rather than relying on anyone to remember to validate it. `design-critic`
 sits at the design/phase gate where a mechanic is *decided*, not on every routine PR
 that implements an already-settled one, and `case-author` is a content-producing role
 — it is not paired with an Opus review on ordinary case YAML. See
