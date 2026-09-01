@@ -1,4 +1,6 @@
 using Brp.Core.Abilities;
+using Brp.Core.Primitives;
+using Brp.Core.Resolution;
 using Brp.Data;
 using Brp.Rules.Combat;
 
@@ -64,5 +66,46 @@ public class BleedingEffectResolverTests
         int consecutiveStaunchedRounds, bool expectedStopped)
     {
         Assert.Equal(expectedStopped, BleedingEffectResolver.StopsPermanently(consecutiveStaunchedRounds, Ruleset));
+    }
+
+    private static RollOutcome MakeFirstAidRoll(SuccessLevel level) => new(
+        Roll: 1,
+        BaseChance: Percent.Zero,
+        EffectiveChance: Percent.Zero,
+        CriticalThreshold: Percent.Zero,
+        SpecialThreshold: Percent.Zero,
+        FumbleThreshold: Percent.Of(100),
+        Level: level);
+
+    [Fact]
+    public void A_successful_first_aid_roll_stops_the_bleeding_permanently_page_149()
+    {
+        // p.149: "Success means that the bleeding stops and will not begin anew" -- stronger than
+        // a successful Stamina staunch, which strenuous activity can restart.
+        var outcome = BleedingEffectResolver.ApplyFirstAid(MakeFirstAidRoll(SuccessLevel.Success));
+
+        Assert.True(outcome.StoppedPermanently);
+        Assert.False(outcome.ContinuesUntilMedicalAttentionOrDeath);
+    }
+
+    [Fact]
+    public void A_failed_first_aid_roll_leaves_the_bleeding_continuing_until_medical_attention_or_death_page_149()
+    {
+        // p.149: "Failure for this First Aid roll means that the bleeding continues until the
+        // target receives successful medical attention (... another skill like Medicine) or dies
+        // from blood loss when they reach 0 hit points."
+        var outcome = BleedingEffectResolver.ApplyFirstAid(MakeFirstAidRoll(SuccessLevel.Failure));
+
+        Assert.False(outcome.StoppedPermanently);
+        Assert.True(outcome.ContinuesUntilMedicalAttentionOrDeath);
+    }
+
+    [Fact]
+    public void A_fumbled_first_aid_roll_also_leaves_the_bleeding_continuing_page_149()
+    {
+        var outcome = BleedingEffectResolver.ApplyFirstAid(MakeFirstAidRoll(SuccessLevel.Fumble));
+
+        Assert.False(outcome.StoppedPermanently);
+        Assert.True(outcome.ContinuesUntilMedicalAttentionOrDeath);
     }
 }

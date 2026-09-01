@@ -69,6 +69,46 @@ public static class BleedingEffectResolver
         ArgumentOutOfRangeException.ThrowIfNegative(consecutiveStaunchedRounds);
         return consecutiveStaunchedRounds >= ruleset.BleedingStaunchedRoundsUntilPermanentStop;
     }
+
+    /// <summary>
+    /// The third printed bleeding-stop path, per p.149: "The most reliable way to stop bleeding
+    /// damage is to make a successful First Aid roll on the injury. Success means that the
+    /// bleeding stops and will not begin anew. Failure for this First Aid roll means that the
+    /// bleeding continues until the target receives successful medical attention (in the form of
+    /// a power or another skill like Medicine) or dies from blood loss when they reach 0 hit
+    /// points." ("A power" is out of scope, per <c>orc-scope-filter.md</c> -- no magic/powers in
+    /// this engine; the in-scope medical-attention route is Medicine.)
+    /// <para>
+    /// This is a <em>stronger</em> stop than a successful Stamina staunch
+    /// (<see cref="AttemptStaunch"/>): a staunch can be undone by dodging or strenuous activity
+    /// (<see cref="StaunchConsequences"/>), but a successful First Aid roll stops the bleeding
+    /// permanently -- it "will not begin anew."
+    /// </para>
+    /// <para>
+    /// Takes an already-resolved First Aid roll rather than rolling one itself:
+    /// <see cref="HealingResolver.ResolveFirstAid"/> already models the complete First Aid skill
+    /// roll (support bonuses, hazardous-conditions Difficult grade), and this engine keeps exactly
+    /// one First Aid roll implementation rather than a second, narrower copy. This method only
+    /// interprets that roll's grade as this specific bleeding wound's stop/continue outcome.
+    /// </para>
+    /// </summary>
+    /// <param name="firstAidRoll">
+    /// The already-resolved First Aid roll made against this bleeding wound (e.g. from
+    /// <see cref="HealingResolver.ResolveFirstAid"/>'s <c>Roll</c>).
+    /// </param>
+    public static BleedingFirstAidOutcome ApplyFirstAid(RollOutcome firstAidRoll)
+    {
+        ArgumentNullException.ThrowIfNull(firstAidRoll);
+
+        if (firstAidRoll.Succeeded)
+        {
+            return new BleedingFirstAidOutcome(
+                firstAidRoll, StoppedPermanently: true, ContinuesUntilMedicalAttentionOrDeath: false);
+        }
+
+        return new BleedingFirstAidOutcome(
+            firstAidRoll, StoppedPermanently: false, ContinuesUntilMedicalAttentionOrDeath: true);
+    }
 }
 
 /// <summary>One round's ongoing bleeding loss (Ch 6, "Bleeding", p.149).</summary>
@@ -84,3 +124,21 @@ public readonly record struct BleedingRoundLoss(int HitPoints, int FatiguePoints
 /// </param>
 public readonly record struct StaunchingConsequences(
     bool OtherActionsAreDifficult, bool DodgingCancelsTheAttempt, bool StrenuousActivityRestartsBleedingAfterSuccess);
+
+/// <summary>
+/// The result of applying an already-resolved First Aid roll to a bleeding wound (Ch 6,
+/// "Bleeding", p.149) -- the third of the three printed bleeding-stop paths (alongside a
+/// successful Stamina staunch and the five-consecutive-staunched-rounds auto-stop).
+/// </summary>
+/// <param name="FirstAidRoll">The already-resolved First Aid roll this outcome was derived from.</param>
+/// <param name="StoppedPermanently">
+/// Whether the bleeding stops permanently and "will not begin anew" (a successful First Aid
+/// roll) -- stronger than a successful Stamina staunch, which strenuous activity can restart.
+/// </param>
+/// <param name="ContinuesUntilMedicalAttentionOrDeath">
+/// Whether the bleeding continues (a failed First Aid roll) "until the target receives
+/// successful medical attention (... another skill like Medicine) or dies from blood loss when
+/// they reach 0 hit points."
+/// </param>
+public sealed record BleedingFirstAidOutcome(
+    RollOutcome FirstAidRoll, bool StoppedPermanently, bool ContinuesUntilMedicalAttentionOrDeath);

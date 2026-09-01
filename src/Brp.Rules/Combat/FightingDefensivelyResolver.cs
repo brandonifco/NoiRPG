@@ -4,10 +4,18 @@ namespace Brp.Rules.Combat;
 
 /// <summary>
 /// Resolves Ch 6: Combat, "Fighting Defensively" (p.151) -- an in-scope Ch 6 core mechanic never
-/// built before #113: forgoing all attacks for a free, unpenalized Dodge substituted for the
-/// round's attack, plus (only if the character can normally make multiple attacks per round --
-/// e.g. a skill over 100%) a second free defensive attempt, which may be either a Dodge or a
-/// Parry.
+/// built before #113: forgoing all attacks for a free Dodge substituted for the round's attack,
+/// plus (only if the character can normally make multiple attacks per round -- e.g. a skill over
+/// 100%) a second free defensive attempt, which may be either a Dodge or a Parry.
+/// <para>
+/// <strong>"Free" means "adds no new -30% increment," not "rolled at 0% penalty."</strong> p.151:
+/// "If they have already made Dodge attempts and parries and are at a negative modifier, the
+/// modifier does not increase." A free attempt is still rolled at whatever cumulative -30%
+/// penalty the character has already accrued from earlier, non-free Dodge/parry attempts this
+/// round -- it merely does not add a further -30% on top of that, and does not itself count
+/// toward a later attempt's penalty. See <see cref="SuccessiveDefensePenaltyModifier"/>'s remarks
+/// for exactly which count a caller passes to get this right.
+/// </para>
 /// <para>
 /// <strong>The first free defense is Dodge-only, and the count is capped at two, not one per
 /// forgone attack.</strong> p.151: "they can substitute one free Dodge attempt for their
@@ -59,11 +67,19 @@ public static class FightingDefensivelyResolver
 
     /// <summary>
     /// Ch 6, p.144/p.151: "each subsequent Dodge or parry attempt is at a cumulative -30%
-    /// modifier." <paramref name="countedPriorAttempts"/> excludes any free Fighting-Defensively
-    /// attempts, which "do not incur the cumulative penalty" and are not counted toward it (p.151:
-    /// "If they have already made Dodge attempts and parries and are at a negative modifier, the
-    /// modifier does not increase" -- i.e. a free attempt neither raises nor is raised by the
-    /// count).
+    /// modifier."
+    /// <para>
+    /// <paramref name="countedPriorAttempts"/> is the number of prior <em>non-free</em>
+    /// Dodge/parry attempts this round (i.e. every ordinary attempt, in order, but never a free
+    /// Fighting-Defensively attempt). For a <em>free</em> attempt, the caller passes the same
+    /// count it would have passed for the next ordinary attempt at that point -- p.151: "If they
+    /// have already made Dodge attempts and parries and are at a negative modifier, the modifier
+    /// does not increase." That is, a free attempt is rolled at the character's <em>current</em>
+    /// accumulated penalty (whatever <paramref name="countedPriorAttempts"/> non-free attempts
+    /// already produced), not reset to 0% -- "free" here means "does not itself add a further
+    /// -30% increment," not "rolled unpenalized." The caller then does <em>not</em> increment the
+    /// running non-free count afterward, so the free attempt is excluded going forward too.
+    /// </para>
     /// </summary>
     public static int SuccessiveDefensePenaltyPercent(int countedPriorAttempts, SpecialDamageEffectsRuleset ruleset)
     {
@@ -75,8 +91,11 @@ public static class FightingDefensivelyResolver
     /// <summary>
     /// Builds the additive percent modifier a caller adds to a Dodge or Parry roll's modifier
     /// list for the given attempt count, or <see langword="null"/> when no penalty applies (the
-    /// first counted attempt, or any free Fighting-Defensively attempt, which the caller simply
-    /// never passes into <paramref name="countedPriorAttempts"/>).
+    /// first attempt of the round, whether free or not). See
+    /// <see cref="SuccessiveDefensePenaltyPercent"/>'s remarks for exactly what
+    /// <paramref name="countedPriorAttempts"/> means for a free Fighting-Defensively attempt --
+    /// it is the character's <em>current</em> non-free-attempt count, not zero, so the free
+    /// attempt is rolled at whatever penalty already applies rather than at 0%.
     /// </summary>
     public static Modifier? SuccessiveDefensePenaltyModifier(
         int countedPriorAttempts, SpecialDamageEffectsRuleset ruleset, string source)
@@ -86,14 +105,20 @@ public static class FightingDefensivelyResolver
     }
 }
 
-/// <summary>The declared effect of fighting defensively for a round (Ch 6, "Fighting Defensively", p.151).</summary>
+/// <summary>
+/// The declared effect of fighting defensively for a round (Ch 6, "Fighting Defensively", p.151).
+/// "Free" below means the attempt does not itself add a further -30% successive-defense
+/// increment (and is not counted toward one later) -- it is still rolled at whatever cumulative
+/// penalty the character has already accrued from earlier attempts this round, not at 0%. See
+/// <see cref="FightingDefensivelyResolver.SuccessiveDefensePenaltyPercent"/>'s remarks.
+/// </summary>
 /// <param name="FirstFreeDefenseType">
-/// The type of the first free, unpenalized defensive attempt -- always <see cref="DefenseType.Dodge"/>
+/// The type of the first free defensive attempt -- always <see cref="DefenseType.Dodge"/>
 /// (p.151: "one free Dodge attempt"; never a Parry).
 /// </param>
 /// <param name="SecondFreeDefenseAvailable">
-/// Whether a second free, unpenalized defensive attempt is available this round -- only true when
-/// the character can normally make multiple attacks per round (p.151).
+/// Whether a second free defensive attempt is available this round -- only true when the
+/// character can normally make multiple attacks per round (p.151).
 /// </param>
 /// <param name="SecondFreeDefenseAllowedTypes">
 /// The defense types the second free attempt may use -- <see cref="DefenseType.Dodge"/> or

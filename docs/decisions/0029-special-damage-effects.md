@@ -83,9 +83,37 @@ language, unlike the obstacle-impact rule three sentences later, which explicitl
 
 Ch 6, p.149: a Bleeding special success (no shipped weapon uses this type -- ADR 0017,
 no edged slashing weapon is in the hand-picked gear subset) opens an ongoing 1 HP
-(and 1 fatigue point, if used) loss each round on DEX rank 1, staunchable by a Stamina
-roll (Difficult on other actions while attempting; canceled by dodging), and stopping
-permanently after five consecutive staunched rounds. All figures sourced directly.
+(and 1 fatigue point, if used) loss each round on DEX rank 1. The book prints **three**
+independent stop paths, all now modeled:
+
+1. **Stamina staunch** (`AttemptStaunch` / `StaunchConsequences` / `StopsPermanently`)
+   -- an in-combat Stamina roll each round-end; success holds the wound closed but is
+   *reversible* ("if the target dodges or does any strenuous activity, the bleeding
+   begins again"), other actions are Difficult while attempting, and dodging cancels
+   the attempt outright. Five consecutive staunched rounds stop it permanently on
+   their own.
+2. **First Aid** (`ApplyFirstAid`) -- "the most reliable way to stop bleeding damage":
+   a successful First Aid roll stops the bleeding *permanently* ("will not begin
+   anew"), stronger than a Stamina staunch. `ApplyFirstAid` takes an already-resolved
+   First Aid `RollOutcome` (e.g. from `HealingResolver.ResolveFirstAid`) rather than
+   rolling its own -- First Aid's full skill roll (support bonuses, hazardous-
+   conditions Difficult grade) already has exactly one implementation in this
+   codebase, and this method only interprets that roll's grade as this wound's
+   stop/continue outcome. A failed roll leaves the bleeding continuing "until the
+   target receives successful medical attention (in the form of a power or another
+   skill like Medicine) or dies from blood loss when they reach 0 hit points" -- "a
+   power" is out of scope per `orc-scope-filter.md` (no magic/powers in this engine),
+   so the in-scope medical-attention route cited is Medicine.
+3. **Death at 0 HP** -- not a new mechanic; the existing `DamageResolver` hit-point-
+   condition classification already covers this path when the ongoing loss (path 1's
+   absence, i.e. unstaunched bleeding) drives current hit points to 0 or below.
+
+**Correction (post-review, second Codex pass):** path 2 (First Aid) was missing from
+the first implementation of this record -- only paths 1 and 3 were modeled, and the
+"Explicitly out of scope" section below originally argued First Aid stopping bleeding
+was purely a caller-level interpretation needing no resolver method. Codex conformance
+found this to be a real gap against the printed three-path rule, not a defensible
+scope cut, so `ApplyFirstAid` was added.
 
 ### Entangling (`EntanglingEffectResolver`) -- dormant, no shipped weapon
 
@@ -102,9 +130,9 @@ of scope here.
 
 ### Fighting Defensively (`FightingDefensivelyResolver`)
 
-Ch 6, p.151: forgoing all attacks for a round substitutes one free, unpenalized
-**Dodge** attempt for the round's attack ("one free Dodge attempt", "a free Dodge
-skill attempt", "Essentially, it is a free Dodge" -- Dodge-only, never a Parry).
+Ch 6, p.151: forgoing all attacks for a round substitutes one free **Dodge** attempt
+for the round's attack ("one free Dodge attempt", "a free Dodge skill attempt",
+"Essentially, it is a free Dodge" -- Dodge-only, never a Parry).
 Only if the character can normally make multiple attacks per round (e.g. a skill over
 100%) is a *second* free defense granted, and that second one may be either a Dodge or
 a Parry ("a second free Dodge or parry"). The count is capped at two: it is gated on
@@ -128,13 +156,27 @@ and 151) its first implementation, previously a named-but-unbuilt seam
 (`attack-defense-matrix-ruleset.json`'s `deferred` list, ADR 0016) -- built here because
 Fighting Defensively's entire point is exempting its free attempt(s) from that count.
 `SuccessiveDefensePenaltyPercent(countedPriorAttempts, ...)` computes the cumulative
--30%-per-attempt penalty; a caller simply never passes a free Fighting-Defensively
-attempt into `countedPriorAttempts`, which is how "does not incur the cumulative
-penalty" and "the modifier does not increase" (p.151) are satisfied without special
-casing. `ForfeitsAllAttacksThisRound`, `CannotCombineWithAnyOffensiveAction`
+-30%-per-attempt penalty; `countedPriorAttempts` counts only prior *non-free* attempts.
+For a free attempt, the caller passes the same count it would have passed for the next
+ordinary attempt at that point (i.e. the character's current accrued non-free-attempt
+count), and then does *not* increment that running count afterward -- this is how
+"free" is satisfied: the free attempt does not itself add a further -30% (it is rolled
+at whatever penalty already applies, never reset to 0%) and is not counted toward a
+later attempt's penalty either. `ForfeitsAllAttacksThisRound`, `CannotCombineWithAnyOffensiveAction`
 (including the Desperate Action, named explicitly), and
 `CannotDodgeAndParryWithinTheSameDexRank` are direct quotes, exposed as caller-read
 flags rather than enforced against a round loop this layer does not own.
+
+**Correction (documentation only, third Codex pass):** the resolver's *math* was
+already correct -- `SuccessiveDefensePenaltyPercent`/`SuccessiveDefensePenaltyModifier`
+never claimed a free attempt rolls at 0% -- but the class-level summary described the
+first free defense as "unpenalized," which could be misread as "rolled at 0% penalty"
+rather than the printed rule's actual "does not increase [the existing] modifier"
+(p.151). The XML docs on `FightingDefensivelyResolver`,
+`SuccessiveDefensePenaltyPercent`, `SuccessiveDefensePenaltyModifier`, and
+`FightingDefensivelyDeclaration` were reworded to state the caller convention
+explicitly (pass the current non-free count for a free attempt; do not reset to zero).
+No behavior changed.
 
 ## Explicitly out of scope (seams for other pieces)
 
@@ -147,11 +189,15 @@ flags rather than enforced against a round loop this layer does not own.
 - **A fatigue-point subsystem** -- Bleeding's 1-fatigue-point/round loss is reported
   (`BleedingRoundLoss.FatiguePoints`) but not applied; no fatigue-point subsystem exists
   in this engine yet.
-- **First Aid stopping bleeding** -- Ch 6, p.149's "the most reliable way to stop
-  bleeding damage is a successful First Aid roll" is narrative; the existing
-  `HealingResolver.ResolveFirstAid` already models a generic First Aid roll, and a
-  caller choosing to treat one of its successes as "bleeding stopped" rather than
-  "hit points healed" is a caller-level interpretation, not a new resolver method.
+- **Crushing special success vs. a successful parry (Ch 6, p.149)** -- "If the target
+  successfully parries against a crushing special success attack, they risk their
+  weapon or shield breaking" (a resistance-table roll of the attacker's increased
+  damage vs. the parrying item's hit points, with further rules for what happens to
+  any damage that gets through). #113 scoped Crushing to its stun effect only
+  (`CrushingStunResolver`); this weapon/shield-break sub-rule is a distinct mechanic
+  layered on top of a *specific* defense choice (parry) rather than the stun that
+  applies regardless of defense, and is deliberately **deferred to a separate,
+  follow-up issue** rather than folded in here silently.
 
 ## Consequences
 
@@ -164,3 +210,9 @@ flags rather than enforced against a round loop this layer does not own.
 - `ADR 0017`'s "Explicitly out of scope" section (special-success effects) is now
   resolved by this record; ADR 0017 itself is not edited, per the "a decision that
   turns out wrong (or, here, incomplete) gets a new record" convention.
+- `BleedingEffectResolver.ApplyFirstAid` / `BleedingFirstAidOutcome` complete
+  Bleeding's three printed stop paths (Stamina staunch, First Aid permanent stop,
+  death at 0 HP) -- this record itself is edited in place to add them (rather than
+  spawning a fourth ADR) since it was still `Accepted` for the same Issue (#113) that
+  this correction lands on, per the same review pass that also fixed Fighting
+  Defensively above.
