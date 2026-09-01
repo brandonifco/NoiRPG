@@ -7,10 +7,11 @@ is the machine-readable form of the pipeline in
 which reviewers a change needs; it asks [`tools/route.sh`](../../tools/route.sh).
 
 Route derivation and labelling are live and consumed by `pr-policy` (which records
-the route in its evidence artifact). The gate **enforcement** that once sat on top of
+the route in its evidence artifact). The per-reviewer *fan-out* that once sat on top of
 this — the `gates-satisfied` aggregator and the gate-poster App — was removed in
-#90/#91; the "required gates" below are the reviewers a change *conceptually* needs,
-no longer an automated check.
+#90/#91, but the required gate set is **not** unenforced: it is now enforced through
+the required `agent-verification` status, which is green only when every gate the
+route requires passed for the exact head SHA. See [§Enforcement](#enforcement) below.
 
 `tools/route.sh` is the **one route authority** (#137): it is the only place that
 parses a diff for content escalation, composes architecture, and applies the

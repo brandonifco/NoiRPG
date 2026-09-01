@@ -195,8 +195,11 @@ Issue (ready)
   -> PR review + merge
 ```
 
-For non-rules work — tooling, CLI, docs, case data — stop after `scope-warden`. The
-expensive verification layers exist for one specific risk and buy nothing elsewhere.
+For non-rules work — tooling, CLI, docs, case data — the route is `ci`-only: no
+semantic reviewer runs at all, not even `scope-warden` (it is a `rules`/`formulas`
+gate). The expensive verification layers exist for one specific risk and buy nothing
+elsewhere. See [`docs/orchestration/routing.md`](orchestration/routing.md) for the
+route → required-gates table.
 
 ## Briefing agents efficiently
 
