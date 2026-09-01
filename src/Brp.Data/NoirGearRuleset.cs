@@ -6,11 +6,12 @@ using Brp.Rules.Gear;
 namespace Brp.Data;
 
 /// <summary>
-/// Loads NoiRPG's Layer 4 weapon and armor lists from embedded JSON. The source is Ch 8:
+/// Loads NoiRPG's Layer 4 weapon, armor, and car lists from embedded JSON. The source is Ch 8:
 /// Equipment, the Modern Melee Weapons, Modern Missile Weapons, and Modern Armor tables
-/// (pp.201-202, 207) plus the Primitive Melee Weapons table (p.196) for the two Club entries --
-/// see each entry's own <c>source</c> field in the ruleset JSON for the exact citation. Hand-
-/// picked to the modern noir subset per `orc-scope-filter.md`, Ch 8, and recorded in
+/// (pp.201-202, 207) plus the Primitive Melee Weapons table (p.196) for the two Club entries, and
+/// the Autos, Trucks, Trains &amp; Tanks table (p.220) for the three in-scope cars -- see each
+/// entry's own <c>source</c> field in the ruleset JSON for the exact citation. Hand-picked to the
+/// modern noir subset per `orc-scope-filter.md`, Ch 8, and recorded in
 /// <c>docs/decisions/0012-gear-definitions.md</c>.
 /// </summary>
 public static class NoirGearRuleset
@@ -25,7 +26,8 @@ public static class NoirGearRuleset
     {
         var weapons = LoadWeapons();
         var armor = LoadArmor();
-        return new GearRegistry(weapons, armor);
+        var vehicles = LoadVehicles();
+        return new GearRegistry(weapons, armor, vehicles);
     }
 
     private static List<WeaponDefinition> LoadWeapons()
@@ -48,6 +50,17 @@ public static class NoirGearRuleset
             ?? throw new InvalidOperationException("The armor ruleset data is empty.");
 
         return data.Armor.Select(ToArmorDefinition).ToList();
+    }
+
+    private static List<VehicleDefinition> LoadVehicles()
+    {
+        var assembly = typeof(NoirGearRuleset).Assembly;
+        using var stream = assembly.GetManifestResourceStream("Brp.Data.vehicle-ruleset.json")
+            ?? throw new InvalidOperationException("The vehicle ruleset data resource is missing.");
+        var data = JsonSerializer.Deserialize<VehicleRulesetData>(stream, SerializerOptions)
+            ?? throw new InvalidOperationException("The vehicle ruleset data is empty.");
+
+        return data.Vehicles.Select(ToVehicleDefinition).ToList();
     }
 
     private static WeaponDefinition ToWeaponDefinition(WeaponEntryData entry)
@@ -194,6 +207,23 @@ public static class NoirGearRuleset
         return new ArmorValue(data.Melee, data.Firearms);
     }
 
+    private static VehicleDefinition ToVehicleDefinition(VehicleEntryData entry) => new(
+        Id: new VehicleId(entry.Id),
+        Name: entry.Name,
+        SkillId: new SkillId(entry.SkillId),
+        RatedSpeed: entry.RatedSpeed,
+        Handling: entry.Handling,
+        Acceleration: entry.Acceleration,
+        MetersPerRound: entry.MetersPerRound,
+        Armor: new VehicleArmor(entry.Armor.GeneralArmor, entry.Armor.OccupantProtection),
+        Siz: entry.Siz,
+        HitPoints: entry.HitPoints,
+        Crew: entry.Crew,
+        Passengers: entry.Passengers,
+        Cargo: entry.Cargo,
+        ValueTier: entry.ValueTier,
+        Source: entry.Source);
+
     private sealed class WeaponRulesetData
     {
         public required List<WeaponEntryData> Weapons { get; init; }
@@ -279,5 +309,50 @@ public static class NoirGearRuleset
         public required int Melee { get; init; }
 
         public required int Firearms { get; init; }
+    }
+
+    private sealed class VehicleRulesetData
+    {
+        public required List<VehicleEntryData> Vehicles { get; init; }
+    }
+
+    private sealed class VehicleEntryData
+    {
+        public required string Id { get; init; }
+
+        public required string Name { get; init; }
+
+        public required string SkillId { get; init; }
+
+        public required int RatedSpeed { get; init; }
+
+        public required int Handling { get; init; }
+
+        public required int Acceleration { get; init; }
+
+        public required int MetersPerRound { get; init; }
+
+        public required VehicleArmorData Armor { get; init; }
+
+        public required int Siz { get; init; }
+
+        public required int HitPoints { get; init; }
+
+        public required int Crew { get; init; }
+
+        public required string Passengers { get; init; }
+
+        public required int Cargo { get; init; }
+
+        public required string ValueTier { get; init; }
+
+        public required string Source { get; init; }
+    }
+
+    private sealed class VehicleArmorData
+    {
+        public required int GeneralArmor { get; init; }
+
+        public required int OccupantProtection { get; init; }
     }
 }

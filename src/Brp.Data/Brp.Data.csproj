@@ -20,6 +20,7 @@
     <EmbeddedResource Include="experience-ruleset.json" />
     <EmbeddedResource Include="weapon-ruleset.json" />
     <EmbeddedResource Include="armor-ruleset.json" />
+    <EmbeddedResource Include="vehicle-ruleset.json" />
     <EmbeddedResource Include="range-band-ruleset.json" />
     <EmbeddedResource Include="combat-round-ruleset.json" />
     <EmbeddedResource Include="attack-defense-matrix-ruleset.json" />

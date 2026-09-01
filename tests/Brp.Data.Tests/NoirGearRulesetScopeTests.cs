@@ -6,7 +6,10 @@ namespace Brp.Data.Tests;
 /// Guards the hand-picked-subset decision (`orc-scope-filter.md`, Ch 8: "a dozen firearms and
 /// three armor types ... not two hundred rows", `docs/decisions/0012-gear-definitions.md`):
 /// exactly the chosen weapons and armor load, nothing pre-modern, fantasy, or shielded, and
-/// every firearm carries the listed-range value #21's range-band math needs.
+/// every firearm carries the listed-range value #21's range-band math needs. Also guards the
+/// #232 vehicles-cars-only cut (`orc-scope-filter.md`, Ch 8, line 136: "Vehicles: cars only"):
+/// exactly the book's three automobile rows load, and no motorcycle, truck, train, tank, or
+/// aircraft/watercraft/spacecraft entry is present.
 /// </summary>
 public class NoirGearRulesetScopeTests
 {
@@ -23,6 +26,26 @@ public class NoirGearRulesetScopeTests
     private static readonly string[] InScopeArmorIds =
     [
         "bulletproofVestEarly", "bulletproofVestModern", "riotGear",
+    ];
+
+    private static readonly string[] InScopeVehicleIds =
+    [
+        "automobileVintage", "automobileModernSedan", "automobileModernSportscar",
+    ];
+
+    // Every other row the book prints in the same vehicle tables (Horse & Horse-Drawn Vehicles,
+    // p.219; Autos, Trucks, Trains & Tanks, p.220; Boats & Ships, p.220; Air Vehicles, p.220;
+    // Space Vehicles, p.220) -- all cut by "Vehicles: cars only".
+    private static readonly string[] OutOfScopeVehicleNames =
+    [
+        "Horse", "Chariot", "Four-Horse Carriage", "Four-Horse Wagon",
+        "Pickup Truck", "18-wheeler", "Motorcycle", "Land Skimmer",
+        "Tank, Vintage", "Tank, Modern",
+        "Train, Steam Engine", "Train, Bullet", "Train, Mag-Lev",
+        "Small Rowed", "Ancient Rowed", "Vintage Sailing", "Hovercraft", "Motorboat",
+        "Modern Cruiseship", "Modern Battleship", "Aircraft Carrier", "Submarine",
+        "Dirigible", "Propeller Plane", "Bomber", "Jet", "Jet Fighter", "Helicopter", "Skyskimmer",
+        "Rocket", "Transport", "Starfighter",
     ];
 
     // Names the extractor's over-inclusive first pass carried that the scope filter cuts:
@@ -117,6 +140,42 @@ public class NoirGearRulesetScopeTests
             Assert.True(
                 skills.TryGetSkill(weapon.SkillId, out _),
                 $"Weapon '{weapon.Name}' references skill '{weapon.SkillId}', which does not exist in skill-ruleset.json.");
+        }
+    }
+
+    [Fact]
+    public void Exactly_the_hand_picked_three_cars_load()
+    {
+        var registry = NoirGearRuleset.Load();
+
+        var actual = registry.Vehicles.Keys.Select(id => id.Value).ToHashSet();
+
+        Assert.Equal(InScopeVehicleIds.ToHashSet(), actual);
+        Assert.Equal(3, registry.Vehicles.Count);
+    }
+
+    [Theory]
+    [MemberData(nameof(OutOfScopeVehicleData))]
+    public void No_out_of_scope_vehicle_is_present(string cutName)
+    {
+        var registry = NoirGearRuleset.Load();
+
+        Assert.DoesNotContain(registry.Vehicles.Values, vehicle => vehicle.Name == cutName);
+    }
+
+    public static TheoryData<string> OutOfScopeVehicleData => new(OutOfScopeVehicleNames);
+
+    [Fact]
+    public void Every_vehicle_uses_the_Drive_skill_defined_in_the_layer_2_skill_ruleset()
+    {
+        var skills = NoirSkillRuleset.Load();
+        var gear = NoirGearRuleset.Load();
+
+        foreach (var vehicle in gear.Vehicles.Values)
+        {
+            Assert.True(
+                skills.TryGetSkill(vehicle.SkillId, out _),
+                $"Vehicle '{vehicle.Name}' references skill '{vehicle.SkillId}', which does not exist in skill-ruleset.json.");
         }
     }
 

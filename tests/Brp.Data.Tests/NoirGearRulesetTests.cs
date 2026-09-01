@@ -5,10 +5,10 @@ using Brp.Rules.Gear;
 namespace Brp.Data.Tests;
 
 /// <summary>
-/// Reproduces the printed stats for every weapon and armor type in the hand-picked modern
+/// Reproduces the printed stats for every weapon, armor type, and car in the hand-picked modern
 /// noir subset (Ch 8: Equipment, Modern Melee Weapons and Modern Missile Weapons tables,
-/// p.201-202, and Modern Armor table, p.207), cell by cell, so a transcription error surfaces
-/// as a failing row.
+/// p.201-202; Modern Armor table, p.207; Autos, Trucks, Trains &amp; Tanks table, p.220), cell by
+/// cell, so a transcription error surfaces as a failing row.
 /// </summary>
 public class NoirGearRulesetTests
 {
@@ -238,5 +238,46 @@ public class NoirGearRulesetTests
         var riotGear = registry.ArmorById(new ArmorId("riotGear"));
 
         Assert.Equal("Includes helmet", riotGear.Note);
+    }
+
+    /// <summary>
+    /// One row of the Autos, Trucks, Trains &amp; Tanks table (p.220), restricted to its three
+    /// automobile entries. Grouped into a record because the table has more columns than
+    /// <see cref="TheoryData{T1}"/>'s generic arity supports individually.
+    /// </summary>
+    public sealed record VehicleRow(
+        string Id, string Name, int RatedSpeed, int Handling, int Acceleration, int MetersPerRound,
+        int GeneralArmor, int OccupantProtection, int Siz, int HitPoints, int Crew, string Passengers,
+        int Cargo, string ValueTier);
+
+    public static TheoryData<VehicleRow> Vehicles => new()
+    {
+        new VehicleRow("automobileVintage", "Automobile, Vintage", 6, -5, 1, 67, 10, 1, 60, 35, 1, "3", 12, "Average"),
+        new VehicleRow("automobileModernSedan", "Automobile, Modern Sedan", 12, 0, 7, 134, 14, 2, 50, 40, 1, "3-4", 24, "Average"),
+        new VehicleRow("automobileModernSportscar", "Automobile, Modern Sportscar", 15, 5, 8, 200, 10, 2, 45, 45, 1, "1", 8, "Expensive"),
+    };
+
+    [Theory]
+    [MemberData(nameof(Vehicles))]
+    public void Every_vehicle_reproduces_its_printed_stats(VehicleRow row)
+    {
+        var registry = NoirGearRuleset.Load();
+
+        var vehicle = registry.VehicleById(new VehicleId(row.Id));
+
+        Assert.Equal(row.Name, vehicle.Name);
+        Assert.Equal(new SkillId("Drive"), vehicle.SkillId);
+        Assert.Equal(row.RatedSpeed, vehicle.RatedSpeed);
+        Assert.Equal(row.Handling, vehicle.Handling);
+        Assert.Equal(row.Acceleration, vehicle.Acceleration);
+        Assert.Equal(row.MetersPerRound, vehicle.MetersPerRound);
+        Assert.Equal(row.GeneralArmor, vehicle.Armor.GeneralArmor);
+        Assert.Equal(row.OccupantProtection, vehicle.Armor.OccupantProtection);
+        Assert.Equal(row.Siz, vehicle.Siz);
+        Assert.Equal(row.HitPoints, vehicle.HitPoints);
+        Assert.Equal(row.Crew, vehicle.Crew);
+        Assert.Equal(row.Passengers, vehicle.Passengers);
+        Assert.Equal(row.Cargo, vehicle.Cargo);
+        Assert.Equal(row.ValueTier, vehicle.ValueTier);
     }
 }
