@@ -37,6 +37,7 @@
     <EmbeddedResource Include="wealth-ruleset.json" />
     <EmbeddedResource Include="equipment-quality-ruleset.json" />
     <EmbeddedResource Include="skill-equipment-ruleset.json" />
+    <EmbeddedResource Include="item-hit-points-ruleset.json" />
   </ItemGroup>
 
 </Project>
