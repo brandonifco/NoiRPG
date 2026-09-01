@@ -59,6 +59,24 @@ public class GearRegistryTests
     }
 
     [Fact]
+    public void A_car_can_be_looked_up_by_id()
+    {
+        var registry = NoirGearRuleset.Load();
+
+        var sedan = registry.VehicleById(new VehicleId("automobileModernSedan"));
+
+        Assert.Equal("Automobile, Modern Sedan", sedan.Name);
+    }
+
+    [Fact]
+    public void Looking_up_an_unknown_vehicle_id_throws()
+    {
+        var registry = NoirGearRuleset.Load();
+
+        Assert.Throws<KeyNotFoundException>(() => registry.VehicleById(new VehicleId("hovercraft")));
+    }
+
+    [Fact]
     public void A_character_carrying_an_equipment_item_can_have_it_resolved_against_the_gear_registry()
     {
         // The light tie the issue asks for: EquipmentItem stays name-only on Character, but a

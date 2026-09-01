@@ -1,0 +1,64 @@
+{
+  "vehicles": [
+    {
+      "id": "automobileVintage",
+      "name": "Automobile, Vintage",
+      "skillId": "Drive",
+      "ratedSpeed": 6,
+      "handling": -5,
+      "acceleration": 1,
+      "metersPerRound": 67,
+      "armor": {
+        "melee": 10,
+        "firearms": 1
+      },
+      "siz": 60,
+      "hitPoints": 35,
+      "crew": 1,
+      "passengers": "3",
+      "cargo": 12,
+      "valueTier": "Average",
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Vintage'; description (p.218): 'An old boxy automobile, equivalent to the Model-T.'"
+    },
+    {
+      "id": "automobileModernSedan",
+      "name": "Automobile, Modern Sedan",
+      "skillId": "Drive",
+      "ratedSpeed": 12,
+      "handling": 0,
+      "acceleration": 7,
+      "metersPerRound": 134,
+      "armor": {
+        "melee": 14,
+        "firearms": 2
+      },
+      "siz": 50,
+      "hitPoints": 40,
+      "crew": 1,
+      "passengers": "3-4",
+      "cargo": 24,
+      "valueTier": "Average",
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Modern Sedan'; description (p.218): 'An average four-door modern automobile.'"
+    },
+    {
+      "id": "automobileModernSportscar",
+      "name": "Automobile, Modern Sportscar",
+      "skillId": "Drive",
+      "ratedSpeed": 15,
+      "handling": 5,
+      "acceleration": 8,
+      "metersPerRound": 200,
+      "armor": {
+        "melee": 10,
+        "firearms": 2
+      },
+      "siz": 45,
+      "hitPoints": 45,
+      "crew": 1,
+      "passengers": "1",
+      "cargo": 8,
+      "valueTier": "Expensive",
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Modern Sportscar'; description (p.218): 'An extremely fast, two-door, two-seat, high-performance automobile.'"
+    }
+  ]
+}
