@@ -130,7 +130,7 @@ tools/dispatch-agent.sh <issue#>     # prints  path=<abs worktree>  branch=<issu
 ```
 
 Dispatch the implementer/writeup agent with that `path` as its working directory, and
-`--cleanup <issue#>` the worktree after merge. The two implementer-facing rails:
+`--cleanup <issue#>` the worktree after merge. The three implementer-facing rails:
 
 - `tools/dispatch-agent.sh <issue#>` never checks the feature branch out into the
   primary tree, so using it cannot reproduce F12.
@@ -139,10 +139,17 @@ Dispatch the implementer/writeup agent with that `path` as its working directory
   action and **stops with a dispatch error** if it finds itself in the primary
   checkout — a mechanical self-check (git's own worktree metadata), so a forgotten
   option fails fast instead of stranding the primary tree.
+- Those same roles register a PreToolUse `Write|Edit` hook,
+  [`tools/dispatch-write-guard.sh`](../tools/dispatch-write-guard.sh), so that even
+  if the agent skips its first-action check, the **first mutation whose target is in
+  the primary checkout is denied** (exit 2, reason fed back). This is the same
+  mechanical-hook pattern that makes reviewers read-only
+  ([`tools/reviewer-bash-guard.sh`](../tools/reviewer-bash-guard.sh), ADR 0026).
 
-A shell tool cannot intercept the harness's Agent dispatch itself; this is a preflight
-plus a self-check, which is what F12 needs. Reviewer (read-only) roles do not write and
-need no worktree.
+A shell tool cannot intercept the harness's Agent dispatch itself; but between the
+preflight, the self-check, and the write-time hook, an ordinary implementer role can
+no longer mutate the primary tree through the normal path — which is what F12 needs.
+Reviewer (read-only) roles do not write and need no worktree.
 
 ## Authoring a design-decision record (ADR) — the `NNNN` placeholder
 

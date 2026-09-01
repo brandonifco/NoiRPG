@@ -4,6 +4,12 @@ description: Authors and validates NoiRPG case data (cases/*.yaml) against the s
 model: sonnet
 effort: medium
 tools: Read, Grep, Glob, Bash, Write, Edit
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "tools/dispatch-write-guard.sh"
 ---
 
 You author and repair case data. Read `cases/SCHEMA.md` first, and `cases/overpass.yaml`

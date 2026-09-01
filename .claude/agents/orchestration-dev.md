@@ -4,6 +4,12 @@ description: Implements one GitHub Issue in the repository's orchestration/tooli
 model: sonnet
 effort: medium
 tools: Read, Grep, Glob, Bash, Write, Edit
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "tools/dispatch-write-guard.sh"
 ---
 
 You implement exactly one Issue in the orchestration/tooling layer. Read `AGENTS.md`
