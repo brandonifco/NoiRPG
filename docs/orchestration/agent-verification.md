@@ -71,3 +71,14 @@ gh api repos/:owner/:repo/rulesets/<id> --jq '.rules[]|select(.type=="required_s
 
 A PR now merges only when all four are green for its current head SHA — the route's
 model-driven gate set is enforced, not just computed.
+
+## Trust root and triage policy
+
+Who is authorized to mint the `agent-verification` status, and how disagreeing or
+adversarial semantic gates get triaged, is recorded in
+[`docs/decisions/0025-agent-verification-trust-root.md`](../decisions/0025-agent-verification-trust-root.md).
+In short: the local orchestrator's credential is the trust root (accidental-error
+protection, not adversarial-agent protection, under the current solo threat model),
+and value/behavior conformance defects block merge while unreachable-robustness,
+style, and already-adjudicated findings are logged rather than blocking, with the
+orchestrator adjudicating gate-vs-gate disagreement.

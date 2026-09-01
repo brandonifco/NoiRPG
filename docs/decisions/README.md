@@ -47,3 +47,4 @@ supersedes it — the original is not edited or deleted.
 | [0022](0022-skill-category-bonus-application.md) | Skill category bonus applied in the engine as base + category bonus, live-recomputed, by subtraction for authored ratings | Accepted |
 | [0023](0023-healing-and-recovery.md) | Healing & recovery: First Aid per-wound healing, natural healing, Medicine, and the Conditions of Medical Care table | Accepted |
 | [0024](0024-hit-locations.md) | Hit locations: type, D20 location table, per-location hit points, and armor-by-location | Accepted |
+| [0025](0025-agent-verification-trust-root.md) | The `agent-verification` trust root, and the codex-conformance / semantic-gate triage policy | Accepted |
