@@ -368,8 +368,15 @@ public class ExperienceSystemTests
     {
         // A ruleset with a different training cap must produce a different clamp -- proof
         // the value is read from the injected ExperienceRuleset, not a bare constant inside
-        // ExperienceSystem.
-        var lowCapRuleset = new ExperienceRuleset(trainingCapPercent: 40);
+        // ExperienceSystem. The research values are irrelevant to this test but are now
+        // required constructor arguments (AGENTS.md invariant 7 -- see
+        // ExperienceRuleset's constructor), so this passes the shipped, book-accurate
+        // ones straight from Ruleset rather than restating C# literals.
+        var lowCapRuleset = new ExperienceRuleset(
+            trainingCapPercent: 40,
+            researchGainDieSides: Ruleset.ResearchGainDieSides,
+            researchGainOffset: Ruleset.ResearchGainOffset,
+            researchDefaultGain: Ruleset.ResearchDefaultGain);
         var student = MakeSkill(rating: 35);
         var entropy = new FixedEntropySource(50, 6); // teach roll 50: a Success at 80% chance, then +6
 

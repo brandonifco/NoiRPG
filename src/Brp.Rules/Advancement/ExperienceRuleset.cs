@@ -10,9 +10,9 @@ public sealed class ExperienceRuleset
     /// <summary>Creates an experience ruleset from data-defined values.</summary>
     public ExperienceRuleset(
         int trainingCapPercent,
-        int researchGainDieSides = 6,
-        int researchGainOffset = -2,
-        int researchDefaultGain = 2)
+        int researchGainDieSides,
+        int researchGainOffset,
+        int researchDefaultGain)
     {
         TrainingCapPercent = trainingCapPercent;
         ResearchGainDieSides = researchGainDieSides;
