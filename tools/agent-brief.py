@@ -176,12 +176,17 @@ def workspace(files_text: str, body: str) -> tuple[list[str], list[str]]:
     return lines, derived
 
 
-def route_for(files: list[str], base: str | None = None) -> dict:
+def route_for(files: list[str], base: str | None = None, issue: int | None = None) -> dict:
+    # route.sh is the one route authority: derives changed paths, content
+    # escalation, and (via --issue) the issue-intent floor the same way for
+    # every consumer — the review packet must never approximate this itself.
     cmd = ["bash", str(ROOT / "tools" / "route.sh"), "--json"]
     if base:
         cmd += ["--base", base]
     else:
         cmd += files
+    if issue:
+        cmd += ["--issue", str(issue)]
     try:
         return json.loads(sh(cmd).strip().splitlines()[-1])
     except Exception:
@@ -262,7 +267,7 @@ def cmd_review(args: argparse.Namespace) -> None:
 
     names = [f for f in sh(["git", "diff", "--name-only", f"{base}...{head}"]).splitlines() if f]
     diff = sh(["git", "diff", "-U1", f"{base}...{head}"])
-    route = route_for(names, base=base)
+    route = route_for(names, base=base, issue=issue)
 
     claim = first_of(split_sections(body), "exact behavioral claim", "behavioral claim") or "(none stated)"
 

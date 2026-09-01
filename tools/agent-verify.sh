@@ -65,23 +65,41 @@ read -r HEAD_SHA PR_URL PR_STATE < <(gh pr view "$PR" \
   || die "cannot read PR #$PR"
 [ -n "$HEAD_SHA" ] || die "PR #$PR has no head SHA"
 
+# --- resolve the linked issue (best-effort; used both for the route's issue-
+# intent floor and for the evidence object) -------------------------------- #
+# Same "Closes/Fixes/Resolves #N" convention pr_policy.py enforces on the body;
+# this gh CLI version has no closingIssuesReferences JSON field to read instead.
+PR_BODY="$(gh pr view "$PR" --json body --jq '.body // ""' 2>/dev/null || true)"
+ISSUE_NUM="$(printf '%s' "$PR_BODY" | python3 -c '
+import re, sys
+m = re.search(r"(?i)\b(clos|fix|resolv)(e|es|ed)?\s+#(\d+)", sys.stdin.read())
+print(m.group(3) if m else "")
+')"
+
 # --- derive the required gate set from the route -------------------------- #
-# The route must reflect the PR's OWN diff, not whatever is checked out. When the
-# working tree is on the PR head we use route.sh --base (full, incl. the numeric
-# content-escalation); otherwise we degrade to GitHub's changed-file list, which
-# is path-only — the rules->formulas content escalation cannot be seen — and say so.
+# The route must reflect the PR's OWN diff, not whatever is checked out. When
+# the working tree is on the PR head we use route.sh --base (full, incl. the
+# numeric content-escalation). Otherwise we fetch the actual PR patch with
+# `gh pr diff` and classify THAT through route.sh --diff-file — the same
+# content-escalation and issue-intent logic route.sh applies to a local diff,
+# never a path-only degrade (see #137: route.sh is the one route authority).
 git -C "$ROOT" rev-parse --verify --quiet "$BASE" >/dev/null 2>&1 \
   || git -C "$ROOT" fetch -q origin "${BASE#origin/}" 2>/dev/null || true
 LOCAL_HEAD="$(git -C "$ROOT" rev-parse --quiet --verify HEAD 2>/dev/null || echo none)"
-ROUTE_CAVEAT=""
+PR_DIFF_FILE=""
+cleanup_diff_file() { [ -n "$PR_DIFF_FILE" ] && rm -f "$PR_DIFF_FILE"; }
+trap cleanup_diff_file EXIT
+ROUTE_ARGS=(--json)
 if [ "$LOCAL_HEAD" = "$HEAD_SHA" ]; then
-  ROUTE_JSON="$(cd "$ROOT" && tools/route.sh --json --base "$BASE" 2>/dev/null || echo '{}')"
+  ROUTE_ARGS+=(--base "$BASE")
 else
-  mapfile -t PR_FILES < <(gh pr diff "$PR" --name-only 2>/dev/null || true)
-  [ "${#PR_FILES[@]}" -gt 0 ] || die "cannot list PR #$PR changed files (and HEAD is not the PR head)"
-  ROUTE_JSON="$(cd "$ROOT" && tools/route.sh --json "${PR_FILES[@]}" 2>/dev/null || echo '{}')"
-  ROUTE_CAVEAT=" (path-only: check out the PR head for content-escalation)"
+  PR_DIFF_FILE="$(mktemp)"
+  gh pr diff "$PR" > "$PR_DIFF_FILE" 2>/dev/null || die "cannot fetch PR #$PR diff (and HEAD is not the PR head)"
+  [ -s "$PR_DIFF_FILE" ] || die "PR #$PR diff is empty (and HEAD is not the PR head)"
+  ROUTE_ARGS+=(--diff-file "$PR_DIFF_FILE")
 fi
+[ -n "$ISSUE_NUM" ] && ROUTE_ARGS+=(--issue "$ISSUE_NUM")
+ROUTE_JSON="$(cd "$ROOT" && tools/route.sh "${ROUTE_ARGS[@]}" 2>/dev/null || echo '{}')"
 mapfile -t REQUIRED < <(printf '%s' "$ROUTE_JSON" | \
   python3 -c 'import sys,json;print("\n".join(json.load(sys.stdin).get("gates",[])))' 2>/dev/null || true)
 ROUTE_NAME="$(printf '%s' "$ROUTE_JSON" | python3 -c 'import sys,json;print(json.load(sys.stdin).get("route","?"))' 2>/dev/null || echo '?')"
@@ -124,16 +142,6 @@ DESC="$passed/$total gates passed [route: $ROUTE_NAME]"
 # GitHub commit-status states are: success | failure | pending | error.
 STATE="$overall"
 
-# --- resolve the linked issue (best-effort, for the evidence object) ------ #
-# Same "Closes/Fixes/Resolves #N" convention pr_policy.py enforces on the body;
-# this gh CLI version has no closingIssuesReferences JSON field to read instead.
-PR_BODY="$(gh pr view "$PR" --json body --jq '.body // ""' 2>/dev/null || true)"
-ISSUE_NUM="$(printf '%s' "$PR_BODY" | python3 -c '
-import re, sys
-m = re.search(r"(?i)\b(clos|fix|resolv)(e|es|ed)?\s+#(\d+)", sys.stdin.read())
-print(m.group(3) if m else "")
-')"
-
 # --- build the ONE canonical evidence object ------------------------------ #
 # Both --json/--json-out and the human --evidence PR-body block render from this
 # exact object — neither reconstructs gate state independently (see #136).
@@ -169,7 +177,7 @@ PYEOF
 
 # --- render the plan (suppressed in --json mode so stdout is pure JSON) --- #
 if [ "$JSON" = 0 ]; then
-  echo "PR #$PR  head=$HEAD_SHA  route=$ROUTE_NAME$ROUTE_CAVEAT"
+  echo "PR #$PR  head=$HEAD_SHA  route=$ROUTE_NAME"
   echo "status: $CONTEXT = $STATE  ($DESC)"
   for g in "${REQUIRED[@]}"; do printf '  %-20s %s\n' "$g" "${RESULT[$g]}"; done
 fi

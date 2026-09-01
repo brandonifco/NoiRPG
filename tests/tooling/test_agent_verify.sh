@@ -81,7 +81,19 @@ case "$1 $2" in
       *) echo "mock gh: unhandled pr view --json $jsonf" >&2; exit 1 ;;
     esac ;;
   "pr diff")
-    printf '%s\n' "${MOCK_PR_FILES:-tools/agent-verify.sh}" ;;
+    # agent-verify.sh now fetches the FULL patch (no --name-only) and hands it
+    # to route.sh --diff-file, never a path-only degrade (#137). MOCK_PR_DIFF
+    # supplies a real unified diff verbatim; otherwise synthesize one non-numeric
+    # hunk per MOCK_PR_FILES entry so the default fixture still behaves like a
+    # boring change.
+    if [ -n "${MOCK_PR_DIFF:-}" ]; then
+      printf '%s\n' "$MOCK_PR_DIFF"
+    else
+      for f in ${MOCK_PR_FILES:-tools/agent-verify.sh}; do
+        printf 'diff --git a/%s b/%s\nindex 1111111..2222222 100644\n--- a/%s\n+++ b/%s\n@@ -1,1 +1,1 @@\n-old line\n+new line\n' \
+          "$f" "$f" "$f" "$f"
+      done
+    fi ;;
   *)
     case "$1" in
       api)
@@ -179,6 +191,35 @@ printf '%s\n' "$combined" | python3 -m json.tool >/dev/null \
 # --- case 7: an unrequired --gate is rejected (unchanged prior behaviour) -- #
 rc7=0; run_verify 999 --gate bogus-gate=pass >/dev/null 2>&1 || rc7=$?
 assert_eq "case7: --gate for a non-required gate is rejected" "2" "$rc7"
+
+# --- case 8: off-PR-head route is NOT path-only degraded (#137) ------------ #
+# The local checkout here is never at MOCK_HEAD_SHA, so agent-verify.sh always
+# takes the "not on PR head" branch. Feed it a numeric-threshold change to a
+# rules file through the gh pr diff mock and confirm content escalation still
+# fires — i.e. the required gate set is `formulas`'s (codex-conformance
+# included), never degraded to the path-only `rules` set.
+NUMERIC_DIFF='diff --git a/src/Brp.Rules/Combat/RangeBands.cs b/src/Brp.Rules/Combat/RangeBands.cs
+index 1111111..2222222 100644
+--- a/src/Brp.Rules/Combat/RangeBands.cs
++++ b/src/Brp.Rules/Combat/RangeBands.cs
+@@ -1,3 +1,3 @@
+ switch (r) {
+-    Range.Short => 15,
++    Range.Short => 20,
+ }'
+json8="$(MOCK_PR_DIFF="$NUMERIC_DIFF" run_verify 999 \
+  --gate scope-warden=pass --gate rules-conformance=pass --gate codex-conformance=pass --json)"
+route8="$(printf '%s' "$json8" | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
+assert_eq "case8: off-head numeric change still content-escalates to formulas" "formulas" "$route8"
+required8="$(printf '%s' "$json8" | python3 -c 'import json,sys; print(sorted(json.load(sys.stdin)["requiredGates"]))')"
+assert_eq "case8: formulas required-gate set (not the path-only rules set)" \
+  "['ci', 'codex-conformance', 'rules-conformance', 'scope-warden']" "$required8"
+
+# Same patch, classified directly by route.sh (the same authority), must agree.
+DIFFFILE="$WORKDIR/numeric.diff"
+printf '%s\n' "$NUMERIC_DIFF" > "$DIFFFILE"
+route8_direct="$("$ROOT/tools/route.sh" --json --diff-file "$DIFFFILE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
+assert_eq "case8: agrees with tools/route.sh --diff-file on the identical patch" "$route8_direct" "$route8"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then

@@ -77,10 +77,21 @@ def is_empty(header: str, content: str) -> bool:
     return False
 
 
-def run_route(base: str | None) -> dict:
+def parse_linked_issue(body: str) -> int | None:
+    m = re.search(r"\b(clos|fix|resolv)(e|es|ed)?\s+#(\d+)", body, re.I)
+    return int(m.group(3)) if m else None
+
+
+def run_route(base: str | None, issue: int | None = None) -> dict:
     cmd = [str(ROOT / "tools" / "route.sh"), "--json"]
     if base:
         cmd += ["--base", base]
+    if issue:
+        # Propagate the linked Issue's route:* label as the asymmetric intent
+        # floor — route.sh (the one route authority) may only RAISE the route
+        # this implies, never lower what the diff itself shows. Best-effort:
+        # route.sh degrades gracefully (no floor applied) if `gh` has no access.
+        cmd += ["--issue", str(issue)]
     try:
         out = subprocess.check_output(cmd, cwd=ROOT, text=True, stderr=subprocess.DEVNULL)
         return json.loads(out.strip().splitlines()[-1])
@@ -104,8 +115,7 @@ def validate(body: str, route: dict, files: list[str]) -> tuple[list[str], dict]
     violations: list[str] = []
 
     # Linked issue.
-    m = re.search(r"\b(clos|fix|resolv)(e|es|ed)?\s+#(\d+)", body, re.I)
-    issue = int(m.group(3)) if m else None
+    issue = parse_linked_issue(body)
     if issue is None:
         violations.append("Linked Issue missing — body has no `Closes #<n>` / `Fixes #<n>`.")
 
@@ -164,7 +174,11 @@ def main() -> int:
         print("no PR body available (pass --body-file or run in a pull_request event)", file=sys.stderr)
         return 2
 
-    route = run_route(base)
+    # Only a genuinely linked Issue (Closes/Fixes/Resolves #N) is a route-intent
+    # source — the PR's own number is not an Issue and must never be passed to
+    # `gh issue view`.
+    linked_issue = parse_linked_issue(body)
+    route = run_route(base, linked_issue)
     files = changed_files(base, head)
     violations, meta = validate(body, route, files)
 

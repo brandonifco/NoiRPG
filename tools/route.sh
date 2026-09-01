@@ -8,10 +8,18 @@
 # touches numeric tables / thresholds.
 #
 # Usage:
-#   tools/route.sh [--base <ref>] [--json] [file ...]
+#   tools/route.sh [--base <ref> | --diff-file <path>] [--json] [--issue <n>] [file ...]
 #
 # File selection (first that applies):
 #   explicit [file ...]   classify exactly those paths
+#   --diff-file <path>    a unified diff (e.g. `gh pr diff` or `git diff` output,
+#                          not necessarily generated in this checkout) — content
+#                          escalation is read from the patch itself, so route
+#                          derivation away from the diff's own branch is identical
+#                          to running on it. This is the ONE route authority: other
+#                          tools that need to classify a patch they didn't generate
+#                          locally (agent-verify.sh, pr_policy.py, agent-brief.py)
+#                          call this, they do not reimplement classification.
 #   --base <ref>          git diff --name-only <ref>...HEAD
 #   (neither)             git diff --name-only HEAD   (working tree + staged)
 #
@@ -27,6 +35,7 @@ MAP="$ROOT/.github/route-map"
 
 JSON=0
 BASE=""
+DIFF_FILE=""       # classify a patch that isn't necessarily the local checkout's diff
 ISSUE_ROUTE=""     # an explicit intent floor, e.g. --issue-route formulas
 ISSUE_NUM=""       # or --issue N, from which we read the issue's route:* label
 FILES=()
@@ -34,6 +43,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --json)        JSON=1; shift ;;
     --base)        BASE="${2:-}"; shift 2 ;;
+    --diff-file)   DIFF_FILE="${2:-}"; shift 2 ;;
     --issue-route) ISSUE_ROUTE="${2:-}"; shift 2 ;;
     --issue)       ISSUE_NUM="${2:-}"; shift 2 ;;
     --)     shift; while [ $# -gt 0 ]; do FILES+=("$1"); shift; done ;;
@@ -61,8 +71,59 @@ case "${ISSUE_ROUTE:-}" in
   *) echo "invalid --issue-route: $ISSUE_ROUTE (docs|tooling|rules|formulas|architecture)" >&2; exit 2 ;;
 esac
 
+[ -n "$DIFF_FILE" ] && [ -n "$BASE" ] && { echo "--diff-file and --base are mutually exclusive" >&2; exit 2; }
+[ -n "$DIFF_FILE" ] && [ ! -f "$DIFF_FILE" ] && { echo "diff file not found: $DIFF_FILE" >&2; exit 2; }
+
+# Parse a unified diff (git diff / gh pr diff format) for the paths it touches.
+# Uses the `diff --git a/X b/Y` header, which names both sides regardless of
+# add/delete/rename, so it does not depend on --- / +++ (which go /dev/null on
+# add or delete). Reports the "b" (current/new) path, falling back to "a".
+files_from_diff_file() {
+  awk '
+    /^diff --git a\// {
+      line = $0
+      sub(/^diff --git a\//, "", line)
+      idx = index(line, " b/")
+      if (idx > 0) {
+        apath = substr(line, 1, idx - 1)
+        bpath = substr(line, idx + 3)
+        print (bpath != "" ? bpath : apath)
+      }
+    }
+  ' "$1"
+}
+
+# Extract only the hunks for the given paths out of a unified diff file, so
+# content escalation can be evaluated against an externally supplied patch the
+# exact same way it is against a local `git diff`.
+diff_hunks_for_files_in_file() {
+  local diff_file="$1"; shift
+  local wanted; wanted="$(printf '%s\n' "$@")"
+  awk -v wanted="$wanted" '
+    BEGIN {
+      n = split(wanted, arr, "\n")
+      for (i = 1; i <= n; i++) if (arr[i] != "") want[arr[i]] = 1
+    }
+    /^diff --git a\// {
+      line = $0
+      sub(/^diff --git a\//, "", line)
+      idx = index(line, " b/")
+      keep = 0
+      if (idx > 0) {
+        apath = substr(line, 1, idx - 1)
+        bpath = substr(line, idx + 3)
+        if ((apath in want) || (bpath in want)) keep = 1
+      }
+      next
+    }
+    { if (keep) print }
+  ' "$diff_file"
+}
+
 if [ ${#FILES[@]} -eq 0 ]; then
-  if [ -n "$BASE" ]; then
+  if [ -n "$DIFF_FILE" ]; then
+    mapfile -t FILES < <(files_from_diff_file "$DIFF_FILE")
+  elif [ -n "$BASE" ]; then
     mapfile -t FILES < <(git -C "$ROOT" diff --name-only "$BASE"...HEAD)
   else
     mapfile -t FILES < <(git -C "$ROOT" diff --name-only HEAD)
@@ -133,7 +194,9 @@ if [ "$base" = "rules" ]; then
     { [ "$r" = "rules" ] || [ "$r" = "formulas" ]; } && rf+=("$f")
   done
   if [ ${#rf[@]} -gt 0 ]; then
-    if [ -n "$BASE" ]; then
+    if [ -n "$DIFF_FILE" ]; then
+      d="$(diff_hunks_for_files_in_file "$DIFF_FILE" "${rf[@]}")"
+    elif [ -n "$BASE" ]; then
       d="$(git -C "$ROOT" diff --unified=0 "$BASE"...HEAD -- "${rf[@]}" 2>/dev/null || true)"
     else
       d="$(git -C "$ROOT" diff --unified=0 HEAD -- "${rf[@]}" 2>/dev/null || true)"
