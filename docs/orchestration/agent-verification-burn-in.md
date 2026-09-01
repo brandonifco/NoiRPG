@@ -206,3 +206,54 @@ gaps, left `NI` rather than guessed (consistent with `docs/orchestration/metrics
 - `cost_usd`, `human_minutes`, and the R/A/H token split remain uninstrumented for
   every job in this run, matching the pre-existing gaps `docs/agent-team-ledger/README.md`
   already documents.
+
+## Second batch — orchestration-hardening PRs (#168–#174, #170/#171)
+
+The run that produced the orchestration fixes (one-closing-Issue enforcement,
+task-packet route floor, doc drift, project schema, this burn-in record, the
+reviewer read-only layer, and the trust-root/triage ADR) surfaced further process
+findings — mostly about the *merge machinery* rather than conformance. They extend,
+not replace, F1–F7.
+
+**F8 — Parallel agents collide on ADR numbers.** #170 and #171 ran concurrently,
+each read `0024` as the latest decision record, and each allocated `0025` for its new
+ADR. The orchestrator had to renumber one (#170 → `0026-reviewer-mechanical-read-only.md`,
+updating every reference) after the other merged. ADR-number allocation is not
+serialized; concurrent design-decision work needs either a reservation step or a
+rule that the number is assigned at merge time, not authoring time.
+
+**F9 — Off-old-base branches silently re-introduce settled index rows.** Both the
+#170 and #171 branches were cut from a `main` that predated #112, so each "helpfully"
+re-added the `docs/decisions/README.md` row for ADR `0024` that already existed on
+current `main`. `update-branch` merges main's *content* but does not reconcile a
+logical duplicate like two `0024` rows — the duplication only surfaced at
+`architecture-review` (design-critic caught it on #171). Lesson: branch from current
+`main`, and treat append-only index/registry files as a known merge-hazard to check
+explicitly.
+
+**F10 — gh API head-lag vs. git compounds F6.** After an `update-branch`, the REST/
+GraphQL PR head (`gh pr view --json headRefOid`) lagged the git ref by several polls.
+Because `tools/agent-verify.sh` derives the head via `gh`, it briefly operated on a
+stale SHA — once posting `agent-verification = success` onto a *superseded* head,
+after which the merge was correctly rejected as out-of-date. Mitigation that worked:
+never act on a single read; poll until the git ref and the `gh` head **converge** on
+the same SHA (and CI is green for it) before posting the status or merging. Every
+merge in this batch was keyed to a git-confirmed, converged head.
+
+**F11 — The route-intent floor propagates through the whole chain (a positive).**
+#171 carried an issue-level `route:architecture` label. Plain `tools/route.sh` on the
+diff reported `ci`-only, but `agent-verify.sh` (which passes `--issue`) correctly
+raised the required set to include `architecture-review` on an otherwise docs-only
+PR — and the gate earned its place by catching F9's duplicate-index drift. The
+asymmetric floor and gate-set composition work end to end, not just at PR-policy time.
+Caveat (tooling follow-up): the `agent-brief.py` review packet's architecture-review
+checklist is templated BRP-layering boilerplate ("Brp.Core/Brp.Rules take no
+game-engine dependency") that does not adapt when the gate is pulled in via an issue
+floor on a docs change; design-critic flagged the mismatch and reviewed against the
+correct scope anyway.
+
+**F12 — Non-isolated subagents mutate the primary worktree.** The #174 writer was
+dispatched without worktree isolation; it created and left the primary checkout on
+its feature branch, which had to be manually restored (`checkout main` +
+fast-forward) during cleanup. Dispatch doc/tooling agents with worktree isolation, or
+expect to restore the primary tree afterward.
