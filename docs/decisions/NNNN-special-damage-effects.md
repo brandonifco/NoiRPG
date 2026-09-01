@@ -102,17 +102,36 @@ of scope here.
 
 ### Fighting Defensively (`FightingDefensivelyResolver`)
 
-Ch 6, p.151: forgoing all attacks for a round substitutes one (or more, with multiple
-attacks per round) free, unpenalized Dodge/parry attempt. This is the first
-implementation of the successive Dodge/parry -30% cumulative penalty (Ch 6, pp.144 and
-151), previously a named-but-unbuilt seam
+Ch 6, p.151: forgoing all attacks for a round substitutes one free, unpenalized
+**Dodge** attempt for the round's attack ("one free Dodge attempt", "a free Dodge
+skill attempt", "Essentially, it is a free Dodge" -- Dodge-only, never a Parry).
+Only if the character can normally make multiple attacks per round (e.g. a skill over
+100%) is a *second* free defense granted, and that second one may be either a Dodge or
+a Parry ("a second free Dodge or parry"). The count is capped at two: it is gated on
+multi-attack capability, not on how many attacks were forgone, so a character forgoing
+three attacks by having three actions still gets at most two free defenses, not three.
+`Declare(bool canMakeMultipleAttacksPerRound)` returns
+`FirstFreeDefenseType = DefenseType.Dodge` unconditionally and
+`SecondFreeDefenseAvailable` / `SecondFreeDefenseAllowedTypes = [Dodge, Parry]` only
+when that flag is true.
+
+**Correction (post-review):** the first implementation of this record exposed an
+untyped `FreeDefenseAttempts` count set to the caller-supplied number of attacks
+forgone (so three forgone attacks wrongly yielded three free, type-unrestricted
+defenses). Codex conformance caught both defects against the printed text above; the
+signature and return shape were redesigned as described here rather than patched
+in place, since the original shape could not express "first is Dodge-only, second is
+conditional and capped at one."
+
+This piece also gives the successive Dodge/parry -30% cumulative penalty (Ch 6, pp.144
+and 151) its first implementation, previously a named-but-unbuilt seam
 (`attack-defense-matrix-ruleset.json`'s `deferred` list, ADR 0016) -- built here because
 Fighting Defensively's entire point is exempting its free attempt(s) from that count.
 `SuccessiveDefensePenaltyPercent(countedPriorAttempts, ...)` computes the cumulative
 -30%-per-attempt penalty; a caller simply never passes a free Fighting-Defensively
 attempt into `countedPriorAttempts`, which is how "does not incur the cumulative
 penalty" and "the modifier does not increase" (p.151) are satisfied without special
-casing. `Declare`, `ForfeitsAllAttacksThisRound`, `CannotCombineWithAnyOffensiveAction`
+casing. `ForfeitsAllAttacksThisRound`, `CannotCombineWithAnyOffensiveAction`
 (including the Desperate Action, named explicitly), and
 `CannotDodgeAndParryWithinTheSameDexRank` are direct quotes, exposed as caller-read
 flags rather than enforced against a round loop this layer does not own.

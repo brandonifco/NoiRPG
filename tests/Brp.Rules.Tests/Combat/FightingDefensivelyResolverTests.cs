@@ -14,28 +14,42 @@ public class FightingDefensivelyResolverTests
     private static readonly SpecialDamageEffectsRuleset Ruleset = NoirSpecialDamageEffectsRuleset.Load();
 
     [Fact]
-    public void Declaring_fighting_defensively_forfeits_all_attacks_and_grants_free_dodges_page_151()
+    public void Declaring_fighting_defensively_forfeits_all_attacks_and_grants_one_free_dodge_page_151()
     {
-        var declaration = FightingDefensivelyResolver.Declare(attacksForgone: 1);
+        // p.151: "one free Dodge attempt" -- Dodge-only, never a Parry, regardless of
+        // multi-attack capability.
+        var declaration = FightingDefensivelyResolver.Declare(canMakeMultipleAttacksPerRound: false);
 
-        Assert.Equal(1, declaration.FreeDefenseAttempts);
+        Assert.Equal(DefenseType.Dodge, declaration.FirstFreeDefenseType);
+        Assert.False(declaration.SecondFreeDefenseAvailable);
+        Assert.Empty(declaration.SecondFreeDefenseAllowedTypes);
         Assert.True(declaration.ForfeitsAllAttacksThisRound);
         Assert.True(declaration.CannotCombineWithAnyOffensiveAction);
         Assert.True(declaration.CannotDodgeAndParryWithinTheSameDexRank);
     }
 
     [Fact]
-    public void Multiple_attacks_per_round_yield_that_many_free_defense_attempts_page_151()
+    public void Multi_attack_capability_grants_a_second_free_dodge_or_parry_page_151()
     {
-        var declaration = FightingDefensivelyResolver.Declare(attacksForgone: 2);
+        // p.151: "If your character can normally make multiple attacks per round ..., they can
+        // make a second free Dodge or parry."
+        var declaration = FightingDefensivelyResolver.Declare(canMakeMultipleAttacksPerRound: true);
 
-        Assert.Equal(2, declaration.FreeDefenseAttempts);
+        Assert.Equal(DefenseType.Dodge, declaration.FirstFreeDefenseType);
+        Assert.True(declaration.SecondFreeDefenseAvailable);
+        Assert.Equal([DefenseType.Dodge, DefenseType.Parry], declaration.SecondFreeDefenseAllowedTypes);
     }
 
     [Fact]
-    public void Declaring_with_zero_attacks_forgone_is_invalid()
+    public void The_free_defense_count_is_capped_at_two_regardless_of_attacks_forgone_page_151()
     {
-        Assert.Throws<ArgumentOutOfRangeException>(() => FightingDefensivelyResolver.Declare(attacksForgone: 0));
+        // Forgoing three (or any number of) attacks by having multiple actions never yields a
+        // third free defense -- the second is gated on multi-attack capability, not on the count
+        // of attacks forgone, and there is no parameter to inflate the count past two.
+        var declaration = FightingDefensivelyResolver.Declare(canMakeMultipleAttacksPerRound: true);
+
+        var freeDefenseCount = 1 + (declaration.SecondFreeDefenseAvailable ? 1 : 0);
+        Assert.Equal(2, freeDefenseCount);
     }
 
     [Theory]

@@ -4,8 +4,19 @@ namespace Brp.Rules.Combat;
 
 /// <summary>
 /// Resolves Ch 6: Combat, "Fighting Defensively" (p.151) -- an in-scope Ch 6 core mechanic never
-/// built before #113: forgoing all attacks for one (or, with multiple attacks per round, more
-/// than one) free, unpenalized Dodge substituted for the attack(s) that round.
+/// built before #113: forgoing all attacks for a free, unpenalized Dodge substituted for the
+/// round's attack, plus (only if the character can normally make multiple attacks per round --
+/// e.g. a skill over 100%) a second free defensive attempt, which may be either a Dodge or a
+/// Parry.
+/// <para>
+/// <strong>The first free defense is Dodge-only, and the count is capped at two, not one per
+/// forgone attack.</strong> p.151: "they can substitute one free Dodge attempt for their
+/// attack... your character can substitute a Dodge skill attempt for an attack without incurring
+/// the -30% penalty... Essentially, it is a free Dodge." Only the *second* free attempt --
+/// gated on multi-attack capability, not on how many attacks were forgone -- may be "a second
+/// free Dodge or parry" (p.151). A character who forgoes three attacks by having three actions
+/// does not get three free defenses; the maximum is always two, and only the second is optional.
+/// </para>
 /// <para>
 /// This piece also gives the successive Dodge/parry -30% cumulative penalty (Ch 6, "Parry"/
 /// "Dodge", p.144; restated at "Fighting Defensively", p.151) its first implementation --
@@ -17,22 +28,30 @@ namespace Brp.Rules.Combat;
 public static class FightingDefensivelyResolver
 {
     /// <summary>
-    /// Declares fighting defensively for the round, per p.151: "your character can substitute one
-    /// free Dodge attempt for their attack and can continue to make dodge or parry attempts... If
-    /// your character can normally make multiple attacks per round (such as having a skill over
-    /// 100%), they can make a second free Dodge or parry without incurring the cumulative
-    /// penalty." <paramref name="attacksForgone"/> is the number of attacks the character would
-    /// otherwise have made this round, each substituted 1-for-1 with a free defensive attempt.
-    /// "Under no circumstances can fighting defensively be combined with any attack or offensive
-    /// action, even such as the Desperate Action" and "your character cannot Dodge and parry
-    /// within the same DEX rank" are both named as flags a caller enforces, not choices this
-    /// method makes.
+    /// Declares fighting defensively for the round, per p.151. The first free defense is always a
+    /// Dodge (never a Parry) -- "one free Dodge attempt", "a free Dodge skill attempt",
+    /// "Essentially, it is a free Dodge." A second free defense, which may be either a Dodge or a
+    /// Parry, is granted only when <paramref name="canMakeMultipleAttacksPerRound"/> is
+    /// <see langword="true"/> -- "If your character can normally make multiple attacks per round
+    /// (such as having a skill over 100%), they can make a second free Dodge or parry without
+    /// incurring the cumulative penalty." There is no third free defense and no scaling with how
+    /// many attacks were forgone; the cap is always at most two. "Under no circumstances can
+    /// fighting defensively be combined with any attack or offensive action, even such as the
+    /// Desperate Action" and "your character cannot Dodge and parry within the same DEX rank" are
+    /// both named as flags a caller enforces, not choices this method makes.
     /// </summary>
-    public static FightingDefensivelyDeclaration Declare(int attacksForgone)
+    /// <param name="canMakeMultipleAttacksPerRound">
+    /// Whether the character can normally make more than one attack in a round (e.g. a combat
+    /// skill rated over 100%) -- the sole gate on the second free defense, per p.151.
+    /// </param>
+    public static FightingDefensivelyDeclaration Declare(bool canMakeMultipleAttacksPerRound)
     {
-        ArgumentOutOfRangeException.ThrowIfNegativeOrZero(attacksForgone);
         return new FightingDefensivelyDeclaration(
-            FreeDefenseAttempts: attacksForgone,
+            FirstFreeDefenseType: DefenseType.Dodge,
+            SecondFreeDefenseAvailable: canMakeMultipleAttacksPerRound,
+            SecondFreeDefenseAllowedTypes: canMakeMultipleAttacksPerRound
+                ? [DefenseType.Dodge, DefenseType.Parry]
+                : [],
             ForfeitsAllAttacksThisRound: true,
             CannotCombineWithAnyOffensiveAction: true,
             CannotDodgeAndParryWithinTheSameDexRank: true);
@@ -68,8 +87,18 @@ public static class FightingDefensivelyResolver
 }
 
 /// <summary>The declared effect of fighting defensively for a round (Ch 6, "Fighting Defensively", p.151).</summary>
-/// <param name="FreeDefenseAttempts">
-/// The number of free, unpenalized Dodge/parry attempts substituted for forgone attacks this round.
+/// <param name="FirstFreeDefenseType">
+/// The type of the first free, unpenalized defensive attempt -- always <see cref="DefenseType.Dodge"/>
+/// (p.151: "one free Dodge attempt"; never a Parry).
+/// </param>
+/// <param name="SecondFreeDefenseAvailable">
+/// Whether a second free, unpenalized defensive attempt is available this round -- only true when
+/// the character can normally make multiple attacks per round (p.151).
+/// </param>
+/// <param name="SecondFreeDefenseAllowedTypes">
+/// The defense types the second free attempt may use -- <see cref="DefenseType.Dodge"/> or
+/// <see cref="DefenseType.Parry"/> when <see cref="SecondFreeDefenseAvailable"/> is
+/// <see langword="true"/> (p.151: "a second free Dodge or parry"), otherwise empty.
 /// </param>
 /// <param name="ForfeitsAllAttacksThisRound">The character makes no attacks at all this round.</param>
 /// <param name="CannotCombineWithAnyOffensiveAction">
@@ -79,7 +108,9 @@ public static class FightingDefensivelyResolver
 /// The character cannot both Dodge and Parry within the same DEX rank.
 /// </param>
 public sealed record FightingDefensivelyDeclaration(
-    int FreeDefenseAttempts,
+    DefenseType FirstFreeDefenseType,
+    bool SecondFreeDefenseAvailable,
+    IReadOnlyList<DefenseType> SecondFreeDefenseAllowedTypes,
     bool ForfeitsAllAttacksThisRound,
     bool CannotCombineWithAnyOffensiveAction,
     bool CannotDodgeAndParryWithinTheSameDexRank);
