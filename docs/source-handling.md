@@ -41,6 +41,53 @@ This is how the resistance misprint below was confirmed to be a real printing er
 rather than an extraction artifact. Rendering the region at 300 dpi and reading it
 visually is the final check.
 
+## Generating a source packet: `tools/source-slice.py`
+
+Do not re-read and re-transcribe the 303-page PDF by hand every time an agent needs
+an excerpt. `tools/source-slice.py` deterministically slices a page range out of
+`BasicRoleplaying-ORC-Content-Document.pdf` and emits it with a header identifying
+the authoritative filename, its pinned SHA-256, the requested pages, and the
+extraction mode:
+
+```bash
+tools/source-slice.py --pages 130                     # single page, plain text
+tools/source-slice.py --pages 130-132 --layout         # wide/tabular pages
+tools/source-slice.py --pages 130 --bbox                # disputed-cell escalation
+tools/source-slice.py --pages 130 --output /tmp/p130.txt
+```
+
+Before extracting anything, it verifies the PDF against the pinned hash in
+`.github/authoritative-source.sha256` and fails loudly (extracting nothing) if the
+hash does not match. It never accepts an arbitrary `--file` — the source filename is
+hardcoded so the superseded `BRP SRD 1.0.2.pdf` is not reachable through this tool.
+It is a page-slice tool, not a search or indexing system: it does not decide *which*
+pages matter, only extracts the ones it is told.
+
+**Locating the pages.** Two paths, depending on what the Issue says:
+
+- **Issue names exact pages.** The orchestrator runs `source-slice.py` directly and
+  hands the resulting packet to `engine-dev`, `rules-conformance`, and Codex.
+- **Issue names only a section** (e.g. "the Resistance Table" without a page number).
+  `rules-extractor` locates it once and reports back the page range — it does not
+  transcribe the content itself. The orchestrator then generates the packet from
+  that range the same way, so the extraction is deterministic and reviewable.
+
+**Independence rule.** Agents may share the same primary-source excerpt — that is
+the point of generating one packet instead of several independent transcriptions.
+But `codex-conformance` must never be fed `rules-conformance`'s reasoning, notes, or
+conclusions about that excerpt. It gets the same raw packet and re-derives its
+verification independently; that independence is what makes it a useful
+cross-vendor check rather than an echo of the first reviewer.
+
+**Escalation for disputed cells.** Plain mode is the default (see below — `-layout`
+scrambles the single-column body). Wide tables use `--layout`. A disputed cell
+escalates to `--bbox` for glyph coordinates, then to a `pdftoppm`-rendered image
+read visually, exactly as documented for the resistance-table misprint below.
+
+**Packets are ephemeral.** Generate and discard by default; do not commit a source
+packet to the repo unless there is a specific, stated reason to keep it (e.g. it is
+itself the artifact under review for a documentation defect in the extraction).
+
 ## The discipline
 
 **Where the book prints a table, reproduce the whole table as test data.** One case per
