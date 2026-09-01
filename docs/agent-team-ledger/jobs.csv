@@ -5,3 +5,9 @@ layer,issue,pr,seq,date,phase,agent_role,model,effort,risk_class,review_layer,to
 3,40,41,4,2026-08-30,rework,engine-dev-fix-defects,sonnet,medium,R3,,246175,NI,NI,NI,37,366666,NI,NI,5fe502c,pending,0,0,2,7,no,1735,"Fixed F1+F2; modeled teach-fumble -1D3; sim kept in lockstep; 7 regression tests."
 3,40,41,5,2026-08-30,verify,rules-conformance-reaudit,opus,high,R3,conformance,36236,NI,NI,NI,12,143633,NI,NI,,pending,1,0,0,0,no,1735,"F1+F2 confirmed closed; found F3 (training cap hardcoded, invariant-7 nick)."
 3,40,41,6,2026-08-30,rework,engine-dev-wire-cap,sonnet,medium,R3,,289172,NI,NI,NI,35,241608,NI,NI,ccd3a78,pending,0,0,1,3,no,1737,"Fixed F3: training cap sourced from Brp.Data via new ExperienceRuleset + loader; 2 tests."
+orch,135,145,1,2026-08-31,verify,scope-warden,haiku,low,NI,NI,10033,NI,NI,NI,1,16164,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,"docs-route scope check: all items pass, no rules content"
+orch,136,146,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,128935,NI,NI,NI,56,542364,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,"collapse verification evidence to one canonical model; pr_policy static, agent-verify --json"
+orch,136,146,2,2026-08-31,verify,scope-warden,haiku,low,NI,NI,11628,NI,NI,NI,1,15647,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,tooling-route scope check: all pass
+orch,137,147,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,99675,NI,NI,NI,58,435380,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,route.sh single authority: --diff-file external-patch classification; 4 consumers unified; 9 acceptance tests
+orch,137,147,2,2026-08-31,verify,scope-warden,haiku,low,NI,NI,13395,NI,NI,NI,1,17095,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,tooling-route scope check: all pass
+orch,138,148,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,67104,NI,NI,NI,40,234198,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,scope-warden residual semantic gate; docs/tooling route -> ci only; labels updated
