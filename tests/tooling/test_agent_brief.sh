@@ -1,0 +1,228 @@
+#!/usr/bin/env bash
+# tests/tooling/test_agent_brief.sh — fixture tests for tools/agent-brief.py's
+# packet-first dispatch contract (Issue #139).
+#
+# Proves: a TASK packet and a REVIEW packet are each generated in one command;
+# every packet ends with a reproducible packet-sha256 (no timestamp or other
+# nondeterministic value hashed in — two runs against identical state produce
+# the identical hash); the packet contains its required sections; and the
+# packet's predicted route agrees with tools/route.sh, the one route authority.
+#
+# No network `gh` access is assumed (CI has none) — `gh` is stubbed with a
+# fixture script, same pattern as tests/tooling/test_agent_verify.sh. `git`
+# operations run against this real checkout's own history, so no mocking of
+# git is needed.
+#
+# Run directly:
+#   tests/tooling/test_agent_brief.sh
+#
+# Exit: 0 if every case passes, 1 on the first failure.
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+SCRIPT="$ROOT/tools/agent-brief.py"
+
+WORKDIR="$(mktemp -d)"
+trap 'rm -rf "$WORKDIR"' EXIT
+
+FAILURES=0
+ok()   { printf 'ok   - %s\n' "$1"; }
+fail() { printf 'FAIL - %s\n' "$1"; FAILURES=$((FAILURES + 1)); }
+
+assert_eq() {
+  local desc="$1" expected="$2" actual="$3"
+  if [ "$expected" = "$actual" ]; then ok "$desc"; else
+    fail "$desc (expected [$expected], got [$actual])"
+  fi
+}
+
+assert_contains() {
+  local desc="$1" haystack="$2" needle="$3"
+  if [[ "$haystack" == *"$needle"* ]]; then ok "$desc"; else
+    fail "$desc (expected to find [$needle])"
+  fi
+}
+
+# --- fixture `gh` stub ------------------------------------------------------ #
+# Answers exactly the gh subcommands agent-brief.py's task packet issues:
+# `issue view <n> --json title,body,labels,number,url` for the issue itself,
+# `issue view <n> --json state,title` for a referenced dependency, and
+# `issue view <n> --json labels --jq ...` (issued by tools/route.sh --issue).
+MOCKBIN="$WORKDIR/bin"
+mkdir -p "$MOCKBIN"
+cat > "$MOCKBIN/gh" <<'MOCKGH'
+#!/usr/bin/env bash
+set -euo pipefail
+
+find_flag_value() {
+  local flag="$1"; shift; local args=("$@")
+  for ((i = 0; i < ${#args[@]}; i++)); do
+    if [ "${args[$i]}" = "$flag" ]; then printf '%s' "${args[$((i + 1))]}"; return 0; fi
+  done
+  return 1
+}
+
+emit() {
+  local body="$1"; shift; local jqf
+  if jqf="$(find_flag_value --jq "$@")"; then printf '%s' "$body" | jq -r "$jqf"
+  else printf '%s\n' "$body"; fi
+}
+
+case "$1 $2" in
+  "issue view")
+    num="$3"
+    jsonf="$(find_flag_value --json "$@" || true)"
+    case "$jsonf" in
+      title,body,labels,number,url)
+        if [ "$num" = "5001" ]; then
+          body_json="$(python3 -c '
+import json
+body = """## Outcome
+Make the widget reproducible.
+
+## Acceptance Criteria
+- widget is deterministic
+
+## Out of Scope
+- do not touch the gizmo
+
+## Dependencies
+#5002
+
+## Workspace
+`tools/agent-brief.py` is the file to change.
+
+## Known Dead Ends
+- tried a global counter, rejected: not reproducible"""
+print(json.dumps(body))
+')"
+          emit "{\"title\":\"Widget packet test\",\"body\":$body_json,\"labels\":[],\"number\":5001,\"url\":\"https://example.invalid/issues/5001\"}" "$@"
+        else
+          echo "mock gh: unhandled issue view $num" >&2; exit 1
+        fi ;;
+      state,title)
+        emit "{\"state\":\"OPEN\",\"title\":\"Dependency fixture issue\"}" "$@" ;;
+      labels)
+        emit "{\"labels\":[]}" "$@" ;;
+      *) echo "mock gh: unhandled issue view --json $jsonf" >&2; exit 1 ;;
+    esac ;;
+  *) echo "mock gh: unhandled args: $*" >&2; exit 1 ;;
+esac
+MOCKGH
+chmod +x "$MOCKBIN/gh"
+export PATH="$MOCKBIN:$PATH"
+
+# === TASK PACKET ============================================================ #
+
+task1="$WORKDIR/task1.md"
+task2="$WORKDIR/task2.md"
+python3 "$SCRIPT" task 5001 > "$task1"
+python3 "$SCRIPT" task 5001 > "$task2"
+
+ok "task packet: generated in one command"
+
+diff -q "$task1" "$task2" >/dev/null \
+  && ok "task packet: byte-identical across two runs" \
+  || fail "task packet: byte-identical across two runs"
+
+hash1="$(grep '^packet-sha256:' "$task1" | awk '{print $2}')"
+hash2="$(grep '^packet-sha256:' "$task2" | awk '{print $2}')"
+[ -n "$hash1" ] && ok "task packet: packet-sha256 present" || fail "task packet: packet-sha256 present"
+assert_eq "task packet: packet-sha256 reproducible across runs" "$hash1" "$hash2"
+assert_eq "task packet: packet-sha256 is 64 hex chars" "64" "${#hash1}"
+
+grep -q '^packet-version: 1$' "$task1" \
+  && ok "task packet: packet-version footer present" \
+  || fail "task packet: packet-version footer present"
+grep -q '^packet-schema: task-packet/1$' "$task1" \
+  && ok "task packet: packet-schema marker present" \
+  || fail "task packet: packet-schema marker present"
+
+for section in \
+  "# TASK BRIEF" \
+  "<https://example.invalid/issues/5001>" \
+  "**Outcome.**" \
+  "**Acceptance criteria.**" \
+  "**Explicitly out of scope.**" \
+  "## AUTHORITY" \
+  "## DEPENDENCIES" \
+  "## WORKSPACE" \
+  "## REQUIRED GATES" \
+  "## DO NOT REVISIT" \
+  "## KNOWN DEAD ENDS" \
+  ; do
+  content="$(cat "$task1")"
+  assert_contains "task packet: contains section [$section]" "$content" "$section"
+done
+
+content="$(cat "$task1")"
+assert_contains "task packet: dependency state resolved" "$content" "Dependency fixture issue"
+assert_contains "task packet: known dead end carried through" "$content" "global counter"
+assert_contains "task packet: explicit exclusion carried through" "$content" "gizmo"
+
+# --- task packet route matches tools/route.sh directly ---------------------- #
+route_line="$(grep '^- route:' "$task1")"
+direct_route="$(bash "$ROOT/tools/route.sh" --json tools/agent-brief.py | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
+assert_contains "task packet: predicted route matches tools/route.sh" "$route_line" "**$direct_route**"
+
+# === REVIEW PACKET =========================================================== #
+# Use two real commits from this checkout's own history so no `gh pr view` is
+# needed (an explicit --base/--head range skips it entirely).
+BASE_SHA="$(git -C "$ROOT" rev-parse HEAD~2)"
+HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD)"
+
+review1="$WORKDIR/review1.md"
+review2="$WORKDIR/review2.md"
+python3 "$SCRIPT" review --base "$BASE_SHA" --head "$HEAD_SHA" --issue 5001 > "$review1"
+python3 "$SCRIPT" review --base "$BASE_SHA" --head "$HEAD_SHA" --issue 5001 > "$review2"
+
+ok "review packet: generated in one command"
+
+diff -q "$review1" "$review2" >/dev/null \
+  && ok "review packet: byte-identical across two runs" \
+  || fail "review packet: byte-identical across two runs"
+
+rhash1="$(grep '^packet-sha256:' "$review1" | awk '{print $2}')"
+rhash2="$(grep '^packet-sha256:' "$review2" | awk '{print $2}')"
+assert_eq "review packet: packet-sha256 reproducible across runs" "$rhash1" "$rhash2"
+assert_eq "review packet: packet-sha256 is 64 hex chars" "64" "${#rhash1}"
+
+grep -q '^packet-schema: review-packet/1$' "$review1" \
+  && ok "review packet: packet-schema marker present" \
+  || fail "review packet: packet-schema marker present"
+
+rcontent="$(cat "$review1")"
+for section in \
+  "# REVIEW BRIEF" \
+  "## PR" \
+  "## ISSUE" \
+  "## RANGE" \
+  "$BASE_SHA" \
+  "$HEAD_SHA" \
+  "## CHANGED FILES" \
+  "## AUTHORITY" \
+  "## IMPLEMENTER CLAIM" \
+  "## REQUIRED REVIEW" \
+  "## ESCALATION REASON" \
+  "## DIFF" \
+  ; do
+  assert_contains "review packet: contains section [$section]" "$rcontent" "$section"
+done
+assert_contains "review packet: source-packet reference present" "$rcontent" "agent-brief.py task 5001"
+
+review_route_line="$(grep '^## REQUIRED REVIEW' "$review1")"
+direct_review_route="$(bash "$ROOT/tools/route.sh" --json --base "$BASE_SHA" --issue 5001 | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])' 2>/dev/null || true)"
+if [ -n "$direct_review_route" ]; then
+  assert_contains "review packet: predicted route matches tools/route.sh" "$review_route_line" "**$direct_review_route**"
+else
+  fail "review packet: predicted route matches tools/route.sh (could not compute direct route)"
+fi
+
+echo
+if [ "$FAILURES" -eq 0 ]; then
+  echo "test_agent_brief.sh: all checks passed"
+  exit 0
+else
+  echo "test_agent_brief.sh: $FAILURES check(s) failed"
+  exit 1
+fi
