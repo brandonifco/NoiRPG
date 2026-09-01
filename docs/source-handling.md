@@ -63,6 +63,23 @@ hardcoded so the superseded `BRP SRD 1.0.2.pdf` is not reachable through this to
 It is a page-slice tool, not a search or indexing system: it does not decide *which*
 pages matter, only extracts the ones it is told.
 
+**Citation sanity check: `--expect <regex>`.** A wrong or truncated page range (e.g.
+citing "p.14" for a table that starts on p.15) slices real-but-irrelevant text
+without complaint — that is how the first #112 source packet omitted the entire
+Hit-Points-by-Location table and Codex silently verified 0 of 45 cells against it
+(burn-in finding F5(b)). When a packet is being built for a conformance gate,
+assert on an anchor from the cited table so a bad range is caught at packet-build
+time instead of discovered later by a reviewer manually re-reading the excerpt:
+
+```bash
+tools/source-slice.py --pages 14-16 --expect "Hit Points by Location"
+```
+
+`--expect` is opt-in and repeatable; it exits non-zero and names any missing
+anchor. It is still a presence check on the range already chosen, not a way to
+locate the range — it does not search the document for the anchor, it only
+confirms the anchor is in the text this invocation already sliced.
+
 **Locating the pages.** Two paths, depending on what the Issue says:
 
 - **Issue names exact pages.** The orchestrator runs `source-slice.py` directly and
