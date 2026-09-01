@@ -51,6 +51,51 @@ GATE_REVIEW = {
                            "Brp.Core/Brp.Rules take no game-engine dependency.",
 }
 
+# The architecture-review gate lands in the gate set for two structurally
+# different reasons, per tools/route.sh (the one route authority):
+#   1. a path-derived project/boundary change actually present in the diff (a
+#      changed .csproj, project reference, or similar) — `architecture: true`.
+#   2. an issue-level `route:architecture` intent floor with NO such change in
+#      the diff. route.sh only reports `issueRaised: true` off the
+#      `route:architecture` floor when it had to add the gate itself (the
+#      path-derived `arch` flag was 0 before applying the floor) — see
+#      route.sh's "Issue-intent floor" comment. So `architecture && issueRaised
+#      && issueRoute == "architecture"` means the gate exists ONLY because of
+#      the issue floor, not because of anything in the diff.
+# These need different reasons/checklists (F11 burn-in finding): the layering
+# boilerplate is nonsensical for, e.g., a docs-only ADR that merely records a
+# decision.
+ARCH_REVIEW_LAYERING = (
+    "Review the new subsystem boundary and project references: layering holds, "
+    "Brp.Core/Brp.Rules take no game-engine dependency."
+)
+ARCH_REVIEW_DECISION_SCOPED = (
+    "No project/boundary change is actually in this diff — this gate is present only "
+    "because the Issue carries a `route:architecture` intent floor. Review the "
+    "SOUNDNESS of the recorded decision or boundary the change makes (is it correct, "
+    "consistent with prior decisions, and adequately justified) — do NOT check "
+    "`Brp.*` layering or project references, which this diff does not touch."
+)
+
+
+def architecture_review_reason_and_checklist(route: dict) -> tuple[str, str] | None:
+    """Return (reason, checklist text) for the architecture-review gate, or
+    None if the gate is not present in `route`'s gate set. Distinguishes WHY
+    the gate is present — see the comment above ARCH_REVIEW_LAYERING."""
+    if not route.get("architecture"):
+        return None
+    issue_floor_only = bool(route.get("issueRaised")) and route.get("issueRoute") == "architecture"
+    if issue_floor_only:
+        return (
+            "architecture review added: Issue intent floor `route:architecture` — "
+            "no project/boundary change in the diff",
+            ARCH_REVIEW_DECISION_SCOPED,
+        )
+    return (
+        "architecture review added: the diff touches project references/layering",
+        ARCH_REVIEW_LAYERING,
+    )
+
 
 def sh(cmd: list[str], check: bool = True) -> str:
     r = subprocess.run(cmd, cwd=ROOT, text=True, capture_output=True)
@@ -316,15 +361,17 @@ def cmd_review(args: argparse.Namespace) -> None:
     adrs = adr_titles()
     adr_pick = relevant_adrs(focus) if title != "(explicit range)" else list(ALWAYS_ADRS)
 
+    arch_review = architecture_review_reason_and_checklist(route)
+
     reasons = []
     if route.get("escalated"):
         reasons.append("content escalation: the diff touches a numeric table/threshold, "
                         "so `rules` was promoted to `formulas`")
-    if route.get("issueRaised"):
+    if route.get("issueRaised") and route.get("issueRoute") != "architecture":
         reasons.append(f"issue-intent floor: Issue #{issue} carries `route:{route.get('issueRoute')}`, "
                         "which raises (never lowers) the route")
-    if route.get("architecture"):
-        reasons.append("architecture review added: the diff touches project references/layering")
+    if arch_review:
+        reasons.append(arch_review[0])
     escalation_reason = "; ".join(reasons) if reasons else "none — plain path-based route, no escalation"
 
     p = []
@@ -363,7 +410,9 @@ def cmd_review(args: argparse.Namespace) -> None:
              + (" (content-escalated)" if route.get("escalated") else ""))
     p.append("Checklist — every listed gate must return a verdict before this PR can merge:")
     for g in route.get("gates", []):
-        if g in GATE_REVIEW:
+        if g == "architecture-review" and arch_review:
+            p.append(f"- [ ] **{g}** — {arch_review[1]}")
+        elif g in GATE_REVIEW:
             p.append(f"- [ ] **{g}** — {GATE_REVIEW[g]}")
         else:
             p.append(f"- [ ] **{g}**")

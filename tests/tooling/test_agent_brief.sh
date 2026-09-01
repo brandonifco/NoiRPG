@@ -23,7 +23,7 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT="$ROOT/tools/agent-brief.py"
 
 WORKDIR="$(mktemp -d)"
-trap 'rm -rf "$WORKDIR"' EXIT
+trap 'git -C "$ROOT" worktree remove --force "$WORKDIR/wt" >/dev/null 2>&1 || true; rm -rf "$WORKDIR"' EXIT
 
 FAILURES=0
 ok()   { printf 'ok   - %s\n' "$1"; }
@@ -117,6 +117,10 @@ print(json.dumps(body))
       labels)
         if [ "$num" = "5003" ]; then
           emit "{\"labels\":[{\"name\":\"route:formulas\"}]}" "$@"
+        elif [ "$num" = "6001" ]; then
+          # Issue #186 fixture: an issue-level `route:architecture` intent
+          # floor, carried by a docs-only PR with no project/boundary change.
+          emit "{\"labels\":[{\"name\":\"route:architecture\"}]}" "$@"
         else
           emit "{\"labels\":[]}" "$@"
         fi ;;
@@ -245,6 +249,84 @@ if [ -n "$direct_review_route" ]; then
   assert_contains "review packet: predicted route matches tools/route.sh" "$review_route_line" "**$direct_review_route**"
 else
   fail "review packet: predicted route matches tools/route.sh (could not compute direct route)"
+fi
+
+# === ARCHITECTURE-REVIEW CHECKLIST SCOPE (Issue #186 / burn-in F11) ======= #
+# The architecture-review gate lands in the gate set for two structurally
+# different reasons: a path-derived project/boundary change actually in the
+# diff, or an issue-level `route:architecture` intent floor with no such
+# change present. The review packet must name the right scope for each — see
+# tools/agent-brief.py's architecture_review_reason_and_checklist().
+#
+# Real git commits are needed (route.sh classifies actual diffs), so this
+# stands up a disposable secondary worktree, sharing this checkout's object
+# store, and advances its own HEAD independently — the primary worktree
+# under test is never touched.
+WT="$WORKDIR/wt"
+git -C "$ROOT" worktree add -q --detach "$WT" HEAD
+
+base_common="$(git -C "$WT" rev-parse HEAD)"
+
+# --- case (a): docs-only change + issue `route:architecture` floor -> the
+# checklist must be decision-scoped, not the Brp.* layering boilerplate. ---
+mkdir -p "$WT/docs/decisions"
+cat > "$WT/docs/decisions/9999-fixture-test-186.md" <<'EOF'
+# 9999. Fixture decision record for test_agent_brief.sh (Issue #186)
+
+This file exists only to give the architecture-review checklist test a
+docs-only diff to classify. It is committed to a disposable worktree and
+never merged.
+EOF
+git -C "$WT" add docs/decisions/9999-fixture-test-186.md
+git -C "$WT" -c user.email=test@example.invalid -c user.name=test commit -q -m "test fixture: docs-only change for #186"
+head_docs="$(git -C "$WT" rev-parse HEAD)"
+
+# route.sh reads issue labels via `gh`, which must resolve to the mock — run
+# it from within $WT so `HEAD` resolves to this worktree's own HEAD (PATH,
+# with the gh stub, is already exported above).
+direct_docs="$(cd "$WT" && bash tools/route.sh --json --base "$base_common" --issue 6001 2>/dev/null || true)"
+assert_contains "case (a): route.sh reports architecture true (issue floor only)" "$direct_docs" '"architecture":true'
+assert_contains "case (a): route.sh reports issueRaised true off the architecture floor" "$direct_docs" '"issueRaised":true'
+assert_contains "case (a): route.sh reports issueRoute architecture" "$direct_docs" '"issueRoute":"architecture"'
+
+review_docs="$WORKDIR/review_docs.md"
+python3 "$WT/tools/agent-brief.py" review --base "$base_common" --head "$head_docs" --issue 6001 > "$review_docs"
+docs_content="$(cat "$review_docs")"
+assert_contains "case (a): checklist is decision-scoped, not layering boilerplate" "$docs_content" \
+  "no project/boundary change is actually in this diff"
+assert_contains "case (a): checklist tells the reviewer to check decision/boundary soundness" "$docs_content" \
+  "SOUNDNESS of the recorded decision"
+if [[ "$docs_content" == *"architecture-review"*"Brp.Core/Brp.Rules take no game-engine dependency"* ]]; then
+  fail "case (a): checklist must NOT use the Brp.* layering boilerplate"
+else
+  ok "case (a): checklist does not use the Brp.* layering boilerplate"
+fi
+assert_contains "case (a): escalation reason cites the issue-intent floor, not a diff-touched boundary" "$docs_content" \
+  "Issue intent floor \`route:architecture\`"
+
+# --- case (b): a real .csproj / project-reference change -> the checklist
+# must still name the layering / no-game-engine-dependency checks. ---
+git -C "$WT" checkout -q "$base_common"
+printf '  <!-- test fixture #186: benign comment -->\n' >> "$WT/tools/Brp.Cli/Brp.Cli.csproj"
+git -C "$WT" add tools/Brp.Cli/Brp.Cli.csproj
+git -C "$WT" -c user.email=test@example.invalid -c user.name=test commit -q -m "test fixture: project-file change for #186"
+head_csproj="$(git -C "$WT" rev-parse HEAD)"
+
+direct_csproj="$(cd "$WT" && bash tools/route.sh --json --base "$base_common" 2>/dev/null || true)"
+assert_contains "case (b): route.sh reports architecture true (path-derived)" "$direct_csproj" '"architecture":true'
+assert_contains "case (b): route.sh reports issueRaised false (no issue floor involved)" "$direct_csproj" '"issueRaised":false'
+
+review_csproj="$WORKDIR/review_csproj.md"
+python3 "$WT/tools/agent-brief.py" review --base "$base_common" --head "$head_csproj" > "$review_csproj"
+csproj_content="$(cat "$review_csproj")"
+assert_contains "case (b): checklist keeps the Brp.* layering/no-game-engine-dependency check" "$csproj_content" \
+  "Brp.Core/Brp.Rules take no game-engine dependency"
+assert_contains "case (b): escalation reason cites the diff, not an issue floor" "$csproj_content" \
+  "the diff touches project references/layering"
+if [[ "$csproj_content" == *"SOUNDNESS of the recorded decision"* ]]; then
+  fail "case (b): checklist must NOT be decision-scoped for a real project-file change"
+else
+  ok "case (b): checklist is not decision-scoped for a real project-file change"
 fi
 
 echo
