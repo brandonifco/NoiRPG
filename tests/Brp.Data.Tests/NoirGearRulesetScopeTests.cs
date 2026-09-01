@@ -34,7 +34,7 @@ public class NoirGearRulesetScopeTests
     ];
 
     // Every other row the book prints in the same vehicle tables (Horse & Horse-Drawn Vehicles,
-    // p.219; Autos, Trucks, Trains & Tanks, p.219; Boats & Ships, p.219; Air Vehicles, p.220;
+    // p.219; Autos, Trucks, Trains & Tanks, p.220; Boats & Ships, p.220; Air Vehicles, p.220;
     // Space Vehicles, p.220) -- all cut by "Vehicles: cars only".
     private static readonly string[] OutOfScopeVehicleNames =
     [

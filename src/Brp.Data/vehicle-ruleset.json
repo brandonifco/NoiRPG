@@ -9,8 +9,8 @@
       "acceleration": 1,
       "metersPerRound": 67,
       "armor": {
-        "melee": 10,
-        "firearms": 1
+        "generalArmor": 10,
+        "occupantProtection": 1
       },
       "siz": 60,
       "hitPoints": 35,
@@ -18,7 +18,7 @@
       "passengers": "3",
       "cargo": 12,
       "valueTier": "Average",
-      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Vintage'; description (p.218): 'An old boxy automobile, equivalent to the Model-T.'"
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.220), row 'Vintage'; description (p.218): 'An old boxy automobile, equivalent to the Model-T.'"
     },
     {
       "id": "automobileModernSedan",
@@ -29,8 +29,8 @@
       "acceleration": 7,
       "metersPerRound": 134,
       "armor": {
-        "melee": 14,
-        "firearms": 2
+        "generalArmor": 14,
+        "occupantProtection": 2
       },
       "siz": 50,
       "hitPoints": 40,
@@ -38,7 +38,7 @@
       "passengers": "3-4",
       "cargo": 24,
       "valueTier": "Average",
-      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Modern Sedan'; description (p.218): 'An average four-door modern automobile.'"
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.220), row 'Modern Sedan'; description (p.218): 'An average four-door modern automobile.'"
     },
     {
       "id": "automobileModernSportscar",
@@ -49,8 +49,8 @@
       "acceleration": 8,
       "metersPerRound": 200,
       "armor": {
-        "melee": 10,
-        "firearms": 2
+        "generalArmor": 10,
+        "occupantProtection": 2
       },
       "siz": 45,
       "hitPoints": 45,
@@ -58,7 +58,7 @@
       "passengers": "1",
       "cargo": 8,
       "valueTier": "Expensive",
-      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.219), row 'Modern Sportscar'; description (p.218): 'An extremely fast, two-door, two-seat, high-performance automobile.'"
+      "source": "Ch 8, Autos, Trucks, Trains & Tanks table (p.220), row 'Modern Sportscar'; description (p.218): 'An extremely fast, two-door, two-seat, high-performance automobile.'"
     }
   ]
 }

@@ -7,7 +7,7 @@ namespace Brp.Data.Tests;
 /// <summary>
 /// Reproduces the printed stats for every weapon, armor type, and car in the hand-picked modern
 /// noir subset (Ch 8: Equipment, Modern Melee Weapons and Modern Missile Weapons tables,
-/// p.201-202; Modern Armor table, p.207; Autos, Trucks, Trains &amp; Tanks table, p.219), cell by
+/// p.201-202; Modern Armor table, p.207; Autos, Trucks, Trains &amp; Tanks table, p.220), cell by
 /// cell, so a transcription error surfaces as a failing row.
 /// </summary>
 public class NoirGearRulesetTests
@@ -241,13 +241,13 @@ public class NoirGearRulesetTests
     }
 
     /// <summary>
-    /// One row of the Autos, Trucks, Trains &amp; Tanks table (p.219), restricted to its three
+    /// One row of the Autos, Trucks, Trains &amp; Tanks table (p.220), restricted to its three
     /// automobile entries. Grouped into a record because the table has more columns than
     /// <see cref="TheoryData{T1}"/>'s generic arity supports individually.
     /// </summary>
     public sealed record VehicleRow(
         string Id, string Name, int RatedSpeed, int Handling, int Acceleration, int MetersPerRound,
-        int MeleeArmor, int FirearmsArmor, int Siz, int HitPoints, int Crew, string Passengers,
+        int GeneralArmor, int OccupantProtection, int Siz, int HitPoints, int Crew, string Passengers,
         int Cargo, string ValueTier);
 
     public static TheoryData<VehicleRow> Vehicles => new()
@@ -271,8 +271,8 @@ public class NoirGearRulesetTests
         Assert.Equal(row.Handling, vehicle.Handling);
         Assert.Equal(row.Acceleration, vehicle.Acceleration);
         Assert.Equal(row.MetersPerRound, vehicle.MetersPerRound);
-        Assert.Equal(row.MeleeArmor, vehicle.Armor.MeleeAndLowVelocity);
-        Assert.Equal(row.FirearmsArmor, vehicle.Armor.Firearms);
+        Assert.Equal(row.GeneralArmor, vehicle.Armor.GeneralArmor);
+        Assert.Equal(row.OccupantProtection, vehicle.Armor.OccupantProtection);
         Assert.Equal(row.Siz, vehicle.Siz);
         Assert.Equal(row.HitPoints, vehicle.HitPoints);
         Assert.Equal(row.Crew, vehicle.Crew);

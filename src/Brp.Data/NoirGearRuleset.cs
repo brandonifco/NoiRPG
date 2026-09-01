@@ -9,7 +9,7 @@ namespace Brp.Data;
 /// Loads NoiRPG's Layer 4 weapon, armor, and car lists from embedded JSON. The source is Ch 8:
 /// Equipment, the Modern Melee Weapons, Modern Missile Weapons, and Modern Armor tables
 /// (pp.201-202, 207) plus the Primitive Melee Weapons table (p.196) for the two Club entries, and
-/// the Autos, Trucks, Trains &amp; Tanks table (p.219) for the three in-scope cars -- see each
+/// the Autos, Trucks, Trains &amp; Tanks table (p.220) for the three in-scope cars -- see each
 /// entry's own <c>source</c> field in the ruleset JSON for the exact citation. Hand-picked to the
 /// modern noir subset per `orc-scope-filter.md`, Ch 8, and recorded in
 /// <c>docs/decisions/0012-gear-definitions.md</c>.
@@ -215,7 +215,7 @@ public static class NoirGearRuleset
         Handling: entry.Handling,
         Acceleration: entry.Acceleration,
         MetersPerRound: entry.MetersPerRound,
-        Armor: new ArmorValue(entry.Armor.Melee, entry.Armor.Firearms),
+        Armor: new VehicleArmor(entry.Armor.GeneralArmor, entry.Armor.OccupantProtection),
         Siz: entry.Siz,
         HitPoints: entry.HitPoints,
         Crew: entry.Crew,
@@ -332,7 +332,7 @@ public static class NoirGearRuleset
 
         public required int MetersPerRound { get; init; }
 
-        public required ArmorValueData Armor { get; init; }
+        public required VehicleArmorData Armor { get; init; }
 
         public required int Siz { get; init; }
 
@@ -347,5 +347,12 @@ public static class NoirGearRuleset
         public required string ValueTier { get; init; }
 
         public required string Source { get; init; }
+    }
+
+    private sealed class VehicleArmorData
+    {
+        public required int GeneralArmor { get; init; }
+
+        public required int OccupantProtection { get; init; }
     }
 }

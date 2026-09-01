@@ -4,7 +4,7 @@ namespace Brp.Rules.Gear;
 
 /// <summary>
 /// A car's identity and the stats a Drive roll, a vehicle chase, or a collision needs. Sourced:
-/// Ch 8: Equipment, "Vehicles" (p.217-219), the "Autos, Trucks, Trains &amp; Tanks" table (p.219)
+/// Ch 8: Equipment, "Vehicles" (p.217-220), the "Autos, Trucks, Trains &amp; Tanks" table (p.220)
 /// and each car's own entry under "Vehicle Descriptions" (p.218). Hand-picked to the three
 /// automobile rows the book itself prints, per `orc-scope-filter.md`, Ch 8: "Vehicles: cars
 /// only" -- motorcycles, trucks, trains, tanks, and every aircraft/watercraft/spacecraft row in
@@ -33,13 +33,13 @@ namespace Brp.Rules.Gear;
 /// </param>
 /// <param name="MetersPerRound">The car's maximum speed within a single combat round ("MOV", p.217).</param>
 /// <param name="Armor">
-/// The car's armor value, protecting crew and passengers from attacks that reach the cabin
-/// ("Armor", p.217). Reuses <see cref="Gear.ArmorValue"/> because the book prints this the same
-/// way as the Modern Armor table -- a melee/low-velocity figure and a firearms figure, slash-
-/// separated when they differ.
+/// The car's armor rating ("Armor", p.217): its own general armor value, and separately, the
+/// protection it affords crew or passengers riding inside it. See <see cref="VehicleArmor"/> for
+/// why this is a dedicated type rather than a reuse of <see cref="Gear.ArmorValue"/> -- the two
+/// tables' slash-separated pairs mean different things.
 /// </param>
 /// <param name="Siz">The car's apparent SIZ value ("SIZ", p.217).</param>
-/// <param name="HitPoints">The car's hit points ("HP", p.217); see the Vehicle Damage rule (p.219) for how these are spent.</param>
+/// <param name="HitPoints">The car's hit points ("HP", p.217); see the Vehicle Damage rule (p.220) for how these are spent.</param>
 /// <param name="Crew">The number of characters required to drive the car at full efficiency ("Crew", p.217).</param>
 /// <param name="Passengers">
 /// The number of passengers the car normally carries ("Passengers", p.217). Kept as the book's
@@ -63,7 +63,7 @@ public sealed record VehicleDefinition(
     int Handling,
     int Acceleration,
     int MetersPerRound,
-    ArmorValue Armor,
+    VehicleArmor Armor,
     int Siz,
     int HitPoints,
     int Crew,
