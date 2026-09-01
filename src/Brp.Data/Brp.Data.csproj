@@ -31,6 +31,7 @@
     <EmbeddedResource Include="fumble-ruleset.json" />
     <EmbeddedResource Include="hit-location-ruleset.json" />
     <EmbeddedResource Include="complementary-skills-ruleset.json" />
+    <EmbeddedResource Include="special-damage-effects-ruleset.json" />
   </ItemGroup>
 
 </Project>
