@@ -82,6 +82,20 @@ def parse_linked_issue(body: str) -> int | None:
     return int(m.group(3)) if m else None
 
 
+def parse_linked_issues(body: str) -> list[int]:
+    """Return the distinct closing-Issue numbers referenced in `body`, in the
+    order first seen. Used to enforce "exactly one Issue per PR" — the single
+    first-match `parse_linked_issue` above stays for the route-intent floor,
+    which is unambiguous once this guarantees the count is exactly one."""
+    nums = re.findall(r"\b(?:clos|fix|resolv)(?:e|es|ed)?\s+#(\d+)", body, re.I)
+    seen: list[int] = []
+    for n in nums:
+        v = int(n)
+        if v not in seen:
+            seen.append(v)
+    return seen
+
+
 def run_route(base: str | None, issue: int | None = None) -> dict:
     cmd = [str(ROOT / "tools" / "route.sh"), "--json"]
     if base:
@@ -114,10 +128,16 @@ def validate(body: str, route: dict, files: list[str]) -> tuple[list[str], dict]
     sec = sections(body)
     violations: list[str] = []
 
-    # Linked issue.
+    # Linked issue. Exactly one closing Issue is required — zero fails as
+    # before, and two or more also fails (one concern, one Issue, one PR).
     issue = parse_linked_issue(body)
+    linked_issues = parse_linked_issues(body)
     if issue is None:
         violations.append("Linked Issue missing — body has no `Closes #<n>` / `Fixes #<n>`.")
+    elif len(linked_issues) >= 2:
+        joined = ", ".join(f"#{n}" for n in linked_issues)
+        violations.append(
+            f"Multiple closing Issues ({joined}) — one Issue per PR (see AGENTS.md).")
 
     def require(header: str, label: str) -> None:
         if is_empty(header, sec.get(header, "")):

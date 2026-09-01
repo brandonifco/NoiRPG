@@ -163,5 +163,47 @@ class PrPolicyStaticEvidenceTests(unittest.TestCase):
         self.assertEqual(evidence["prPolicy"], "fail")
 
 
+class PrPolicyOneClosingIssueTests(unittest.TestCase):
+    """Issue #168: exactly one closing Issue is required — not zero, not two+."""
+
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.head = subprocess.check_output(
+            ["git", "rev-parse", "HEAD"], cwd=ROOT, text=True
+        ).strip()
+        cls.tmpdir = tempfile.TemporaryDirectory()
+        cls.out_path = Path(cls.tmpdir.name) / "evidence.json"
+
+    @classmethod
+    def tearDownClass(cls) -> None:
+        cls.tmpdir.cleanup()
+
+    def test_two_closing_issues_fails_with_new_violation(self) -> None:
+        body = COMPLETE_BODY.replace("Closes #136", "Closes #136\nCloses #200")
+        result = run_pr_policy(body, self.out_path, self.head, self.head)
+        self.assertEqual(result.returncode, 1, msg=result.stdout + result.stderr)
+        self.assertIn("Multiple closing Issues (#136, #200)", result.stdout)
+
+        evidence = json.loads(self.out_path.read_text())
+        self.assertEqual(evidence["prPolicy"], "fail")
+
+    def test_one_closing_issue_passes_unchanged(self) -> None:
+        result = run_pr_policy(COMPLETE_BODY, self.out_path, self.head, self.head)
+        self.assertEqual(result.returncode, 0, msg=result.stdout + result.stderr)
+
+        evidence = json.loads(self.out_path.read_text())
+        self.assertEqual(evidence["prPolicy"], "pass")
+        self.assertEqual(evidence["issue"], 136)
+
+    def test_zero_closing_issues_still_fails_with_existing_message(self) -> None:
+        body = COMPLETE_BODY.replace("Closes #136\n", "")
+        result = run_pr_policy(body, self.out_path, self.head, self.head)
+        self.assertEqual(result.returncode, 1, msg=result.stdout + result.stderr)
+        self.assertIn("Linked Issue missing", result.stdout)
+
+        evidence = json.loads(self.out_path.read_text())
+        self.assertEqual(evidence["prPolicy"], "fail")
+
+
 if __name__ == "__main__":
     unittest.main()
