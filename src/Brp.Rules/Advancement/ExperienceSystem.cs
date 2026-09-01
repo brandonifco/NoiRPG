@@ -67,7 +67,7 @@ public static class ExperienceSystem
     /// and raises the rating by a further die roll if the roll beats the success threshold.
     /// The experience check is cleared either way. Returns the points gained (0 if none).
     /// <para>
-    /// Ch 5 p.138, "Exceeding 100% in a Skill": once a skill is at or above 100%, an
+    /// Ch 5 p.139, "Exceeding 100% in a Skill": once a skill is at or above 100%, an
     /// unmodified d100 can never again roll "higher than your character's current skill
     /// rating" -- the printed rating has outrun the die. The book replaces the ordinary
     /// comparison with a fixed threshold at that point: "you must roll over 100 on D100 ...
@@ -280,9 +280,9 @@ public static class ExperienceSystem
 
         var roll = entropy.NextD100() + experienceBonus;
 
-        // Same threshold rule as ImprovementRoll (Ch 5 p.138, "Making an Experience Roll"
-        // and "Exceeding 100% in a Skill") -- research says only "make an experience roll
-        // as normal," it does not restate the rule.
+        // Same threshold rule as ImprovementRoll (Ch 5, "Making an Experience Roll" (p.138)
+        // and "Exceeding 100% in a Skill" (p.139)) -- research says only "make an
+        // experience roll as normal," it does not restate the rule.
         var cappedThreshold = Math.Min(skill.CurrentRating, 100);
         var succeeded = cappedThreshold >= 100 ? roll >= 100 : roll > cappedThreshold;
         if (!succeeded)
