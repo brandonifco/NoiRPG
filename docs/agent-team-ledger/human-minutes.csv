@@ -1,1 +1,2 @@
 issue,pr,merge_sha,human_minutes,interventions,note
+112,179,3440130,NI,3,First formulas-route PR through the full 5-gate chain. Not hands-free: three decisions escalated to and made by the human (re-run Codex with errata packet; run architecture-review; the stateless-classifier design-contract scope call). human-minutes not instrumented (telemetry gap).
