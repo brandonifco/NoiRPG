@@ -148,6 +148,51 @@ else
   if [ "$(cat "$OUT_FILE")" = "$OUT1" ]; then ok "--output: file content matches stdout content"; else
     fail "--output: file content differs from stdout content"
   fi
+
+  # -------------------------------------------------------------------------
+  # 7. --expect: anchor present passes; anchor absent fails loudly (Issue #188).
+  # -------------------------------------------------------------------------
+  # Pick a word we know is on page 5 from the already-fetched OUT1 body (skip the
+  # header lines, which always start with '#').
+  ANCHOR_WORD="$(printf '%s\n' "$OUT1" | grep -v '^#' | grep -oE '[A-Za-z]{5,}' | head -n1 || true)"
+
+  if [ -n "$ANCHOR_WORD" ]; then
+    set +e
+    EXPECT_OK_OUT="$(python3 "$SCRIPT" --pages 5 --expect "$ANCHOR_WORD" 2>&1)"
+    EXPECT_OK_RC=$?
+    set -e
+    if [ "$EXPECT_OK_RC" -eq 0 ]; then ok "--expect: present anchor exits zero"; else
+      fail "--expect: present anchor '$ANCHOR_WORD' unexpectedly failed (rc=$EXPECT_OK_RC): $EXPECT_OK_OUT"
+    fi
+    if [ "$EXPECT_OK_OUT" = "$OUT1" ]; then
+      ok "--expect: present anchor does not change packet output"
+    else
+      fail "--expect: present anchor changed packet output"
+    fi
+  else
+    skip "--expect present-anchor case: could not find a stable word on page 5"
+  fi
+
+  set +e
+  EXPECT_MISSING_OUT="$(python3 "$SCRIPT" --pages 5 --expect "ZzQqXxNoSuchAnchorInThisDocument999" 2>&1)"
+  EXPECT_MISSING_RC=$?
+  set -e
+  if [ "$EXPECT_MISSING_RC" -ne 0 ]; then ok "--expect: absent anchor exits nonzero"; else
+    fail "--expect: absent anchor expected nonzero exit, got $EXPECT_MISSING_RC"
+  fi
+  if [[ "$EXPECT_MISSING_OUT" == *"ZzQqXxNoSuchAnchorInThisDocument999"* ]]; then
+    ok "--expect: failure message names the missing anchor"
+  else
+    fail "--expect: failure message did not name the missing anchor: $EXPECT_MISSING_OUT"
+  fi
+
+  # No --expect at all: behavior must be unchanged (already covered by OUT1/OUT2
+  # above, which never pass --expect).
+  if [ "$OUT1" = "$OUT2" ]; then
+    ok "--expect: omitting the flag leaves existing behavior unchanged"
+  else
+    fail "--expect: omitting the flag changed existing behavior"
+  fi
 fi
 
 echo
