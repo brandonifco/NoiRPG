@@ -26,3 +26,7 @@ __pycache__/
 # OS
 .DS_Store
 Thumbs.db
+
+# Auto-generated Codex role mirror (external tool derives it from .claude/agents/;
+# the repo tracks tools/codex-agent.sh instead — see #142/#161).
+.codex/

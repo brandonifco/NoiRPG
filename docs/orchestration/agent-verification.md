@@ -46,9 +46,10 @@ tools/agent-verify.sh <PR#> \
   posted on incomplete evidence**.
 - Default is a dry run. `--post` posts the status; `--evidence` also writes a managed
   `<!-- agent-verification -->` block into the PR body for humans.
-- Run it with the PR branch checked out. From another branch it degrades to a
-  path-only route (GitHub's changed-file list) and says so — the `rules → formulas`
-  content-escalation can't be seen without the diff.
+- Works from any branch. When the working tree is on the PR head it routes from the
+  local diff (`route.sh --base`); otherwise it fetches the full PR patch with
+  `gh pr diff` and classifies it via `route.sh --diff-file`, so the `rules → formulas`
+  content-escalation is applied either way — never a path-only degrade (see #137).
 
 ## Making it required (burned in, then flipped)
 
