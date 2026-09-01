@@ -408,4 +408,182 @@ public class ExperienceSystemTests
         Assert.Equal(-1, gain);
         Assert.Equal(0, student.CurrentRating);
     }
+
+    // --- Ch 5 p.138, "Increasing Skills by Experience": the default-gain option ---
+
+    [Theory]
+    [InlineData(6, 3)] // "add a default of +3 to the skill rating instead of rolling"
+    [InlineData(8, 4)] // "for 1D8 it's +4"
+    [InlineData(10, 5)] // "and for 1D10 it's +5"
+    public void Default_gain_reproduces_ch5_p138s_table_row_by_row(int gainDieSides, int expectedDefault)
+    {
+        Assert.Equal(expectedDefault, ExperienceSystem.DefaultGain(gainDieSides));
+    }
+
+    [Fact]
+    public void Improvement_roll_takes_the_default_gain_instead_of_drawing_the_gain_die_when_announced()
+    {
+        // Ch 5 p.138: "you can choose to add a default of +3 to the skill rating instead
+        // of rolling." Only the percentile roll is scripted -- a gain-die draw would throw,
+        // proving the default path never calls entropy.NextDie for the gain.
+        var skill = MakeSkill(rating: 20);
+        TickViaRealStakes(skill);
+        var entropy = new FixedEntropySource(21);
+
+        var gain = ExperienceSystem.ImprovementRoll(skill, entropy, useDefaultGain: true);
+
+        Assert.Equal(3, gain);
+        Assert.Equal(23, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Improvement_roll_default_gain_scales_with_a_higher_campaign_die_type()
+    {
+        // Ch 5 p.138: an "epic" campaign raising the gain die to 1D8 also raises the
+        // default to +4 (half of 8), not the 1D6 default of +3.
+        var skill = MakeSkill(rating: 20);
+        TickViaRealStakes(skill);
+        var entropy = new FixedEntropySource(21);
+
+        var gain = ExperienceSystem.ImprovementRoll(skill, entropy, gainDieSides: 8, useDefaultGain: true);
+
+        Assert.Equal(4, gain);
+        Assert.Equal(24, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Improvement_roll_default_gain_still_grants_nothing_on_a_failed_experience_roll()
+    {
+        var skill = MakeSkill(rating: 20);
+        TickViaRealStakes(skill);
+        // One value only: the default path draws no gain die even on failure.
+        var entropy = new FixedEntropySource(20);
+
+        var gain = ExperienceSystem.ImprovementRoll(skill, entropy, useDefaultGain: true);
+
+        Assert.Equal(0, gain);
+        Assert.Equal(20, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Close_case_threads_the_default_gain_option_to_every_ticked_skill()
+    {
+        var skillA = MakeSkill(rating: 10);
+        TickViaRealStakes(skillA);
+
+        var character = new Character(
+            new CharacterId("pc"),
+            "Case Closer",
+            MakeAbilities(),
+            new Dictionary<SkillId, CharacterSkill> { [new SkillId("A")] = skillA });
+
+        // Only the percentile roll is scripted; the default path never draws a gain die.
+        var entropy = new FixedEntropySource(50);
+
+        var results = ExperienceSystem.CloseCase(character, entropy, useDefaultGain: true);
+
+        Assert.Equal(3, results[new SkillId("A")]);
+        Assert.Equal(13, skillA.CurrentRating);
+    }
+
+    // --- Ch 5 pp.138-139, "Skill Training and Research": self-directed study ---
+
+    [Fact]
+    public void Research_grants_a_one_d_six_minus_two_gain_on_a_successful_experience_roll()
+    {
+        // Ch 5 p.139: "make an experience roll as normal. If the roll succeeds, increase
+        // the skill by 1D6-2 points." A gain-die draw of 6 yields 6-2 = 4.
+        var skill = MakeSkill(rating: 20);
+        var entropy = new FixedEntropySource(21, 6);
+
+        var gain = ExperienceSystem.Research(skill, entropy);
+
+        Assert.Equal(4, gain);
+        Assert.Equal(24, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Research_grants_nothing_on_a_failed_experience_roll()
+    {
+        var skill = MakeSkill(rating: 20);
+        // One value only: a failed experience roll draws no gain die.
+        var entropy = new FixedEntropySource(20);
+
+        var gain = ExperienceSystem.Research(skill, entropy);
+
+        Assert.Equal(0, gain);
+        Assert.Equal(20, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Research_can_take_a_flat_plus_two_instead_of_rolling_the_gain_die()
+    {
+        // Ch 5 p.139: "or choose to add 2 to the current skill rating." Only the percentile
+        // roll is scripted -- a gain-die draw would throw.
+        var skill = MakeSkill(rating: 20);
+        var entropy = new FixedEntropySource(21);
+
+        var gain = ExperienceSystem.Research(skill, entropy, useDefaultGain: true);
+
+        Assert.Equal(2, gain);
+        Assert.Equal(22, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Research_never_lowers_a_skill_when_the_gain_die_rolls_low()
+    {
+        // 1D6-2 on a natural 1 is -1: the book never contemplates research reducing a
+        // skill, and CharacterSkill.Improve floors a negative amount to no change.
+        var skill = MakeSkill(rating: 20);
+        var entropy = new FixedEntropySource(21, 1);
+
+        var gain = ExperienceSystem.Research(skill, entropy);
+
+        Assert.Equal(0, gain);
+        Assert.Equal(20, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Research_can_raise_a_skill_above_the_training_ceiling_unlike_teach()
+    {
+        // Ch 5 p.139: "Unlike training, researching allows your character to improve more
+        // than 75% in a skill." Teach would cap this gain at 75; Research must not.
+        var skill = MakeSkill(rating: 74);
+        var entropy = new FixedEntropySource(75, 6); // experience roll succeeds, then a full +4 (6-2)
+
+        var gain = ExperienceSystem.Research(skill, entropy);
+
+        Assert.Equal(4, gain);
+        Assert.Equal(78, skill.CurrentRating);
+    }
+
+    [Fact]
+    public void Research_adds_the_experience_bonus_to_the_roll_but_not_to_the_gain()
+    {
+        // Same rule as ImprovementRoll (Ch 5 p.138): the experience bonus only affects
+        // whether the roll succeeds, never the size of the gain.
+        var skill = MakeSkill(rating: 20);
+        var entropy = new FixedEntropySource(19, 5); // 19 alone fails; +2 bonus succeeds
+
+        var gain = ExperienceSystem.Research(skill, entropy, experienceBonus: 2);
+
+        Assert.Equal(3, gain);
+        Assert.Equal(23, skill.CurrentRating);
+    }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(130)]
+    public void Research_grants_an_improvement_on_a_natural_100_once_the_skill_is_at_or_above_100_percent(int rating)
+    {
+        // Ch 5 p.138, "Exceeding 100% in a Skill", read the same way for research as for
+        // ImprovementRoll -- research says only "make an experience roll as normal."
+        var skill = MakeSkill(rating);
+        var entropy = new FixedEntropySource(100, 5); // natural 100, then a gain of 5-2=3
+
+        var gain = ExperienceSystem.Research(skill, entropy);
+
+        Assert.Equal(3, gain);
+        Assert.Equal(rating + 3, skill.CurrentRating);
+    }
 }
