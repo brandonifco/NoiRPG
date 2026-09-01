@@ -29,6 +29,7 @@
     <EmbeddedResource Include="major-wound-ruleset.json" />
     <EmbeddedResource Include="healing-ruleset.json" />
     <EmbeddedResource Include="fumble-ruleset.json" />
+    <EmbeddedResource Include="hit-location-ruleset.json" />
   </ItemGroup>
 
 </Project>

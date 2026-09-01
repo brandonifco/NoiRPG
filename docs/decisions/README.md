@@ -46,3 +46,4 @@ supersedes it — the original is not edited or deleted.
 | [0021](0021-major-wounds.md) | Major Wounds: the wound damage amount, the shock/Luck/table effect, cumulative minors, and the fatal-wound rescue window | Accepted |
 | [0022](0022-skill-category-bonus-application.md) | Skill category bonus applied in the engine as base + category bonus, live-recomputed, by subtraction for authored ratings | Accepted |
 | [0023](0023-healing-and-recovery.md) | Healing & recovery: First Aid per-wound healing, natural healing, Medicine, and the Conditions of Medical Care table | Accepted |
+| [0024](0024-hit-locations.md) | Hit locations: type, D20 location table, per-location hit points, and armor-by-location | Accepted |

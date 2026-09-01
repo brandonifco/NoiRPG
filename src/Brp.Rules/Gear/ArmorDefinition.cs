@@ -10,9 +10,13 @@ namespace Brp.Rules.Gear;
 /// <param name="ArmorValue">Armor points, by attack type (Ch 8, "Armor by Hit Locations" is on the keep-list).</param>
 /// <param name="SkillPenalty">The skill penalty imposed while worn.</param>
 /// <param name="HitLocations">
-/// The hit locations this armor covers ("Fits Locations" column, p.207), as printed. No
-/// <c>HitLocation</c> type exists yet in the engine, so these are plain strings; formalizing
-/// hit locations is a combat-layer concern this issue was not asked to design.
+/// The hit locations this armor covers ("Fits Locations" column, p.207), as printed --
+/// "Head", "Chest", "Abdomen", "Arms", or "Legs". Kept as the book's own category strings
+/// rather than the granular <see cref="Combat.HitLocation"/> enum the D20 hit-location table
+/// rolls (Ch 6, p.145) because the printed armor table's categories are coarser than that
+/// table's seven locations ("Arms" covers both <see cref="Combat.HitLocation.LeftArm"/> and
+/// <see cref="Combat.HitLocation.RightArm"/>, and likewise for "Legs"). See
+/// <see cref="ArmorCoverage"/> (#112) for the mapping between the two.
 /// </param>
 /// <param name="Note">An optional printed footnote, e.g. Riot Gear's "Includes helmet".</param>
 /// <param name="Source">The book table this entry was transcribed from.</param>
