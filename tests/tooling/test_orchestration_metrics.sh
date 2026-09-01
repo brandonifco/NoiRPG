@@ -57,16 +57,28 @@ PYEOF
 assert_eq "case1: every jobs.csv data row matches the header field count" "OK" "$csv_check"
 
 ni_check="$(python3 - "$JOBS_CSV" <<'PYEOF'
-import csv, sys
+import csv, re, sys
 path = sys.argv[1]
 with open(path, newline="") as f:
     rows = list(csv.DictReader(f))
-bad = [r.get("issue") for r in rows
-       if r.get("packet_type") != "NI" or r.get("prompt_hash") != "NI" or r.get("discovery_calls") != "NI"]
-print("OK" if not bad else "NOT_NI:" + ",".join(str(b) for b in bad))
+HEX64 = re.compile(r"\A[0-9a-f]{64}\Z")
+def ok(r):
+    # Each new column is either NI (unmeasured) or a well-formed value — never
+    # fabricated garbage. This catches migration/schema corruption while still
+    # allowing real job telemetry to populate the columns (their whole purpose).
+    pt, ph, dc = r.get("packet_type"), r.get("prompt_hash"), r.get("discovery_calls")
+    if pt not in ("NI", "task", "review"):
+        return False
+    if ph != "NI" and not HEX64.match(ph or ""):
+        return False
+    if dc != "NI" and not (dc or "").isdigit():
+        return False
+    return True
+bad = [r.get("issue") for r in rows if not ok(r)]
+print("OK" if not bad else "MALFORMED:" + ",".join(str(b) for b in bad))
 PYEOF
 )"
-assert_eq "case1b: every pre-#141 jobs.csv row has NI (never fabricated) in the 3 new columns" "OK" "$ni_check"
+assert_eq "case1b: every jobs.csv row has NI or a well-formed value in the 3 new columns (no fabrication)" "OK" "$ni_check"
 
 # --- case 2: ledger-log.sh accepts and round-trips the 3 new job fields ---- #
 WORK_LEDGER="$WORKDIR/ledger"
