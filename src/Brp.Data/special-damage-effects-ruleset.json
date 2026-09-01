@@ -1,0 +1,49 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 6: Combat",
+    "notes": "Special-damage EFFECTS (#113), deferred from #52's damage-NUMBER piece (docs/decisions/0017-damage.md): Crushing's stun (p.149), Impaling's lodged-weapon/extraction rules (pp.149-150), Knockback (p.151), Bleeding (p.149), Entangling (pp.150-151), and Fighting Defensively (p.151). All values verified against the printed book text."
+  },
+  "crushingStun": {
+    "stunDurationFormula": "1D3",
+    "printedRule": "A target suffering a crushing special success must also make a successful Stamina roll or be stunned for 1D3 rounds. ... A stunned target cannot attack while stunned and can only attempt to dodge or parry an attack if they make a successful Idea roll for each attempt. Furthermore, all attacks against the target are Easy. The stunned target can attempt to flee, but to do so requires a successful Idea roll to discern an escape path and a successful Agility roll to get out of danger.",
+    "printedSource": "Ch 6: Combat, \"Crushing\", pp.149-150"
+  },
+  "impaling": {
+    "selfExtractionFailureExtraDamageFormula": "1D3",
+    "movementDamageRoundingNote": "HOUSE RULE BY PRECEDENT: the book does not state a rounding direction for halving the fresh movement-damage roll ('take half the weapon's damage roll'). Rounded up here, matching the book's consistent round-up convention used everywhere else a fraction arises (e.g. hit points p.13, major wound level p.14/p.155, thrown-weapon damage modifier p.147).",
+    "printedRule": "An impaling weapon is still lodged in the target's body until removed. ... whenever the target moves in any significant fashion, they take half the weapon's damage roll (roll again, without the damage modifier or armor protection) again ... A target impaled with a weapon and attempting to remove it must make a resistance roll of their STR vs. the amount of damage dealt thus far by the weapon. Success means that the weapon has been freed ... while failure means that they are unable to free it that combat round and they take an additional 1D3 hit points of damage ... from the activity.",
+    "printedSource": "Ch 6: Combat, \"Impaling\", pp.149-150"
+  },
+  "knockback": {
+    "metersPerDamagePoint": 5,
+    "obstacleDamageFormula": "1D6",
+    "obstacleIncrementMeters": 3,
+    "resistanceRollDirectionNote": "HOUSE INTERPRETATION: the printed prose narrates the single damage-vs-SIZ resistance roll from the target's point of view ('if unsuccessful, knocked back' / 'if the target wins, not moved'), which does not by itself state which side is the resistance table's 'active' party. The engine reads active=damage, passive=SIZ (Ch 5, p.129: 'active' is 'the party or force trying to influence the passive factor' -- the knockback force is what tries to move the target, resisted by their SIZ), so that a higher damage total relative to SIZ raises the chance of a successful knockback (ResistanceOutcome.Succeeded=true), matching the intuitive physics and the resistance formula's chance = 50 + 5*(active-passive). See KnockbackResolver.Resolve's own remarks.",
+    "printedRule": "A special success with an unarmed throw or a shield attack has knocked back the target. The total damage rolled (before armor is subtracted) is pitted against the target's SIZ in a resistance roll. ... If unsuccessful, the target is knocked back one meter for every 5 points of damage rolled (before armor) ... If the knockback target also hits an obstacle in their path, they take 1D6 damage for every three meters or fraction thereof they have left to travel. The target must also make a successful Agility roll or fall prone. If the target wins the resistance roll, they are not moved, and if their SIZ is higher than the attacker's SIZ, the attacker staggers back one meter.",
+    "printedSource": "Ch 6: Combat, \"Knockback\", p.151"
+  },
+  "bleeding": {
+    "hitPointLossPerRound": 1,
+    "fatiguePointLossPerRound": 1,
+    "staunchedRoundsUntilPermanentStop": 5,
+    "printedRule": "This does 1 additional hit point damage on DEX rank 1 of each round after the round in which the wound is inflicted. If fatigue points are used, the target loses 1 additional fatigue point each round they are bleeding. ... At the end of each round, the target can try a Stamina roll to determine if the bleeding stops. ... While doing so, any attacks, parries, or physical actions they attempt are Difficult. Attempting to dodge cancels the attempt to stop the bleeding. ... If the bleeding is stopped for five combat rounds, it stops entirely on its own.",
+    "printedSource": "Ch 6: Combat, \"Bleeding\", p.149"
+  },
+  "entangling": {
+    "immobilizesRemainderOfCurrentRound": true,
+    "immobilizedFollowingRounds": 1,
+    "printedRule": "A successful entangle prevents the target's movement for the rest of the combat round and into the next combat round. ... On the round following a successful entangle attack, the target can attempt an Agility roll to free themselves or make a STR vs. STR resistance roll to attempt to pull the entangling weapon from the attacker's hand(s). ... A successful Dodge roll or Wrestle roll negates a successful entangle but can only be attempted on the next combat round. A critical parry negates a critical entangle, but an ordinary parry success has no effect.",
+    "printedSource": "Ch 6: Combat, \"Entangling\", pp.150-151"
+  },
+  "fightingDefensively": {
+    "successiveDefensePenaltyPercent": 30,
+    "printedRule": "If your character forgoes all attacks in a round to fight defensively, they can substitute one free Dodge attempt for their attack and can continue to make dodge or parry attempts. Normally, each subsequent Dodge or parry attempt is at a cumulative -30% modifier, but while fighting defensively, your character can substitute a Dodge skill attempt for an attack without incurring the -30% penalty. ... The only restriction in this case is that your character cannot Dodge and parry within the same DEX rank. If your character can normally make multiple attacks per round ..., they can make a second free Dodge or parry without incurring the cumulative penalty. Under no circumstances can fighting defensively be combined with any attack or offensive action, even such as the Desperate Action.",
+    "printedSource": "Ch 6: Combat, \"Fighting Defensively\", p.151"
+  },
+  "notes": [
+    "All numeric values here are ruleset data, not C# constants (AGENTS.md invariant 7).",
+    "Bleeding, Entangling, and Knockback special-damage types remain dormant: no shipped weapon (weapon-ruleset.json) triggers them (ADR 0017). Crushing (clubs/brass knuckles) and Impaling (firearms/knives) are live triggers on every attack that lands a Special success with those weapons.",
+    "Fighting Defensively is a Ch 6 core mechanic independent of any specific special-damage type; it is included here because it shares this issue's scope and the same 'structured caller seam' shape as the special-damage effects."
+  ]
+}

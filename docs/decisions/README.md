@@ -50,3 +50,4 @@ supersedes it — the original is not edited or deleted.
 | [0025](0025-agent-verification-trust-root.md) | The `agent-verification` trust root, and the codex-conformance / semantic-gate triage policy | Accepted |
 | [0026](0026-reviewer-mechanical-read-only.md) | Verification reviewers get a constrained, mechanically-enforced read-only Bash layer | Accepted |
 | [0027](0027-adr-number-allocation.md) | ADR-number allocation is serialized at merge time, not authoring time | Accepted |
+| [NNNN](NNNN-special-damage-effects.md) | Special-damage effects (Crushing stun, Impaling lodged weapon, Knockback, Bleeding, Entangling) and Fighting Defensively | Accepted |
