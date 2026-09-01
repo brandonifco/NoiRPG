@@ -41,12 +41,73 @@ armor) and hands the resulting `DamageRoll` to the new
 `Brp.Rules.Combat.BreakableItemResolver.ApplyDamage`.
 
 **One new resolver method for the one genuinely different rule.** The only thing p.224
-adds beyond the existing character-damage arithmetic is armor degradation — "that many
-damage points reduce its armor value" — which characters never do (a character's armor
+adds beyond the existing character-damage arithmetic is armor degradation — armor
+wearing down as the object takes hits — which characters never do (a character's armor
 value is fixed). `BreakableItemResolver.ApplyDamage(currentHitPoints, currentArmorValue,
-DamageRoll)` subtracts `DamageDealt` from both hit points and (floored at zero) the
-armor value, and classifies `BreakableItemCondition.Destroyed` at 0 or fewer hit
-points.
+DamageRoll)` subtracts `DamageDealt` from hit points and reduces the armor value by 1
+per landed hit (see "Rules interpretation: armor degradation" below for why 1 per hit,
+not `DamageDealt` per hit), and classifies `BreakableItemCondition.Destroyed` at 0 or
+fewer hit points.
+
+### Rules interpretation: armor degradation
+
+Two passages on the same page point different ways for these specific items, and this
+is the committed reconciliation, recorded so a future conformance pass checks the
+recorded decision rather than re-litigating the raw text.
+
+**Passage A — "Damage to Inanimate Objects" (p.224), the general object rule:**
+
+> "If the damage exceeds the object's armor value, then the hit points are reduced by
+> the remaining damage and that many damage points reduce its armor value (representing
+> how much less it is able to withstand damage once damaged)."
+
+Read alone, Passage A supports degrading the armor value by the full penetrating
+damage (`DamageDealt`) on every hit that exceeds it.
+
+**Passage B — "Armor Value of Substances" (p.224-225), specific to the armor source
+every shipped item uses:**
+
+> "Natural armor values such as these above are not lost and do not deteriorate through
+> multiple attacks, unless through some environmental means or a specific attempt to
+> reduce the armor value of an object."
+>
+> "For example, your character bashes at a window made of bulletproof glass repeatedly
+> with a sledgehammer, aiming at the same spot in an attempt to cause enough cracking to
+> break through it. You[r] gamemaster decides to represent this by reducing the armor
+> value by 1 with each successful hit, and rolling damage. When the damage roll
+> overcomes the steadily reducing armor value, the window bursts."
+
+**Passage B governs, for every item this ruleset ships.** Every entry
+(`doorWoodInterior`, `doorGlass`, `windowGlass`, `lockPadlock`) draws its starting armor
+value from "Armor Value of Substances" (p.224), the exact table Passage B's own
+"natural armor values such as these above" refers to. Breaking through a door, window,
+or lock — this resolver's entire purpose — is precisely "a specific attempt to reduce
+the armor value of an object": Passage B's carve-out condition is met by construction,
+not by interpretation. Passage B is also the more specific of the two (it names the
+exact armor source this ruleset uses, where Passage A speaks of objects in general) and
+supplies the book's only worked example of the carve-out actually being exercised. Under
+ordinary interpretive practice, a more specific, example-backed passage governs over a
+more general one it directly qualifies.
+
+Passage A's hit-point arithmetic is unaffected by this reconciliation — Passage B says
+nothing about hit points, only armor. `DamageRoll.DamageDealt` ("raw damage minus armor
+value, floored at zero") still reduces hit points exactly as Passage A states; only the
+armor-value degradation step changes to "1 per landed hit" (Passage B's worked example)
+rather than "`DamageDealt` per landed hit" (Passage A's general phrasing).
+
+**Corollary:** the worked example degrades armor "with each successful hit" without
+qualifying it on whether that swing's damage penetrated — so `BreakableItemResolver`
+degrades armor by 1 for any landed (non-Miss) hit, Normal/Special/Critical alike, even
+one whose `DamageDealt` is 0 because the raw damage that swing rolled did not exceed the
+armor value in effect for it.
+
+**Correction (post-review, codex-conformance pass on PR #237):** the first
+implementation of this record read Passage A alone and degraded armor by the full
+`DamageDealt` per hit, without having read the "Armor Value of Substances" section's own
+non-deterioration clause and worked example a few paragraphs later on the same page.
+`BreakableItemResolver.ApplyDamage` and its tests were corrected to the "1 per landed
+hit" reading recorded above; this section and this correction note were added in the
+same pass.
 
 **Stateless, caller-driven, like every other `Brp.Rules.Combat` resolver** (matching
 `FallingResolver`, `PoisonResolver`): `ApplyDamage` takes and returns plain
@@ -128,8 +189,10 @@ in code, per AGENTS.md invariant 7.
   `BreakableItemCondition`.
 - New ruleset, `item-hit-points-ruleset.json` / `Brp.Data.NoirItemHitPointsRuleset.Load()`.
 - `Brp.Data.Tests.NoirItemHitPointsRulesetTests` reproduces every hand-picked row cell
-  by cell; `Brp.Rules.Tests.Combat.BreakableItemResolverTests` covers the armor-vs-HP
-  arithmetic (including armor flooring at zero and destruction at 0 HP) and one
-  end-to-end test that rolls a real weapon's damage through
-  `DamageResolver.RollDamage` and applies it via `BreakableItemResolver.ApplyDamage`,
-  demonstrating the reused machinery.
+  by cell; `Brp.Rules.Tests.Combat.BreakableItemResolverTests` covers the hit-point
+  arithmetic, the pinned "armor degrades by 1 per landed hit, not by `DamageDealt`"
+  behavior (including a large-penetrating-damage hit that still only costs 1 armor,
+  and a non-penetrating hit that still costs 1 armor) with its p.224-225 citation,
+  armor flooring at zero, destruction at 0 HP, and one end-to-end test that rolls a
+  real weapon's damage through `DamageResolver.RollDamage` and applies it via
+  `BreakableItemResolver.ApplyDamage`, demonstrating the reused machinery.
