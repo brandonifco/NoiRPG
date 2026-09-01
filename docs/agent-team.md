@@ -115,6 +115,15 @@ that implements an already-settled one, and `case-author` is a content-producing
 **Verification agents get read-only tools.** An agent that can edit what it is checking
 will eventually make the check pass instead of making the code right.
 
+**Dispatch implementer and writeup agents with worktree isolation.** Burn-in finding
+F12 (`docs/orchestration/agent-verification-burn-in.md`): the #174 writeup agent was
+dispatched without worktree isolation, created its feature branch in the primary
+checkout, and left it there — the primary tree had to be manually restored
+(`git checkout main` plus a fast-forward) during cleanup. Give a dispatched
+implementer or writeup agent its own worktree so the primary checkout is never left
+stranded on a feature branch. If a non-isolated agent is used deliberately, expect to
+restore the primary tree afterward the same way.
+
 ## What verification passes should look for
 
 `docs/source-handling.md` lists the defect classes that have actually bitten this
