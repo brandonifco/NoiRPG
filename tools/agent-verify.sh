@@ -23,7 +23,7 @@
 #
 # Usage:
 #   tools/agent-verify.sh <PR#> [--gate NAME=pass|fail|skip ...] [--base REF]
-#                               [--post] [--evidence] [--json] [--json-out FILE]
+#                               [--post] [--wait] [--evidence] [--json] [--json-out FILE]
 #
 #   * `ci` is read from GitHub (the `build-and-test` check-run) — never supplied.
 #   * every OTHER required gate must be supplied via --gate; a missing one leaves
@@ -32,6 +32,13 @@
 #     --evidence additionally writes the per-gate block into the PR body.
 #   * --json prints the canonical evidence object to stdout as JSON (nothing else
 #     is written to stdout in that mode); --json-out FILE writes it to a file.
+#   * --post refuses (clear message, non-zero) if the gh-reported PR head
+#     disagrees with the branch's actual git ref — the gh API can lag several
+#     polls behind git after a push/update-branch (burn-in F10), and acting on
+#     that stale read risks posting the status onto a superseded head.
+#     --wait polls (gh, then git) until the two converge before proceeding; the
+#     dry-run path (no --post) is unaffected by the guard, though it still runs
+#     under --wait if requested.
 #
 # Exit: 0 if the aggregate is success, 1 otherwise (so a caller can branch on it).
 set -euo pipefail
@@ -40,7 +47,7 @@ CONTEXT="agent-verification"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 die() { echo "agent-verify: $*" >&2; exit 2; }
 
-PR=""; BASE="origin/main"; POST=0; EVIDENCE=0; JSON=0; JSON_OUT=""
+PR=""; BASE="origin/main"; POST=0; EVIDENCE=0; JSON=0; JSON_OUT=""; WAIT=0
 declare -A GATE=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -50,6 +57,7 @@ while [ $# -gt 0 ]; do
             GATE["$n"]="$s"; shift 2 ;;
     --base) BASE="${2:-}"; shift 2 ;;
     --post) POST=1; shift ;;
+    --wait) WAIT=1; shift ;;
     --evidence) EVIDENCE=1; shift ;;
     --json) JSON=1; shift ;;
     --json-out) [ $# -ge 2 ] || die "--json-out needs FILE"; JSON_OUT="$2"; shift 2 ;;
@@ -57,13 +65,56 @@ while [ $# -gt 0 ]; do
     *)  [ -z "$PR" ] || die "unexpected argument: $1"; PR="$1"; shift ;;
   esac
 done
-[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--post] [--evidence] [--json] [--json-out FILE]"
+[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--post] [--wait] [--evidence] [--json] [--json-out FILE]"
 
 # --- resolve the PR ------------------------------------------------------- #
-read -r HEAD_SHA PR_URL PR_STATE < <(gh pr view "$PR" \
-  --json headRefOid,url,state --jq '[.headRefOid, .url, .state] | @tsv') \
-  || die "cannot read PR #$PR"
+read_pr_head() {
+  read -r HEAD_SHA HEAD_REF_NAME PR_URL PR_STATE < <(gh pr view "$PR" \
+    --json headRefOid,headRefName,url,state \
+    --jq '[.headRefOid, .headRefName, .url, .state] | @tsv') \
+    || die "cannot read PR #$PR"
+}
+read_pr_head
 [ -n "$HEAD_SHA" ] || die "PR #$PR has no head SHA"
+[ -n "$HEAD_REF_NAME" ] || die "PR #$PR has no head branch name"
+
+# --- converged-head guard (burn-in F10) ------------------------------------ #
+# `gh pr view --json headRefOid` can lag several polls behind the branch's
+# real git tip right after a push/update-branch. Acting on that stale read —
+# posting `agent-verification`, or merging — risks silently targeting a
+# SUPERSEDED head. Treat git, the actual mover of the ref, as ground truth:
+# re-derive the branch's tip locally and refuse unless it agrees with gh.
+#
+# Prefers an already-known remote-tracking ref (no network) and only falls
+# back to a fetch if the ref is not present locally yet, mirroring the BASE
+# resolution above.
+GIT_HEAD_SHA=""
+git_head_for_ref() {
+  local ref="$1" sha
+  sha="$(git -C "$ROOT" rev-parse --quiet --verify "origin/$ref" 2>/dev/null || true)"
+  if [ -z "$sha" ]; then
+    git -C "$ROOT" fetch -q origin "$ref" >/dev/null 2>&1 || true
+    sha="$(git -C "$ROOT" rev-parse --quiet --verify "origin/$ref" 2>/dev/null || true)"
+  fi
+  printf '%s' "$sha"
+}
+converged() {
+  GIT_HEAD_SHA="$(git_head_for_ref "$HEAD_REF_NAME")"
+  [ -n "$GIT_HEAD_SHA" ] && [ "$GIT_HEAD_SHA" = "$HEAD_SHA" ]
+}
+
+if [ "$WAIT" = 1 ]; then
+  POLL_ATTEMPTS="${AGENT_VERIFY_POLL_ATTEMPTS:-12}"
+  POLL_INTERVAL="${AGENT_VERIFY_POLL_INTERVAL:-5}"
+  attempt=1
+  until converged; do
+    [ "$attempt" -ge "$POLL_ATTEMPTS" ] && \
+      die "gave up waiting for gh/git head convergence on PR #$PR after $POLL_ATTEMPTS polls (gh head=$HEAD_SHA, git head=${GIT_HEAD_SHA:-<none>} for branch $HEAD_REF_NAME); the gh API is still lagging behind git (see burn-in F10) — refusing to proceed"
+    sleep "$POLL_INTERVAL"
+    attempt=$((attempt + 1))
+    read_pr_head
+  done
+fi
 
 # --- resolve the linked issue (best-effort; used both for the route's issue-
 # intent floor and for the evidence object) -------------------------------- #
@@ -215,6 +266,7 @@ print("\n".join(out))
 }
 
 if [ "$POST" = 1 ]; then
+  converged || die "refusing to post: gh reports head $HEAD_SHA for branch $HEAD_REF_NAME but git's actual tip is ${GIT_HEAD_SHA:-<unknown>} — the gh API is lagging behind git (burn-in F10); acting now would post onto a stale/superseded head. Re-run (optionally with --wait) once they converge."
   gh api -X POST "repos/{owner}/{repo}/statuses/$HEAD_SHA" \
     -f state="$STATE" -f context="$CONTEXT" -f description="$DESC" -f target_url="$PR_URL" \
     --jq '"posted: \(.context) = \(.state)"' || die "failed to post status"
