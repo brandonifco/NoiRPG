@@ -77,7 +77,10 @@ way can ever satisfy.
   each caught something the other missed), the orchestrator makes the call and
   records the adjudication in the PR's `agent-verification` evidence block or a PR
   comment. This is a human/orchestrator judgment call, not something either gate
-  resolves unilaterally.
+  resolves unilaterally. This adjudication authority rests on the same trusted
+  orchestrator named as the minting authority in Part 1 — it is one point of trust,
+  not two independent gaps — and it shares Part 1's revisit condition: reconsider
+  it only if that credential/role is ever shared with a less-trusted actor.
 - **Documented deviations get errata-authority packet blocks.** When a decision
   record already corrects a printed misprint or documents a deliberate departure
   (for example, `docs/decisions/0024-hit-locations.md`'s D20 `8–11` -> `9–11`
@@ -96,7 +99,11 @@ Both packet-block patterns are legitimate recorded authority, analogous in kind 
 — the gate still checks the implementation against a citable, committed authority;
 it is simply the *correct* authority (the recorded erratum or the recorded
 contract) rather than the raw, uncorrected printed text or an assumed contract the
-component never had.
+component never had. The design-contract block has a latent abuse vector — a
+contract narrowed *post-hoc*, after a gate flags a behavior, specifically to write
+that behavior out of scope — and the guardrail against it is that the contract must
+already be committed, citable, prior authority, not language drafted in reaction to
+dodge a specific finding.
 
 ## Consequences
 
