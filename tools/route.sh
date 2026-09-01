@@ -220,7 +220,7 @@ if [ -n "$ISSUE_ROUTE" ]; then
 fi
 
 case "$base" in
-  docs | tooling) gates="ci scope-warden" ;;
+  docs | tooling) gates="ci" ;;
   rules)          gates="ci scope-warden rules-conformance" ;;
   formulas)       gates="ci scope-warden rules-conformance codex-conformance" ;;
 esac

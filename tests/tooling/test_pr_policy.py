@@ -149,7 +149,7 @@ class PrPolicyStaticEvidenceTests(unittest.TestCase):
         self.assertEqual(evidence["baseSha"], self.head)
         self.assertEqual(evidence["issue"], 136)
         self.assertEqual(evidence["route"], "tooling")
-        self.assertEqual(sorted(evidence["requiredGates"]), ["ci", "scope-warden"])
+        self.assertEqual(sorted(evidence["requiredGates"]), ["ci"])
         self.assertEqual(evidence["prPolicy"], "pass")
         self.assertIn("issueRoute", evidence)  # present even when null
 
