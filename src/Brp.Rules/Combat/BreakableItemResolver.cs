@@ -7,7 +7,7 @@ namespace Brp.Rules.Combat;
 /// This is the item SIZ/hit-points breaking rule (#230), sourced to "General Qualities of
 /// Objects", "Damage to Inanimate Objects", and "Armor Value of Substances" (all p.224), and
 /// "SIZ of Common Objects" (pp.225-226) -- see <see cref="BreakableItemDefinition"/> and
-/// <c>docs/decisions/NNNN-item-hit-points.md</c> for the per-item sourcing and the full
+/// <c>docs/decisions/0033-item-hit-points.md</c> for the per-item sourcing and the full
 /// rules-interpretation record this summary follows.
 /// <para>
 /// <strong>Hit points</strong> follow "Damage to Inanimate Objects" (p.224) unchanged: "If the
@@ -30,7 +30,7 @@ namespace Brp.Rules.Combat;
 /// particular swing. Deliberately breaking through a door, window, or lock -- this resolver's
 /// entire purpose -- <em>is</em> that "specific attempt", so the more specific substance-armor
 /// rule and its worked example govern over the general object rule's phrasing for every item this
-/// ruleset ships. See <c>docs/decisions/NNNN-item-hit-points.md</c>'s "Rules interpretation:
+/// ruleset ships. See <c>docs/decisions/0033-item-hit-points.md</c>'s "Rules interpretation:
 /// armor degradation" block for the full quoted reconciliation.
 /// </para>
 /// <para>

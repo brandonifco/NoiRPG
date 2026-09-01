@@ -1,4 +1,4 @@
-# NNNN. Item SIZ/hit points for breaking doors, windows, and locks
+# 0033. Item SIZ/hit points for breaking doors, windows, and locks
 
 ## Status
 

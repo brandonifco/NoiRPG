@@ -10,7 +10,7 @@ namespace Brp.Rules.Tests.Combat;
 /// destroyed at 0 hit points. "Armor Value of Substances" (p.224-225): for every item this
 /// ruleset ships, the armor value degrades by exactly 1 per landed hit (the worked bulletproof-
 /// glass example), not by the penetrating damage that hit dealt -- see
-/// <c>docs/decisions/NNNN-item-hit-points.md</c>'s "Rules interpretation: armor degradation"
+/// <c>docs/decisions/0033-item-hit-points.md</c>'s "Rules interpretation: armor degradation"
 /// block for the full reconciliation of these two passages.
 /// </summary>
 public class BreakableItemResolverTests

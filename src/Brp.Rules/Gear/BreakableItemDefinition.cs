@@ -6,7 +6,7 @@ namespace Brp.Rules.Gear;
 /// Qualities of Objects" and "Damage to Inanimate Objects" (p.224), "Armor Value of Substances"
 /// (p.224), and "SIZ of Common Objects" (pp.225-226). Hand-picked per `orc-scope-filter.md`, Ch 8,
 /// line 137 ("Item SIZ/hit points for breaking doors, windows, locks"). See
-/// <c>docs/decisions/NNNN-item-hit-points.md</c> for the per-entry sourcing, including the two
+/// <c>docs/decisions/0033-item-hit-points.md</c> for the per-entry sourcing, including the two
 /// entries the book prints no exact row for (the glass door's armor value and the padlock
 /// entirely), each marked as a house extrapolation there and in this entry's own
 /// <see cref="Source"/> field.

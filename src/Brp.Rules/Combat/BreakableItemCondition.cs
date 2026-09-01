@@ -7,7 +7,7 @@ namespace Brp.Rules.Combat;
 /// Every item hand-picked into <c>item-hit-points-ruleset.json</c> (doors, windows, locks) is
 /// human-sized or smaller, so only this branch of the printed rule applies -- the "larger than
 /// human-sized, human-sized hole punched through a segment" branch is out of scope for this set
-/// (see <c>docs/decisions/NNNN-item-hit-points.md</c>).
+/// (see <c>docs/decisions/0033-item-hit-points.md</c>).
 /// </summary>
 public enum BreakableItemCondition
 {

@@ -9,7 +9,7 @@ namespace Brp.Data;
 /// "Damage to Inanimate Objects", "Armor Value of Substances" (p.224), and "SIZ of Common
 /// Objects" (pp.225-226). Hand-picked to a small realistic noir subset per `orc-scope-filter.md`,
 /// Ch 8, line 137 -- see each entry's own <c>source</c> field in the ruleset JSON for the exact
-/// citation, and <c>docs/decisions/NNNN-item-hit-points.md</c> for the two entries the book
+/// citation, and <c>docs/decisions/0033-item-hit-points.md</c> for the two entries the book
 /// prints no exact row for.
 /// </summary>
 public static class NoirItemHitPointsRuleset
