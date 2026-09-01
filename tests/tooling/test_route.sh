@@ -194,6 +194,97 @@ assert_eq "case9: off-branch escalated flag == on-branch" \
 assert_eq "case9: off-branch gate set == on-branch gate set" \
   "$(gates_of "$ON_BRANCH_JSON")" "$(gates_of "$OFF_BRANCH_JSON")"
 
+# --- Defect #162: escalation must also catch numeric shapes beyond the ------ #
+# original set (plain assignment, numeric return, arithmetic) -------------- #
+ASSIGN_DIFF="$WORKDIR/assign.diff"
+cat > "$ASSIGN_DIFF" <<'EOF'
+diff --git a/src/Brp.Rules/Combat/Limits.cs b/src/Brp.Rules/Combat/Limits.cs
+index 1111111..2222222 100644
+--- a/src/Brp.Rules/Combat/Limits.cs
++++ b/src/Brp.Rules/Combat/Limits.cs
+@@ -1,2 +1,2 @@
+-    public const int MaximumRoll = 100;
++    public const int MaximumRoll = 99;
+EOF
+j15="$("$SCRIPT" --json --diff-file "$ASSIGN_DIFF")"
+assert_eq "case15: plain const assignment to a number -> formulas" "formulas" "$(route_of "$j15")"
+assert_eq "case15: content-escalated flag set" "True" "$(escalated_of "$j15")"
+
+FIELD_INIT_DIFF="$WORKDIR/field-init.diff"
+cat > "$FIELD_INIT_DIFF" <<'EOF'
+diff --git a/src/Brp.Rules/Combat/Dice.cs b/src/Brp.Rules/Combat/Dice.cs
+index 1111111..2222222 100644
+--- a/src/Brp.Rules/Combat/Dice.cs
++++ b/src/Brp.Rules/Combat/Dice.cs
+@@ -1,2 +1,2 @@
+-    int GainDieSides = 6;
++    int GainDieSides = 4;
+EOF
+j16="$("$SCRIPT" --json --diff-file "$FIELD_INIT_DIFF")"
+assert_eq "case16: field init numeric change -> formulas" "formulas" "$(route_of "$j16")"
+
+RETURN_DIFF="$WORKDIR/return.diff"
+cat > "$RETURN_DIFF" <<'EOF'
+diff --git a/src/Brp.Rules/Combat/Damage.cs b/src/Brp.Rules/Combat/Damage.cs
+index 1111111..2222222 100644
+--- a/src/Brp.Rules/Combat/Damage.cs
++++ b/src/Brp.Rules/Combat/Damage.cs
+@@ -1,2 +1,2 @@
+-        return baseDamage * 2;
++        return baseDamage * 3;
+EOF
+j17="$("$SCRIPT" --json --diff-file "$RETURN_DIFF")"
+assert_eq "case17: bare numeric return with arithmetic -> formulas" "formulas" "$(route_of "$j17")"
+
+# --- guard: a rules .cs change with NO numeric literal edit must NOT --------- #
+# over-escalate to formulas (renaming a method / editing a comment) --------- #
+NO_NUMERIC_DIFF="$WORKDIR/no-numeric.diff"
+cat > "$NO_NUMERIC_DIFF" <<'EOF'
+diff --git a/src/Brp.Rules/Combat/Damage.cs b/src/Brp.Rules/Combat/Damage.cs
+index 1111111..2222222 100644
+--- a/src/Brp.Rules/Combat/Damage.cs
++++ b/src/Brp.Rules/Combat/Damage.cs
+@@ -1,2 +1,2 @@
+-    public void Recalculate() {
++    public void RecomputeDamage() {
+         // adjust for cover
+EOF
+j18="$("$SCRIPT" --json --diff-file "$NO_NUMERIC_DIFF")"
+assert_eq "case18: rules change with no numeric edit stays -> rules (no over-escalation)" \
+  "rules" "$(route_of "$j18")"
+assert_eq "case18: escalated flag is False for a non-numeric rules change" \
+  "False" "$(escalated_of "$j18")"
+
+# --- Defect #164: fail CLOSED on a non-empty, header-less (unparseable) ----- #
+# diff instead of silently defaulting to tooling with zero files ------------ #
+HEADERLESS_DIFF="$WORKDIR/headerless.diff"
+cat > "$HEADERLESS_DIFF" <<'EOF'
+--- a/tools/some-script.sh
++++ b/tools/some-script.sh
+@@ -1,2 +1,2 @@
+-echo hi
++echo hello
+EOF
+if "$SCRIPT" --json --diff-file "$HEADERLESS_DIFF" >/dev/null 2>"$WORKDIR/headerless.err"; then
+  fail "case19: header-less non-empty diff must fail closed (exit non-zero), but it exited 0"
+else
+  ok "case19: header-less non-empty diff fails closed (non-zero exit)"
+fi
+if [ -s "$WORKDIR/headerless.err" ]; then
+  ok "case19b: header-less diff failure prints an error to stderr"
+else
+  fail "case19b: header-less diff failure printed nothing to stderr"
+fi
+
+# --- sanity: a genuinely empty diff file is NOT an error (no changes) ------- #
+EMPTY_DIFF="$WORKDIR/empty.diff"
+: > "$EMPTY_DIFF"
+if "$SCRIPT" --json --diff-file "$EMPTY_DIFF" >/dev/null 2>"$WORKDIR/empty.err"; then
+  ok "case20: an empty diff file is not an error"
+else
+  fail "case20: an empty diff file incorrectly failed closed"
+fi
+
 echo
 if [ "$FAILURES" -eq 0 ]; then
   echo "test_route.sh: all checks passed"

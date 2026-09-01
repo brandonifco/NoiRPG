@@ -123,6 +123,15 @@ diff_hunks_for_files_in_file() {
 if [ ${#FILES[@]} -eq 0 ]; then
   if [ -n "$DIFF_FILE" ]; then
     mapfile -t FILES < <(files_from_diff_file "$DIFF_FILE")
+    # Fail CLOSED: a non-empty diff that yields zero recognizable file paths
+    # (e.g. a `diff --git` header-less patch, such as `git diff --no-prefix`
+    # output) is unparseable, not "no changes" — do not silently fall through
+    # to the tooling/no-files default. A legitimately empty diff file (no
+    # changes at all) is not an error.
+    if [ ${#FILES[@]} -eq 0 ] && [ -s "$DIFF_FILE" ]; then
+      echo "--diff-file: non-empty diff yielded no recognizable file paths (missing 'diff --git a/... b/...' headers?): $DIFF_FILE" >&2
+      exit 2
+    fi
   elif [ -n "$BASE" ]; then
     mapfile -t FILES < <(git -C "$ROOT" diff --name-only "$BASE"...HEAD)
   else
@@ -201,7 +210,7 @@ if [ "$base" = "rules" ]; then
     else
       d="$(git -C "$ROOT" diff --unified=0 HEAD -- "${rf[@]}" 2>/dev/null || true)"
     fi
-    if printf '%s' "$d" | grep -Eq '^[+-][^+-].*(=>[[:space:]]*-?[0-9]|:[[:space:]]*-?[0-9]+|\[[[:space:]]*-?[0-9]|(>=|<=|>|<)[[:space:]]*-?[0-9]|,[[:space:]]*-?[0-9]+)'; then
+    if printf '%s' "$d" | grep -Eq '^[+-][^+-].*(=>[[:space:]]*-?[0-9]|:[[:space:]]*-?[0-9]+|\[[[:space:]]*-?[0-9]|(>=|<=|>|<)[[:space:]]*-?[0-9]|,[[:space:]]*-?[0-9]+|=[[:space:]]*-?[0-9]|return[[:space:]]+-?[0-9]|[*/%][[:space:]]*-?[0-9])'; then
       base="formulas"; escalated=1
     fi
   fi

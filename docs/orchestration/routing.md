@@ -107,6 +107,9 @@ explicit keeps the decision deterministic:
 | numeric array / indexer | `[ -?N` | `[ 1, 3, 6 ]` |
 | threshold comparison | `>= <= > <` followed by `-?N` | `roll <= skill / 5` |
 | number in a list | `, -?N` | `Steps(1, 2, 4, 8)` |
+| plain / const assignment (also `==`, `!=`) | `= -?N` | `public const int MaximumRoll = 99;` |
+| numeric return | `return -?N` | `return baseDamage * 3;` |
+| arithmetic on a number | `* / %` followed by `-?N` | `baseDamage * 3` |
 
 The match is intentionally line-level and slightly over-inclusive: a false escalation
 costs one extra (independent) verification pass; a false *de*-escalation would let a
