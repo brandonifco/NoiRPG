@@ -1,0 +1,35 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 8: Equipment",
+    "notes": "Skills and Equipment (pp.185-186), the 'Skills & Equipment' table: 'Skill | Potential Equipment'. Hand-picked per orc-scope-filter.md, Ch 8 ('hand-pick the entries a noir detective could plausibly encounter') to the rows whose skill has an engine equivalent in skill-ruleset.json. Where the book's row names a skill that the engine only exposes through specialties (Art, Knowledge, Repair, Science, Technical Skill), one link is recorded per resolvable specialty id -- SkillRegistry only resolves leaf skills, not the parent category (docs/decisions/0011-skill-definition.md) -- each carrying the parent row's equipment text. Weapon skills (Firearms, Melee Weapon) are cut along with the book's own carve-out ('it does not require any equipment, or it is obvious, such as weapon skills'). The book's Craft and Literacy rows are cut with those skills (out of scope, not present in skill-ruleset.json). Pre-modern flavor text (astrolabe, herbalist materials) dropped per AGENTS.md invariant 4 (modern era baselines)."
+  },
+  "links": [
+    { "skillId": "Appraise", "potentialEquipment": "None, or reference materials, measuring devices, a magnifying glass, etc." },
+    { "skillId": "Photography", "potentialEquipment": "By medium -- camera, film, darkroom equipment, etc. (book row: Art)." },
+    { "skillId": "Climb", "potentialEquipment": "None, or rope, pitons, crampons, etc." },
+    { "skillId": "Disguise", "potentialEquipment": "Makeup, wigs, costume changes, etc." },
+    { "skillId": "Locksmith", "potentialEquipment": "None, or precision tools (book row: Fine Manipulation)." },
+    { "skillId": "First Aid", "potentialEquipment": "None, or a basic first aid kit and bandages." },
+    { "skillId": "Gaming", "potentialEquipment": "None, or cards, dice, a game board, etc." },
+    { "skillId": "Streetwise", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Law", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Accounting", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Knowledge (Group)", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Knowledge (Region)", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Knowledge (Politics)", "potentialEquipment": "None, or reference materials (book row: Knowledge)." },
+    { "skillId": "Language", "potentialEquipment": "None, or a language dictionary." },
+    { "skillId": "Medicine", "potentialEquipment": "None, or modern medical facilities and pharmaceuticals." },
+    { "skillId": "Navigate", "potentialEquipment": "None, or maps, a compass, GPS, etc." },
+    { "skillId": "Repair (Electrical)", "potentialEquipment": "None, or tools appropriate to the type of repair (book row: Repair)." },
+    { "skillId": "Repair (Electronic)", "potentialEquipment": "None, or tools appropriate to the type of repair (book row: Repair)." },
+    { "skillId": "Repair (Mechanical)", "potentialEquipment": "None, or tools appropriate to the type of repair (book row: Repair)." },
+    { "skillId": "Research", "potentialEquipment": "None, or a research library and reference materials." },
+    { "skillId": "Science (Chemistry)", "potentialEquipment": "None, or scientific instruments and reference materials (book row: Science)." },
+    { "skillId": "Science (Forensics)", "potentialEquipment": "None, or scientific instruments and reference materials (book row: Science)." },
+    { "skillId": "Teach", "potentialEquipment": "Educational materials appropriate to the subject." },
+    { "skillId": "Technical Skill (Computer Use)", "potentialEquipment": "None, or materials appropriate to the specific skill (book row: Technical Skill)." },
+    { "skillId": "Technical Skill (Electronics)", "potentialEquipment": "None, or materials appropriate to the specific skill (book row: Technical Skill)." },
+    { "skillId": "Technical Skill (Security Systems)", "potentialEquipment": "None, or materials appropriate to the specific skill (book row: Technical Skill)." }
+  ]
+}
