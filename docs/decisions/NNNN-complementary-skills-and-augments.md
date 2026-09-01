@@ -7,9 +7,10 @@ Accepted — 2026-09-01. Resolves #114.
 ## Context
 
 Ch 3: Skills, "Augments and Complementary skills" (p.34), prints one prose section covering
-two distinct mechanics, and the book's own front-matter Optional Rule Checklist (p.229) lists
-only one toggle for both — **"Complimentary Skills"** — under Skills. `orc-scope-filter.md`
-turned that single checklist entry ON, glossing it as "(+1/5 rating)".
+two distinct mechanics, and the book's own front-matter Optional Rule Checklist (header p.229;
+the "Skills" subsection listing this entry is p.230) lists only one toggle for both —
+**"Complimentary Skills"** — under Skills. `orc-scope-filter.md` turned that single checklist
+entry ON, glossing it as "(+1/5 rating)".
 
 Issue #114 asked for a single mechanic combining the +1/5 numeric bonus with an experience
 rule ("a skill used to augment gets no experience check if the primary roll fails"). Read
