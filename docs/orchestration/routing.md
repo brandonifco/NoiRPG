@@ -25,8 +25,9 @@ approximating any of this itself.
 1. **Path baseline (simple, deterministic).** [`.github/route-map`](../../.github/route-map)
    maps each changed path to a coarse route, CODEOWNERS-style — the *last* matching
    rule wins for a given file. Across all changed files, the highest-precedence
-   route is taken (`docs` < `tooling` < `rules` < `formulas`), and any file that
-   maps to `architecture` adds an architecture review on top.
+   route is taken (`docs` < `tooling` < `presentation` < `scenario` < `gameplay` <
+   `rules` < `formulas`), and any file that maps to `architecture` adds an
+   architecture review on top.
 2. **Content escalation (precise, where it matters).** A `rules` change is promoted
    to `formulas` when the diff actually touches numeric tables or thresholds — so the
    expensive independent cross-check fires when a *value* could be wrong, not merely
@@ -42,8 +43,11 @@ approximating any of this itself.
 
 | Route | What triggers it | Required gates |
 |---|---|---|
-| `docs` | `*.md`, `docs/**` | `ci`, `scope-warden` |
-| `tooling` | `.github/**`, `tools/**`, `*.sln`, `global.json`, anything unmatched | `ci`, `scope-warden` |
+| `docs` | `*.md`, `docs/**` | `ci` |
+| `tooling` | `.github/**`, `tools/**`, `*.sln`, `global.json`, anything unmatched | `ci` |
+| `presentation` | `src/Noir.Game/**`, `src/Noir.Client/**` (game engine / client / presentation code — Layer 5) | `ci` |
+| `scenario` | `cases/**`, `src/Noir.Scenario/**` (authored case content and the case-schema engine — Layer 5) | `ci` |
+| `gameplay` | `src/Noir.Rules/**` (original Noir mechanics — Layer 5) | `ci` |
 | `rules` | `src/Brp.Core/**`, `src/Brp.Rules/**`, `src/Brp.Data/**/*.cs` (loaders/models — ordinary implementation) | `ci`, `scope-warden`, `rules-conformance` |
 | `formulas` | `src/Brp.Data/**/*.json` (printed numeric tables), **or** a `rules` change whose diff touches numeric tables/thresholds | `ci`, `scope-warden`, `rules-conformance`, `codex-conformance` |
 | `architecture` | `**/*.csproj`, `Directory.Build.props` (project boundaries/refs) | *(above, per the other files)* **+** `architecture-review` |
@@ -52,6 +56,43 @@ approximating any of this itself.
 else applies — it adds `architecture-review` (dispatched to the `design-critic`
 agent) without removing the normal gates. Escalation only ever *raises* the gate
 set, never lowers it.
+
+### `gameplay`, `scenario`, `presentation` — design-led, not BRP source-conformance
+
+These three routes exist so Layer 5 — the noir game layer on top of BRP — gets an
+explicit classification instead of falling through to the `tooling` catch-all once it
+starts landing. Their gate set is `ci` only, deliberately: none of them is checked
+against a printed source table, so none of them needs `rules-conformance` or
+`codex-conformance`, and none of them gets a semantic AI reviewer on every routine PR.
+
+- **`gameplay`** is original Noir mechanics — not BRP, so there is no source table to
+  conform to. A settled `gameplay` change relies on CI, deterministic tests, and
+  layer/scope enforcement, plus the prior accepted design decision that authorized the
+  mechanic in the first place. `design-critic` (Opus, phase-gate design review) belongs
+  at design/phase gates — the point where the mechanic is *decided* — not on every
+  routine implementation PR that merely builds what was already decided.
+- **`scenario`** is authored case/scenario content. Its correctness is machine-checked
+  by [`tools/case_validator.py`](../../tools/case_validator.py) — schema, the Three
+  Doors rule, the junction budget, canonical skill names, and load/parse validity — all
+  deterministic. `case-author` (Sonnet, see [`agent-team.md`](../agent-team.md)) is a
+  content-producing role, not a second reviewer; it does not get paired with an Opus
+  review on ordinary case YAML.
+- **`presentation`** is game engine / client / presentation code. It gets its own route
+  rather than the generic `tooling` catch-all so its gate set is legible on its own
+  terms, even though none of `src/Noir.Game/**` or `src/Noir.Client/**` exists yet —
+  this route is added ahead of the code, not in response to it.
+
+A `**/*.csproj` or `Directory.Build.props` change under any of these paths still
+composes `architecture-review` on top, exactly as it does for `rules`/`formulas` —
+the architecture rules are last in `.github/route-map`, so they still win for those
+files.
+
+None of this authorizes Layer 5 implementation. `needs-design` remains a scheduler
+stop (`tools/ready-issues.sh` treats it as a human gate alongside `blocked`): an
+unresolved original-design Issue must not be picked up for implementation merely
+because its dependencies have closed. The route taxonomy tells verification which
+gates a Layer 5 change will need *once it is settled and ready* — it does not settle
+the design itself.
 
 ## Content-escalation patterns
 
@@ -108,10 +149,11 @@ content. So editing a loader no longer triggers the expensive Codex route.
 ## Labels
 
 The derived route can be surfaced on issues/PRs as a `route:*` label
-(`route:docs`, `route:tooling`, `route:rules`, `route:formulas`,
-`route:architecture`) so the route is visible without running the tool. These were
-applied automatically by the now-removed `route-gates` workflow; apply them by hand
-(or from a new workflow) if you want them.
+(`route:docs`, `route:tooling`, `route:presentation`, `route:scenario`,
+`route:gameplay`, `route:rules`, `route:formulas`, `route:architecture`) so the route
+is visible without running the tool. These were applied automatically by the
+now-removed `route-gates` workflow; apply them by hand (or from a new workflow) if
+you want them.
 
 A `route:*` label on an **issue** is also an *input*, not just a readout: it declares
 the change's intended risk, and `tools/route.sh --issue <n>` reads it as the

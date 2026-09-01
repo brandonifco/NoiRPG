@@ -56,7 +56,7 @@ done
 # route but never lower it. The diff sees only filenames; an issue's `route:*`
 # label carries the author's knowledge that a change is riskier than it looks.
 # `--issue N` reads that label; `--issue-route R` supplies it directly.
-iprec() { case "$1" in docs) echo 1 ;; tooling) echo 2 ;; rules) echo 3 ;; formulas) echo 4 ;; architecture) echo 5 ;; *) echo 0 ;; esac; }
+iprec() { case "$1" in docs) echo 1 ;; tooling) echo 2 ;; presentation) echo 3 ;; scenario) echo 4 ;; gameplay) echo 5 ;; rules) echo 6 ;; formulas) echo 7 ;; architecture) echo 8 ;; *) echo 0 ;; esac; }
 if [ -n "$ISSUE_NUM" ] && [ -z "$ISSUE_ROUTE" ]; then
   # Take the highest-precedence route:* label if the issue carries more than one.
   while IFS= read -r r; do
@@ -67,8 +67,8 @@ if [ -n "$ISSUE_NUM" ] && [ -z "$ISSUE_ROUTE" ]; then
              2>/dev/null || true)
 fi
 case "${ISSUE_ROUTE:-}" in
-  ""|docs|tooling|rules|formulas|architecture) ;;
-  *) echo "invalid --issue-route: $ISSUE_ROUTE (docs|tooling|rules|formulas|architecture)" >&2; exit 2 ;;
+  ""|docs|tooling|presentation|scenario|gameplay|rules|formulas|architecture) ;;
+  *) echo "invalid --issue-route: $ISSUE_ROUTE (docs|tooling|presentation|scenario|gameplay|rules|formulas|architecture)" >&2; exit 2 ;;
 esac
 
 [ -n "$DIFF_FILE" ] && [ -n "$BASE" ] && { echo "--diff-file and --base are mutually exclusive" >&2; exit 2; }
@@ -171,7 +171,7 @@ route_for_file() {
   printf '%s' "$matched"
 }
 
-prec() { case "$1" in docs) echo 1 ;; tooling) echo 2 ;; rules) echo 3 ;; formulas) echo 4 ;; *) echo 0 ;; esac; }
+prec() { case "$1" in docs) echo 1 ;; tooling) echo 2 ;; presentation) echo 3 ;; scenario) echo 4 ;; gameplay) echo 5 ;; rules) echo 6 ;; formulas) echo 7 ;; *) echo 0 ;; esac; }
 
 base="tooling"; basep=0; arch=0
 for f in "${FILES[@]}"; do
@@ -220,7 +220,7 @@ if [ -n "$ISSUE_ROUTE" ]; then
 fi
 
 case "$base" in
-  docs | tooling) gates="ci" ;;
+  docs | tooling | presentation | scenario | gameplay) gates="ci" ;;
   rules)          gates="ci scope-warden rules-conformance" ;;
   formulas)       gates="ci scope-warden rules-conformance codex-conformance" ;;
 esac

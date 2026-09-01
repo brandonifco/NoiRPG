@@ -90,6 +90,28 @@ a Sonnet worker can. Do not route routine implementation to Opus.
 not a failure — deciding it inside an implementation PR is how decisions get buried
 where no later agent will find them.
 
+**`needs-design` is a scheduler stop, not a suggestion.** `tools/ready-issues.sh`
+treats `needs-design` as a human gate, the same as `blocked`: an unresolved
+original-design Issue must never be converted into implementation work — Sonnet or
+otherwise — merely because its dependencies have closed. Route/gate derivation (below)
+tells verification what a *settled* Layer 5 change will need; it is not permission to
+treat an unsettled one as ready.
+
+**Layer 5 (`gameplay`/`scenario`/`presentation`) is design-led, not source-conformance.**
+`tools/route.sh` gives the noir game layer on top of BRP its own routes —
+`gameplay` (original mechanics, `src/Noir.Rules/**`), `scenario` (authored case
+content and its schema engine, `cases/**` and `src/Noir.Scenario/**`), and
+`presentation` (game engine / client code, `src/Noir.Game/**` /
+`src/Noir.Client/**`) — each with a `ci`-only gate set. None of them is checked
+against a printed BRP table, so none of them gets `rules-conformance` or
+`codex-conformance`; instead each relies on a deterministic, code-level gate:
+CI plus the layer's own tests for `gameplay`, and `tools/case_validator.py` (schema,
+the Three Doors rule, junction budget, canonical skills) for `scenario`. `design-critic`
+sits at the design/phase gate where a mechanic is *decided*, not on every routine PR
+that implements an already-settled one, and `case-author` is a content-producing role
+— it is not paired with an Opus review on ordinary case YAML. See
+[`docs/orchestration/routing.md`](orchestration/routing.md) for the full route table.
+
 **Verification agents get read-only tools.** An agent that can edit what it is checking
 will eventually make the check pass instead of making the code right.
 
