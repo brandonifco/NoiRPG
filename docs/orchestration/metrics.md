@@ -98,13 +98,37 @@ conformance stages actually made; see Cost / Job telemetry below.
 
 | Metric | Source | Status |
 |---|---|---|
-| Output tokens per layer / per phase | [`docs/agent-team-ledger/jobs.csv`](../agent-team-ledger/jobs.csv) `tokens_total` | **exact for logged jobs** |
+| Output tokens per layer / per phase (Claude subagent jobs) | [`docs/agent-team-ledger/jobs.csv`](../agent-team-ledger/jobs.csv) `tokens_total` | **exact for logged jobs** |
+| Input+output tokens per Codex run | same, `tokens_total` on `agent_role`-`codex-*` rows | **exact for logged Codex runs, added #190** |
 | Findings by detecting stage | [`docs/agent-team-ledger/findings.csv`](../agent-team-ledger/findings.csv) | **exact for logged findings** |
 
-Only **output-token totals** are available. The R/A/H decomposition (`tokens_R/A/H`) and
-`cost_usd` are `NI` in the ledger — see the ledger
+Claude subagent jobs still expose only **output-token totals**. The R/A/H decomposition
+(`tokens_R/A/H`) and `cost_usd` are `NI` in the ledger — see the ledger
 [`README.md`](../agent-team-ledger/README.md) gap list. The tool reports the totals it has
 and repeats the `NI` caveat rather than implying a full cost accounting exists.
+
+**Codex runs (#190 spike outcome).** `codex exec --json` emits one `turn.completed` event
+per run carrying a structured `usage` object: `input_tokens`, `cached_input_tokens`,
+`cache_write_input_tokens`, `output_tokens`, `reasoning_output_tokens`. `tools/codex-agent.sh`
+now parses that event and logs `tokens_total = input_tokens + output_tokens` on every
+`codex-*` ledger row where it was parseable, instead of an unconditional `NI`. Two things
+were spiked and found **not** obtainable, and remain hard `NI` gaps:
+
+- **`cost_usd` for Codex runs.** The binary reports no dollar figure at any verbosity
+  (`--json` or otherwise), and this repo has no authoritative per-model Codex pricing table
+  to multiply the token counts by without guessing. Fabricating one would violate the
+  ledger's no-invented-numbers rule, so `cost_usd` stays `NI`.
+- **The human-readable "tokens used" line** that `codex exec` prints without `--json` is
+  *not* a usable substitute for the structured figure above — on an equivalent prompt in
+  this spike it disagreed with `usage.input_tokens + usage.output_tokens` by roughly 3x,
+  and the binary documents no definition of what it counts (cumulative session? current
+  turn only? cache-adjusted?). It is not parsed for that reason.
+
+A side effect: `codex-agent.sh` now always passes `--json`, so its live terminal transcript
+is one JSON object per turn event rather than prose. `--output-last-message` still writes
+the plain-text final answer to the `OUT` file for anyone reading the result, and a raw copy
+of the JSONL event stream is kept at a sibling temp file (printed at the end of the run) so
+the usage figure is independently checkable.
 
 ### Job telemetry (briefing efficiency, build/verify/rework)
 

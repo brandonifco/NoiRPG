@@ -79,6 +79,32 @@ The schema is complete; the **capture** is not yet. Fields currently marked `NI`
 need logging the present subagent-completion telemetry does not expose. This mirrors the paper's own
 candor in §4.7/§8 — and pins exactly what to build before the 30–100-task study the reviewer wants:
 
+- **Codex runs now log `tokens_total` (#190 spike).** `tools/codex-agent.sh` parses the
+  `usage` object `codex exec --json` reports on its final `turn.completed` event
+  (`input_tokens + output_tokens`) and records it on every `codex-*` job row where the
+  event was parseable. Before #190 every Codex row was an unconditional `tokens_total = NI`
+  (see the `codex-conformance` rows from Issue #112/PR #179 below, all logged before this
+  change). `cost_usd` for Codex runs stays `NI` — the binary reports no dollar figure and
+  no per-model Codex pricing table exists in this repo to multiply against without
+  guessing; see `docs/orchestration/metrics.md` for the full spike writeup, including why
+  the plain-text "tokens used" line codex prints without `--json` was rejected as a source
+  (it disagreed with the structured figure by ~3x on an equivalent prompt in testing, with
+  no documented definition of what it counts).
+- **Per-rework (per-job) token deltas for Claude subagent resumes remain a hard `NI` gap —
+  investigated and confirmed not obtainable (#190 spike).** Subagent completion telemetry
+  reports a *cumulative-per-resume* total each time a subagent thread is resumed for
+  another rework round (see the Issue #112/PR #179 rework rows below: ~178k → ~231k →
+  ~272k → ~285k across implement + three reworks). Only the first figure (the initial,
+  un-resumed job) is a clean per-job number. Subtracting successive cumulative totals to
+  approximate a per-job delta was considered and rejected: each resume re-establishes
+  context (re-reads files, restates prior findings) whose cost is commingled with the new
+  round's actual work in the same cumulative figure, so a subtracted delta would not
+  cleanly represent "tokens this rework round cost" — it would silently blend in
+  re-context-loading cost that varies resume to resume for reasons unrelated to the size of
+  the fix. This is Claude Code / Agent-SDK subagent-resume runtime behavior, not something
+  exposed by any script in `tools/` that this repository controls, so there is nothing to
+  instrument here beyond recording the honest gap. A resumed rework job's `tokens_total`
+  stays `NI` rather than a mis-derived subtraction.
 - **`tokens_R` / `tokens_A` / `tokens_H` (the C2 centerpiece) are `NI`.** Subagent completion
   telemetry reports only a *single total* output-token figure — no per-turn input/cached/reasoning/
   tool breakdown and no turn-level R/A/H category. The R/A/H split therefore *cannot* be derived
