@@ -4,10 +4,11 @@ using Brp.Rules.Gear;
 namespace Brp.Rules.Tests.Gear;
 
 /// <summary>
-/// Confirms <see cref="ArmorCoverage"/> resolves the armor table's printed coverage categories
-/// ("Head", "Chest", "Abdomen", "Arms", "Legs", "All", "All but head" -- Ch 8: Equipment, "Fits
-/// Locations" column, pp.207-208) against the seven granular <see cref="HitLocation"/> values, and
-/// totals armor value across overlapping covering pieces per "Layering Armor" (Ch 8, p.209).
+/// Confirms <see cref="ArmorCoverage"/> resolves both the printed "Fits Locations" categories
+/// ("Head", "Chest", "Arms", "All", "All but head" -- Ch 8: Equipment, pp.207-208) and the
+/// "Abdomen"/"Legs" data-authoring convenience (see <see cref="ArmorCoverage"/>'s remarks) against
+/// the seven granular <see cref="HitLocation"/> values, and totals armor value across overlapping
+/// covering pieces per "Layering Armor" (Ch 8, p.209).
 /// </summary>
 public class ArmorCoverageTests
 {

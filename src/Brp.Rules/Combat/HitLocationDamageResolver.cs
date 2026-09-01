@@ -15,6 +15,37 @@ namespace Brp.Rules.Combat;
 /// <see cref="DamageResolver.RollDamage"/> respectively) -- this resolver's job starts once both the
 /// struck location and the raw (pre-armor) damage number are known.
 /// </para>
+/// <para>
+/// <strong>Design contract: a stateless, single-blow classifier -- deliberate, not a gap.</strong>
+/// <see cref="ApplyDamage"/> takes one already-known damage amount for one blow and classifies it
+/// against one location's hit points; it holds no history of prior blows to that location beyond
+/// what <see cref="HitLocationHitPoints"/> already tracked before this call. Concretely:
+/// </para>
+/// <list type="bullet">
+/// <item><description>
+/// <see cref="HitLocationDamageBand"/> is computed from <em>this call's</em> raw damage versus the
+/// location's maximum, per the book's own per-blow wording (Ch 6, p.157: "a 2-point arm hit for 5
+/// points..." -- a single-blow example, not an accumulated one). It does not consult
+/// <see cref="HitLocationHitPoints.DamageTakenAt"/> to decide the band for this blow.
+/// </description></item>
+/// <item><description>
+/// Accumulating damage to a location <em>across multiple blows</em> -- so that, for example, two
+/// lesser blows to the same limb eventually cross the "disabled" threshold together -- is the
+/// caller's responsibility. <see cref="HitLocationHitPoints"/> records each call's applied damage
+/// (via <see cref="HitLocationHitPoints.RemainingAt"/>/<see cref="HitLocationHitPoints.DamageTakenAt"/>),
+/// but nothing in this resolver reads that running total back in to change how the <em>current</em>
+/// blow is banded. A caller wanting a "disabled by attrition" rule compares
+/// <see cref="HitLocationHitPoints.RemainingAt"/> against zero itself.
+/// </description></item>
+/// <item><description>
+/// Applying the effects each <see cref="HitLocationDamageBand"/> implies -- a leg going prone, an
+/// arm dropping what it held, a limb being severed, unconsciousness, death -- is likewise left to
+/// the caller, exactly as <see cref="HitLocationDamageBand"/>'s own remarks already state. This is
+/// the same deferral this Issue makes throughout (see
+/// <c>docs/decisions/0024-hit-locations.md</c>, "Design contract: stateless classifier..."), not a
+/// narrower case of it.
+/// </description></item>
+/// </list>
 /// </summary>
 public static class HitLocationDamageResolver
 {
@@ -25,7 +56,14 @@ public static class HitLocationDamageResolver
 
     /// <summary>
     /// Applies one blow's damage to <paramref name="location"/> and to <paramref name="target"/>'s
-    /// total hit points.
+    /// total hit points. Stateless per the class remarks: the returned
+    /// <see cref="HitLocationDamageResult.Band"/> classifies only this call's
+    /// <paramref name="incomingDamage"/> (after armor) against the location's hit points -- it never
+    /// reads <paramref name="locations"/>'s already-recorded damage from earlier blows to decide the
+    /// band. A caller that wants the printed "≥1x = disabled" (etc.) determination to account for
+    /// damage a location has already taken across prior blows must compare
+    /// <see cref="HitLocationHitPoints.DamageTakenAt"/>/<see cref="HitLocationHitPoints.RemainingAt"/>
+    /// (which this call does update) itself; this method reports only the single blow it was given.
     /// </summary>
     /// <param name="target">The character taking the damage.</param>
     /// <param name="locations">The character's per-location hit-point tracker.</param>

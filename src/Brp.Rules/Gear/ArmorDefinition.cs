@@ -10,14 +10,15 @@ namespace Brp.Rules.Gear;
 /// <param name="ArmorValue">Armor points, by attack type (Ch 8, "Armor by Hit Locations" is on the keep-list).</param>
 /// <param name="SkillPenalty">The skill penalty imposed while worn.</param>
 /// <param name="HitLocations">
-/// The hit locations this armor covers ("Fits Locations" column, pp.207-208), as printed --
-/// "Head", "Chest", "Abdomen", "Arms", "Legs", "All", or "All but head". Kept as the book's own
-/// category strings
-/// rather than the granular <see cref="Combat.HitLocation"/> enum the D20 hit-location table
-/// rolls (Ch 6, p.145) because the printed armor table's categories are coarser than that
-/// table's seven locations ("Arms" covers both <see cref="Combat.HitLocation.LeftArm"/> and
-/// <see cref="Combat.HitLocation.RightArm"/>, and likewise for "Legs"). See
-/// <see cref="ArmorCoverage"/> (#112) for the mapping between the two.
+/// The hit locations this armor covers ("Fits Locations" column, pp.207-208). The printed column
+/// itself uses only five literal labels -- "Head", "Chest", "Arms", "All", and "All but head" --
+/// but this field also accepts "Abdomen" and "Legs" as a data-authoring convenience for expanding a
+/// printed "All" into its individual constituent locations (see <see cref="ArmorCoverage"/>'s
+/// remarks). Kept as the book's own category strings rather than the granular
+/// <see cref="Combat.HitLocation"/> enum the D20 hit-location table rolls (Ch 6, p.145) because the
+/// printed armor table's categories are coarser than that table's seven locations ("Arms" covers
+/// both <see cref="Combat.HitLocation.LeftArm"/> and <see cref="Combat.HitLocation.RightArm"/>, and
+/// likewise for "Legs"). See <see cref="ArmorCoverage"/> (#112) for the mapping between the two.
 /// </param>
 /// <param name="Note">An optional printed footnote, e.g. Riot Gear's "Includes helmet".</param>
 /// <param name="Source">The book table this entry was transcribed from.</param>

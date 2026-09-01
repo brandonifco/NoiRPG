@@ -106,14 +106,25 @@ naming both the printed value and the value the engine actually returns, per the
 
 ### Armor by hit location — sourced
 
-`ArmorCoverage` (in `Brp.Rules.Gear`, alongside `ArmorDefinition`) resolves the printed armor
-tables' coverage categories against the seven granular `HitLocation` values. The category
-vocabulary is the union of every "Fits Locations" cell printed across all four armor tables (Ch 8,
-pp.207-208: Primitive, Ancient and Medieval, Modern, Advanced): "Head", "Chest", "Abdomen", "Arms",
-"Legs", "All", and "All but head". "Arms"/"Legs" each cover both sides of that limb; "All" covers
-every location; "All but head" covers every location except `Head`; the other three map 1:1. The
-in-scope modern subset (ADR 0013) uses "Chest" and "All" (e.g. "Clothing, Heavy" = All); "All but
-head" is printed only on out-of-scope historical armors (Lamellar, Plate, Ring, Scale) but is
+`ArmorCoverage` (in `Brp.Rules.Gear`, alongside `ArmorDefinition`) resolves the armor tables'
+coverage categories against the seven granular `HitLocation` values. **The printed "Fits Locations"
+column itself uses only five literal labels** — "Head", "Chest", "Arms", "All", and "All but head"
+— verified cell by cell against all four armor tables (Ch 8, pp.207-208: Primitive, Ancient and
+Medieval, Modern, Advanced) with `pdftotext -layout`; the column never prints a standalone
+"Abdomen" or "Legs" cell. "Arms" covers both `LeftArm` and `RightArm`; "All" covers every location;
+"All but head" covers every location except `Head`; "Head"/"Chest" map 1:1.
+
+`ArmorCoverage` additionally accepts **"Abdomen" and "Legs" as a data-authoring convenience, not a
+second printed vocabulary**: `armor-ruleset.json` sometimes expands a printed "All" into its five
+constituent locations by name instead of leaving it as the single string "All" (e.g. Riot Gear's
+`HitLocations` lists `["Head", "Arms", "Chest", "Abdomen", "Legs"]` rather than `["All"]`) — a
+transcription choice ADR 0013 made, not a claim that the book prints those two words in this
+column. `ArmorCoverage` supports both authoring styles so either resolves identically. (An earlier
+version of this record and `ArmorCoverage`'s doc comment listed "Abdomen"/"Legs" alongside the five
+genuinely printed labels without distinguishing them; corrected here.)
+
+The in-scope modern subset (ADR 0013) uses "Chest" and "All" (e.g. "Clothing, Heavy" = All); "All
+but head" is printed only on out-of-scope historical armors (Lamellar, Plate, Ring, Scale) but is
 handled so the vocabulary itself never throws. `ArmorDefinition` itself is unchanged — its
 `HitLocations` field is exactly what ADR 0013 shipped, now made operative rather than inert plain
 strings.
@@ -169,6 +180,36 @@ separately, but also keep a running total"). `HitLocationDamageResolver.ApplyDam
    which strict/non-strict comparison that section's specific consequence uses. No behavioral
    change follows from this in the resolver itself — `HitLocationDamageBand`'s doc comment now
    states both readings so a future caller does not conflate them.
+
+### Design contract: `HitLocationDamageResolver` is a stateless, single-blow classifier — house decision, deliberate
+
+**House decision**, made explicitly by the project owner during conformance review: `ApplyDamage` is
+deliberately stateless with respect to a location's damage *history*. It classifies exactly the one
+damage amount it is given for the current blow against a location's hit points; it does not read
+`HitLocationHitPoints`'s already-recorded damage from earlier blows back in to decide the current
+blow's `HitLocationDamageBand`, and it does not itself apply any of the per-band effects. This is
+**in scope as designed, not a gap the Issue left open**:
+
+- **Accumulating damage across multiple blows to the same location** — so that, for instance, two
+  lesser hits to an arm eventually reach the printed "disabled" threshold together, not just a
+  single blow reaching it alone — is the **caller's** responsibility. `HitLocationHitPoints` already
+  tracks the running total needed for this (`DamageTakenAt`/`RemainingAt`, updated by every
+  `ApplyDamage` call); a caller wanting a cumulative "disabled" rule compares that running total
+  against zero (or the location's maximum) itself, on its own schedule, rather than relying on this
+  resolver's per-call `Band` to have folded prior blows in.
+- **Applying the effects a `HitLocationDamageBand` implies** (a leg falling prone, an arm dropping
+  what it held, a limb being severed, unconsciousness, instant death) is deferred to the caller —
+  already recorded as out of scope above, and restated here because it is the same design choice,
+  not a separate one: a stateless classifier that reports a band is exactly the right shape for a
+  resolver that does not also own turn-economy, narrative state, or Stamina rolls.
+
+This mirrors, rather than deviates from, the Issue's existing deferral pattern: `MajorWoundResolver`
+(ADR 0021) similarly reports structured outcomes for a caller's encounter loop to apply, and
+`HitLocationDamageBand`'s own remarks already stated that its narrative consequences are a caller
+concern. Recording it here makes the *classifier's statelessness itself* — not just "effects are
+deferred" — an explicit, citable contract for future callers and reviewers, so a later change that
+tries to make `ApplyDamage` "smarter" by reading prior damage internally is a deliberate redesign
+requiring its own review, not an unnoticed behavior drift.
 
 ### The falling exception — sourced
 

@@ -3,17 +3,31 @@ using Brp.Rules.Combat;
 namespace Brp.Rules.Gear;
 
 /// <summary>
-/// Resolves <see cref="ArmorDefinition.HitLocations"/>'s printed category strings -- "Head",
-/// "Chest", "Abdomen", "Arms", "Legs", "All", and "All but head" -- against the seven granular
-/// <see cref="HitLocation"/> values the D20 hit-location table rolls (Ch 6, p.145). The category
-/// vocabulary is the union of every "Fits Locations" cell printed across the Primitive, Ancient and
-/// Medieval, Modern, and Advanced Armor tables (Ch 8: Equipment, pp.207-208) -- the in-scope modern
-/// subset (ADR 0013) uses "Chest" and "All" (e.g. "Clothing, Heavy"); "All but head" is printed only
-/// on out-of-scope historical armors (Lamellar, Plate, Ring, Scale), but is handled here so the
-/// vocabulary itself does not throw if a future entry uses it.
-/// "Arms"/"Legs" are two-sided categories in the printed table but the D20 table rolls a specific
-/// side, so both sides of a limb category are covered identically -- the book does not distinguish
-/// left- and right-side armor coverage.
+/// Resolves <see cref="ArmorDefinition.HitLocations"/>'s category strings against the seven granular
+/// <see cref="HitLocation"/> values the D20 hit-location table rolls (Ch 6, p.145).
+/// <para>
+/// <strong>The printed "Fits Locations" column (Ch 8: Equipment, pp.207-208, across the Primitive,
+/// Ancient and Medieval, Modern, and Advanced Armor tables) uses only five literal labels: "Head",
+/// "Chest", "Arms", "All", and "All but head"</strong> -- verified cell by cell against
+/// `pdftotext -layout`; the column never prints a standalone "Abdomen" or "Legs" cell on its own.
+/// The in-scope modern subset (ADR 0013) uses "Chest" and "All" (e.g. "Clothing, Heavy" = All).
+/// "All but head" is printed only on out-of-scope historical armors (Lamellar, Plate, Ring, Scale),
+/// but is handled here so the vocabulary itself does not throw if a future entry uses it.
+/// </para>
+/// <para>
+/// <strong>"Abdomen" and "Legs" are <see cref="HitLocation"/>-mapping targets this resolver
+/// supports, not printed column labels.</strong> They exist because the shipped armor data
+/// (`armor-ruleset.json`) sometimes expands a printed "All" into its five constituent locations by
+/// name (e.g. Riot Gear's `HitLocations` lists "Head", "Arms", "Chest", "Abdomen", "Legs"
+/// individually rather than the single string "All") -- a data-authoring choice made when that
+/// entry was transcribed (ADR 0013), not a second printed vocabulary. <see cref="Matches"/> accepts
+/// both forms so either authoring style resolves correctly.
+/// </para>
+/// <para>
+/// "Arms"/"Legs" are two-sided categories -- the printed table (and this data-modeling
+/// convention) does not distinguish left- and right-side armor coverage, but the D20 table rolls a
+/// specific side, so both sides of a limb category are covered identically.
+/// </para>
 /// </summary>
 public static class ArmorCoverage
 {

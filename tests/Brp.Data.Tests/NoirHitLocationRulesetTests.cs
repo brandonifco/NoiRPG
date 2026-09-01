@@ -57,8 +57,12 @@ public class NoirHitLocationRulesetTests
         // Ch 6, p.145 prints "5-8 Left Leg" immediately followed by "8-11 Abdomen" -- the two
         // ranges share the value 8, which is impossible for a table that must partition 1-20
         // exactly once each (verified via the PDF's glyph bounding boxes, not a whitespace
-        // artifact). The only partition consistent with the other six printed rows (1-4, 12,
-        // 13-15, 16-18, 19-20 = 17 rolls, leaving exactly 3 for Abdomen) is 9-11.
+        // artifact). Corrected to 9-11 -- not because that is the only range summing to 20 (5-7
+        // Left Leg / 8-11 Abdomen sums to 20 just as well), but because the printed Left Leg row,
+        // 5-8, is itself clean and unambiguous; the two legs are otherwise printed symmetrically
+        // (Right Leg 1-4, Left Leg 5-8, four faces each); and the canonical BRP humanoid
+        // hit-location table this one descends from gives Abdomen as 09-11. See
+        // docs/decisions/0024-hit-locations.md for the full argument.
         var leftLeg = Ruleset.Table.ForRoll(8);
         Assert.Equal(HitLocation.LeftLeg, leftLeg.Location);
         Assert.Equal(5, leftLeg.Minimum);
