@@ -124,6 +124,38 @@ implementer or writeup agent its own worktree so the primary checkout is never l
 stranded on a feature branch. If a non-isolated agent is used deliberately, expect to
 restore the primary tree afterward the same way.
 
+## Authoring a design-decision record (ADR) — the `NNNN` placeholder
+
+Never pick a `docs/decisions/NNNN-slug.md` number by reading the highest one
+committed on your own branch. Two authors on parallel branches off the same base can
+both see the same "latest" number and both claim the next one — exactly what happened
+on #170/#171 (burn-in finding **F8**: both authored `0025`; the collision only
+surfaced at merge time and had to be renumbered by hand).
+
+Instead, write the record with the literal placeholder token `NNNN` everywhere its
+number would appear: the filename (`docs/decisions/NNNN-slug.md`), the `# NNNN. Title`
+header, any self-reference in the body, and the `docs/decisions/README.md` row you add
+for it. Do not guess a number and do not reserve one in a shared file — either still
+races under true parallelism (see `docs/decisions/0027-adr-number-allocation.md` for
+why a `next-adr.sh`-style helper and a reservation registry were both rejected).
+
+The number is assigned exactly once, by `tools/assign-adr-number.sh`, run as a
+pre-merge step against the tree about to be merged — today that means whoever is
+merging the PR runs it by hand before merging, the same trust level as every other
+`tools/*.sh` gate in this repo. It finds the placeholder, computes the next free
+number from `docs/decisions/`, renames the file, and rewrites every reference
+(header, README row, any other Markdown file linking to the placeholder's old
+filename). It is safe to run more than once — a second run after a successful
+assignment finds no placeholder left and refuses cleanly rather than reassigning.
+See `docs/decisions/0027-adr-number-allocation.md` for the full mechanism and the
+rejected alternatives, and `tests/tooling/test_assign_adr_number.sh` for the
+concurrent-authoring case this fixes.
+
+`tools/adr-index-check.sh` (run by `tools/orchestration-policy.sh`) still checks the
+resulting index for a duplicate number, a gap, or a row/file mismatch — that guard is
+unchanged by this convention and continues to run as the after-the-fact drift check,
+not a replacement for assigning the number correctly in the first place.
+
 ## What verification passes should look for
 
 `docs/source-handling.md` lists the defect classes that have actually bitten this
