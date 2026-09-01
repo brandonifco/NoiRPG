@@ -5,9 +5,9 @@ namespace Brp.Data;
 
 /// <summary>
 /// Loads NoiRPG's hit-location values from embedded JSON. Sourced: Ch 6: Combat, "Melee Hit
-/// Location Table (Option)" (p.145) and "Hit Points by Hit Location (Option)" (p.14); Ch 6,
-/// "Damage and hit Locations (Option)" (pp.156-157) for the limb damage cap multiplier. Recorded in
-/// <c>docs/decisions/0024-hit-locations.md</c>.
+/// Location Table (Option)" (p.145) and "Damage and hit Locations (Option)" (pp.156-157, the limb
+/// damage cap multiplier); Ch 2: Characters, "Hit Points by Hit Location (Option)" (p.14). Recorded
+/// in <c>docs/decisions/0024-hit-locations.md</c>.
 /// </summary>
 public static class NoirHitLocationRuleset
 {

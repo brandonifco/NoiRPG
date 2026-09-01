@@ -22,9 +22,21 @@ public enum HitLocationDamageBand
     EqualOrExceedsLocationHitPoints,
 
     /// <summary>
-    /// Ch 6, "Damage Equals or Exceeds Double the Location's Hit Points" (p.157): the character is
-    /// functionally incapacitated by a hit to a limb, or unconscious and bleeding from a hit to the
-    /// head, chest, or abdomen.
+    /// Ch 6, "Damage Equals or Exceeds Double the Location's Hit Points" (p.157) -- this band's own
+    /// boundary is <strong>&gt;=2x</strong>, matching that heading exactly, and is what a limb hit
+    /// (the incapacitating/bleeding effect) keys off of: "cannot take more than twice the possible
+    /// points of damage in an arm or leg from a single blow" is itself a cap set at exactly twice,
+    /// not a strict-greater-than trigger.
+    /// <para>
+    /// <strong>Caution for a head/chest/abdomen consequence, at a stricter threshold than this
+    /// band.</strong> That location's own worded trigger is "more than twice" (p.157) -- i.e.
+    /// <strong>&gt;2x</strong>, not &gt;=2x. A caller wiring the head/chest/abdomen
+    /// unconscious-and-bleeding effect must not fire it at a blow reaching exactly this band; it
+    /// needs a value strictly greater than 2x the location's hit points, one step past where this
+    /// band itself starts. This band only identifies which printed section governs a blow -- it
+    /// does not encode that section's per-location strict/non-strict comparison, which differs
+    /// between the limb and head/chest/abdomen bullets of the same heading.
+    /// </para>
     /// </summary>
     EqualOrExceedsDoubleLocationHitPoints,
 

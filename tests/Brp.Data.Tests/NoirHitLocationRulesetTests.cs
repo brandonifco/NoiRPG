@@ -73,7 +73,7 @@ public class NoirHitLocationRulesetTests
     [Fact]
     public void The_per_location_hit_point_fractions_match_the_book()
     {
-        // Ch 6, Hit Points by Hit Location (p.14): Leg/Abdomen/Head 1/3, Chest 4/10, Arm 1/4.
+        // Ch 2: Characters, Hit Points by Hit Location (p.14): Leg/Abdomen/Head 1/3, Chest 4/10, Arm 1/4.
         Assert.Equal(3, Ruleset.LimbHeadAbdomenDivisor);
         Assert.Equal(4, Ruleset.ChestNumerator);
         Assert.Equal(10, Ruleset.ChestDenominator);

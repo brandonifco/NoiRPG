@@ -4,7 +4,7 @@ using Brp.Rules.Combat;
 namespace Brp.Rules.Tests.Combat;
 
 /// <summary>
-/// Reproduces Ch 6: Combat, "Hit Points by Hit Location (Option)" (p.14), both the formula ("Leg,
+/// Reproduces Ch 2: Characters, "Hit Points by Hit Location (Option)" (p.14), both the formula ("Leg,
 /// Abdomen, Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit points",
 /// rounded up) and its own printed lookup table for totals 1-21, cell by cell -- 45 cells (15 totals
 /// times 3 distinct formulas: Leg/Abdomen/Head share one, Chest and Arm each their own) -- plus the
@@ -15,7 +15,7 @@ public class HitPointsByLocationCalculatorTests
 {
     private static readonly HitLocationRuleset Ruleset = NoirHitLocationRuleset.Load();
 
-    // (totalHitPoints, legAbdomenHead, chest, arm) -- one row per printed column, Ch 6, p.14. The
+    // (totalHitPoints, legAbdomenHead, chest, arm) -- one row per printed column, Ch 2: Characters, p.14. The
     // printed columns group totals sharing identical values (e.g. "1-2", "11-12", "13-15"); each
     // such group is expanded to one row per total so every printed cell gets its own case.
     public static TheoryData<int, int, int, int> PrintedTable => new()

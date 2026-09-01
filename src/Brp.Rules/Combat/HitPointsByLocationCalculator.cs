@@ -3,7 +3,7 @@ using Brp.Core.Primitives;
 namespace Brp.Rules.Combat;
 
 /// <summary>
-/// Derives per-location hit points from a total, per Ch 6: Combat, "Hit Points by Hit Location
+/// Derives per-location hit points from a total, per Ch 2: Characters, "Hit Points by Hit Location
 /// (Option)" (p.14): "Use the following formula for humanoids, rounding up for each location:
 /// Leg, Abdomen, Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit
 /// points."

@@ -5,9 +5,9 @@ namespace Brp.Rules.Tests.Gear;
 
 /// <summary>
 /// Confirms <see cref="ArmorCoverage"/> resolves the armor table's printed coverage categories
-/// ("Head", "Chest", "Abdomen", "Arms", "Legs" -- Ch 8: Equipment, Modern Armor table, "Fits
-/// Locations" column, p.207) against the seven granular <see cref="HitLocation"/> values, per
-/// "Armor by Hit Location (Option)" (Ch 8, p.209).
+/// ("Head", "Chest", "Abdomen", "Arms", "Legs", "All", "All but head" -- Ch 8: Equipment, "Fits
+/// Locations" column, pp.207-208) against the seven granular <see cref="HitLocation"/> values, and
+/// totals armor value across overlapping covering pieces per "Layering Armor" (Ch 8, p.209).
 /// </summary>
 public class ArmorCoverageTests
 {
@@ -27,6 +27,15 @@ public class ArmorCoverageTests
     [InlineData("Legs", HitLocation.LeftLeg, true)]
     [InlineData("Legs", HitLocation.RightLeg, true)]
     [InlineData("Legs", HitLocation.RightArm, false)]
+    [InlineData("All", HitLocation.Head, true)]
+    [InlineData("All", HitLocation.Chest, true)]
+    [InlineData("All", HitLocation.LeftArm, true)]
+    [InlineData("All", HitLocation.RightLeg, true)]
+    [InlineData("All but head", HitLocation.Head, false)]
+    [InlineData("All but head", HitLocation.Chest, true)]
+    [InlineData("All but head", HitLocation.Abdomen, true)]
+    [InlineData("All but head", HitLocation.LeftArm, true)]
+    [InlineData("All but head", HitLocation.RightLeg, true)]
     public void Covers_maps_each_printed_category_to_the_correct_locations(
         string category, HitLocation location, bool expected)
     {
@@ -53,13 +62,24 @@ public class ArmorCoverageTests
     }
 
     [Fact]
-    public void Armor_value_at_a_location_uses_the_heaviest_of_multiple_covering_pieces()
+    public void Armor_value_at_a_location_totals_multiple_covering_pieces()
     {
-        // Ch 8, p.209: "using the heaviest if these differ."
+        // Ch 8, "Layering Armor" (p.209): soft armor worn with other armor "add[s] their usual
+        // armor value"; overlapping anything else "total[s] the armor value." A Riot Gear (AV12/6)
+        // layered with a soft vest (AV4/4) at the chest totals to 16/10, not the heaviest piece alone.
         var lightVest = MakeArmor(4, 4, "Chest");
         var heavyRiotGear = MakeArmor(12, 6, "Head", "Arms", "Chest", "Abdomen", "Legs");
 
-        Assert.Equal(12, ArmorCoverage.ArmorValueAt(HitLocation.Chest, isFirearm: false, [lightVest, heavyRiotGear]));
-        Assert.Equal(6, ArmorCoverage.ArmorValueAt(HitLocation.Chest, isFirearm: true, [lightVest, heavyRiotGear]));
+        Assert.Equal(16, ArmorCoverage.ArmorValueAt(HitLocation.Chest, isFirearm: false, [lightVest, heavyRiotGear]));
+        Assert.Equal(10, ArmorCoverage.ArmorValueAt(HitLocation.Chest, isFirearm: true, [lightVest, heavyRiotGear]));
+    }
+
+    [Fact]
+    public void Armor_value_at_a_location_does_not_total_pieces_that_do_not_cover_it()
+    {
+        var chestOnly = MakeArmor(4, 4, "Chest");
+        var armsOnly = MakeArmor(6, 6, "Arms");
+
+        Assert.Equal(4, ArmorCoverage.ArmorValueAt(HitLocation.Chest, isFirearm: false, [chestOnly, armsOnly]));
     }
 }

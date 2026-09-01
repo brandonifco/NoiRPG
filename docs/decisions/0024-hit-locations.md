@@ -10,21 +10,31 @@ the armor definition schema (ADR 0013). Deliberately does **not** touch `DamageR
 
 ## Context
 
-Ch 6: Combat gives the optional hit-location system across three passages, verified independently
-with `pdftotext -f/-l` against the pinned PDF (AGENTS.md invariant 1/2):
+The optional hit-location system spans two chapters, verified independently with
+`pdftotext -f/-l -layout` against the pinned PDF (AGENTS.md invariant 1/2):
 
-- "Melee Hit Location Table (Option)" and the "Hit Locations" D20 table (p.145).
-- "Hit Points by Hit Location (Option)" — the per-location fraction formula and its own printed
-  lookup table for totals 1-21 (p.14).
-- "Damage and hit Locations (Option)" — routing damage to a struck location and the total pool, the
+- Ch 2: Characters, "Hit Points by Hit Location (Option)" — the per-location fraction formula and
+  its own printed lookup table for totals 1-21 (p.14).
+- Ch 6: Combat, "Melee Hit Location Table (Option)" and the "Hit Locations" D20 table (p.145); and
+  "Damage and hit Locations (Option)" — routing damage to a struck location and the total pool, the
   limb damage cap, and the three damage-band thresholds (pp.156-157).
 
-Ch 8: Equipment, "Armor by Hit Location (Option)" (p.209) and the Modern Armor table's "Fits
-Locations" column (p.207) give how armor applies per location. Ch 7: Spot Rules, "Falling" (p.172)
-gives the one printed exception to the limb damage cap.
+Ch 8: Equipment, "Armor by Hit Location (Option)" and "Layering Armor" (both p.209), and the armor
+tables' "Fits Locations" column (pp.207-208, all four armor tables: Primitive, Ancient and Medieval,
+Modern, Advanced) give how armor value applies per location and how overlapping pieces combine. Ch 7:
+Spot Rules, "Falling" (p.172) gives the one printed exception to the limb damage cap.
 
 Only these passages and the already-shipped `ArmorDefinition`/`AbilitySet` were consulted. Nothing
 here derives from `engine-implementation-plan.md` (AGENTS.md invariant 2).
+
+**Revision note (post-acceptance).** Independent conformance review (rules-conformance +
+Codex-conformance) found four defects in the first version of this record and its implementation:
+an armor-value citation that was fabricated (attributed "using the heaviest if these differ" to
+armor *value*, when that clause governs only burden and skill modifier — armor value totals, per a
+different p.209 passage, "Layering Armor"), an armor-coverage vocabulary gap ("All"/"All but head"
+threw instead of resolving), a chapter mislabel (the per-location hit-point table is Ch 2, not
+Ch 6), and an unsound justification for the D20 table correction (below). All four are fixed in this
+revision; see each subsection.
 
 ## Decision
 
@@ -54,16 +64,25 @@ faces, in `NoirHitLocationRulesetTests`.
 the Left Leg row immediately above it (printed **5–8**) — the digit 8 is claimed by both rows.
 Confirmed via the PDF's glyph bounding boxes (`pdftotext -bbox`, per `docs/source-handling.md`'s
 escalation recipe) to be a real printed character, not a whitespace-extraction artifact: the source
-literally prints "8–11". A D20 table must partition 1–20 exactly once each; the other six rows
-(1-4, 12, 13-15, 16-18, 19-20) already claim 4+1+3+3+2 = 13 rolls, plus the undisputed part of
-Left Leg (5-8, 4 rolls) = 17, leaving exactly 3 rolls for Abdomen. The only three-wide range
-starting after 8 is **9–11**, which this engine implements. `NoirHitLocationRulesetTests` pins both
-facts: the corrected table has no overlap, and a dedicated test documents what the book actually
-prints at that cell.
+literally prints "8–11".
+
+The engine implements **9–11**, not the printed 8–11. The first version of this record justified
+that correction by an arithmetic argument ("the only partition consistent with 20 faces") that does
+not actually hold: **Left Leg 5–7 plus Abdomen 8–11 also sums to 20 rolls** and is equally
+"consistent" by that test alone — face-counting the six undisputed rows only proves *some* row must
+absorb the overlap, not *which side* of it does. The correction stands on different, sounder
+grounds instead: the Left Leg row's own printed range, **5–8**, is clean and unambiguous on its own
+— nothing about it is malformed or disputed; the printed table is otherwise symmetric between the
+two legs (Right Leg 1–4 and Left Leg 5–8 are both exactly 4 faces); and the canonical BRP humanoid
+hit-location table (the same D20 table this book's own Ch 6 Hit Locations table descends from) gives
+Abdomen as **09–11**. Given a clean, undisputed Left Leg row and the canonical table's Abdomen range
+agreeing on 9–11, that is the correction this engine implements, not a face-count coincidence.
+`NoirHitLocationRulesetTests` pins both facts: the corrected table has no overlap, and a dedicated
+test documents what the book actually prints at the disputed cell.
 
 ### Per-location hit points — sourced formula, one printed table cell logged as inconsistent
 
-`HitPointsByLocationCalculator.Compute` implements Ch 6, p.14's formula directly — "Leg, Abdomen,
+`HitPointsByLocationCalculator.Compute` implements Ch 2: Characters, p.14's formula directly — "Leg, Abdomen,
 Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit points," each rounded
 up via the existing `Rounding.Divide(..., RoundingMode.Up)` (ADR 0008's convention) — rather than a
 band table, so it produces a value for any total, not just the printed 1-21 range.
@@ -88,13 +107,35 @@ naming both the printed value and the value the engine actually returns, per the
 ### Armor by hit location — sourced
 
 `ArmorCoverage` (in `Brp.Rules.Gear`, alongside `ArmorDefinition`) resolves the printed armor
-table's coarser coverage categories ("Head", "Chest", "Abdomen", "Arms", "Legs" — already stored as
-plain strings on `ArmorDefinition.HitLocations`, ADR 0013) against the seven granular `HitLocation`
-values: "Arms" covers both `LeftArm` and `RightArm`; "Legs" covers both legs; the other three map
-1:1. `ArmorValueAt(location, isFirearm, wornArmor)` returns the highest covering piece's value for
-the given attack type (Ch 8, p.209: "using the heaviest if these differ"), or zero if nothing worn
-covers the location. `ArmorDefinition` itself is unchanged — its `HitLocations` field is exactly
-what ADR 0013 shipped, now made operative rather than inert plain strings.
+tables' coverage categories against the seven granular `HitLocation` values. The category
+vocabulary is the union of every "Fits Locations" cell printed across all four armor tables (Ch 8,
+pp.207-208: Primitive, Ancient and Medieval, Modern, Advanced): "Head", "Chest", "Abdomen", "Arms",
+"Legs", "All", and "All but head". "Arms"/"Legs" each cover both sides of that limb; "All" covers
+every location; "All but head" covers every location except `Head`; the other three map 1:1. The
+in-scope modern subset (ADR 0013) uses "Chest" and "All" (e.g. "Clothing, Heavy" = All); "All but
+head" is printed only on out-of-scope historical armors (Lamellar, Plate, Ring, Scale) but is
+handled so the vocabulary itself never throws. `ArmorDefinition` itself is unchanged — its
+`HitLocations` field is exactly what ADR 0013 shipped, now made operative rather than inert plain
+strings.
+
+**Armor value at a location totals across overlapping covering pieces — sourced, corrected from an
+earlier fabricated citation.** `ArmorValueAt(location, isFirearm, wornArmor)` sums the given attack
+type's value from every worn piece that covers the location, per Ch 8, "Layering Armor" (p.209):
+soft armor worn with other armor "add[s] their usual armor value," and overlapping anything else
+"total[s] the armor value" (at the cost of tripling the lesser piece's ENC, which is not modeled
+here — only the armor-value total is). Zero if nothing worn covers the location.
+
+An earlier version of this record and `ArmorValueAt`'s doc comment instead took the *maximum* of
+overlapping pieces, citing p.209's "Armor by Hit Location (Option)" text, "using the heaviest if
+these differ," as though it governed armor value. That citation was fabricated: the actual
+sentence — "The burden is that of the pieces worn on the chest, abdomen, or legs, using the
+heaviest if these differ" — governs **burden**, and the very next bullet governs **skill
+modifier**; neither bullet mentions armor value, which the section's first bullet instead says to
+take "from the armor charts" without any aggregation rule of its own. The aggregation rule for
+armor *value* specifically is "Layering Armor," a different, adjacent passage on the same page,
+which this revision now cites instead. ENC/burden/skill-modifier layering (the "heaviest" rule, and
+ENC tripling for hard-over-soft) is out of scope for this issue and is not implemented; only the
+armor-value total is.
 
 ### Damage routed to the struck location and the total pool, with the limb cap — sourced
 
@@ -115,6 +156,19 @@ separately, but also keep a running total"). `HitLocationDamageResolver.ApplyDam
    letting a caller apply the book's own per-location narrative text (a leg falling prone, an arm
    dropping what it held, bleeding rates, Stamina rolls, instant death for a tripled head/chest/
    abdomen hit) without this resolver hardcoding a copy of that prose.
+
+   **A boundary distinction the band's doc comment calls out explicitly, for a future caller:** the
+   `EqualOrExceedsDoubleLocationHitPoints` band fires at **≥2×**, matching the printed section
+   heading verbatim ("Damage Equals or Exceeds Double the Location's Hit Points," pp.156-157). But
+   that section's *head/chest/abdomen* consequence (unconsciousness and bleeding) is worded in the
+   body text as **"more than twice"** (Ch 6, p.157) — i.e. **>2×**, not ≥2× like the limb
+   consequence in the same section ("cannot take more than twice the possible points of damage...
+   from a single blow"), which is itself worded as a cap at exactly twice, not a strict ">2×"
+   trigger. A caller wiring the head/chest/abdomen debilitating effect must
+   not fire it at exactly 2×; the band only tells the caller which printed section applies, not
+   which strict/non-strict comparison that section's specific consequence uses. No behavioral
+   change follows from this in the resolver itself — `HitLocationDamageBand`'s doc comment now
+   states both readings so a future caller does not conflate them.
 
 ### The falling exception — sourced
 

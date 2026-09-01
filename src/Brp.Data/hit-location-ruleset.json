@@ -55,7 +55,7 @@
     "chestNumerator": 4,
     "chestDenominator": 10,
     "armDivisor": 4,
-    "source": "Ch 6, Hit Points by Hit Location (p.14): 'Leg, Abdomen, Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit points.' Rounded up."
+    "source": "Ch 2: Characters, Hit Points by Hit Location (p.14): 'Leg, Abdomen, Head: 1/3 total hit points. Chest: 4/10 total hit points. Arm: 1/4 total hit points.' Rounded up."
   },
   "limbDamageCapMultiplier": 2,
   "limbDamageCapMultiplierSource": "Ch 6, Damage Equals or Exceeds Double the Location's Hit Points (p.157): 'cannot take more than twice the possible points of damage in an arm or leg from a single blow.'"
