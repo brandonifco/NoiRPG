@@ -51,4 +51,4 @@ supersedes it — the original is not edited or deleted.
 | [0026](0026-reviewer-mechanical-read-only.md) | Verification reviewers get a constrained, mechanically-enforced read-only Bash layer | Accepted |
 | [0027](0027-adr-number-allocation.md) | ADR-number allocation is serialized at merge time, not authoring time | Accepted |
 | [0028](0028-complementary-skills-and-augments.md) | Complementary Skills and Augments are two mechanics, not one | Accepted |
-| [NNNN](NNNN-special-damage-effects.md) | Special-damage effects (Crushing stun, Impaling lodged weapon, Knockback, Bleeding, Entangling) and Fighting Defensively | Accepted |
+| [0029](0029-special-damage-effects.md) | Special-damage effects (Crushing stun, Impaling lodged weapon, Knockback, Bleeding, Entangling) and Fighting Defensively | Accepted |
