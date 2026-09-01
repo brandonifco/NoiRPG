@@ -76,8 +76,11 @@ jobs:
         if: always()
         run: |
           python3 -m pip install --quiet pyyaml
-          shopt -s nullglob
-          files=(cases/*.yaml cases/*.yml)
+          # Discover case files RECURSIVELY: the scenario route covers cases/**,
+          # so a nested case (e.g. cases/chapter-1/foo.yaml) must be validated
+          # too, not just top-level files. The name filter excludes non-YAML
+          # (e.g. cases/SCHEMA.md).
+          mapfile -t files < <(find cases -type f \( -name '*.yaml' -o -name '*.yml' \) | sort)
           if [ ${#files[@]} -eq 0 ]; then
             echo "No case files to validate."
             exit 0
