@@ -39,11 +39,17 @@ mkfield() { # name  datatype  [comma,options]
 # merged -> Done). We do NOT add a custom "Stage" field — a second workflow field
 # the automations would not touch. Verification Route mirrors tools/route.sh;
 # Agent Role mirrors the roster.
-mkfield "Layer"                       SINGLE_SELECT "L0,L1,L2,L3,L4,Orchestration"
+#
+# NOTE: field-create only runs when the field does not already exist (see
+# mkfield above), so re-running this script against an already-provisioned
+# board will NOT add these new options to an existing single-select field.
+# Add missing options to an existing board's fields via the API or the
+# project UI directly.
+mkfield "Layer"                       SINGLE_SELECT "L0,L1,L2,L3,L4,L5,Orchestration"
 mkfield "Subsystem"                   TEXT
 mkfield "Risk"                        SINGLE_SELECT "low,medium,high"
-mkfield "Verification Route"          SINGLE_SELECT "docs,tooling,rules,formulas,architecture"
-mkfield "Agent Role"                  SINGLE_SELECT "engine-dev,case-author,scope-warden,rules-conformance,design-critic,rules-extractor,codex"
+mkfield "Verification Route"          SINGLE_SELECT "docs,tooling,presentation,scenario,gameplay,rules,formulas,architecture"
+mkfield "Agent Role"                  SINGLE_SELECT "engine-dev,case-author,scope-warden,rules-conformance,design-critic,rules-extractor,orchestration-dev,codex"
 mkfield "Source-Conformance Required" SINGLE_SELECT "yes,no"
 
 echo "adding items:"
