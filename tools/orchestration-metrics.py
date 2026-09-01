@@ -284,12 +284,20 @@ def first_try_metrics(prs: list[dict], ci: dict) -> dict:
 
 
 def gate_catch_metrics(prs: list[dict], slug: str | None) -> dict:
-    """Gate catches — count `failure` conclusions for gate check-runs on PR heads.
+    """HISTORICAL-COMPAT ONLY — do not read this as describing current enforcement.
 
-    The gate-poster App and the verification-gate system it fed were removed in
-    #90/#91, so scope-warden / rules-conformance / codex-conformance /
-    architecture-review check-runs are no longer produced. This reads zero and
-    says so; the metric is retained in case gate enforcement is ever rebuilt."""
+    Gate catches — count `failure` conclusions for gate check-runs on PR heads.
+    This reads PRE-#90/#91 per-gate check-runs (scope-warden / rules-conformance /
+    codex-conformance / architecture-review posted individually by the removed
+    gate-poster App). That system is gone; nothing posts these check-runs anymore,
+    so on any current PR this reads zero — and that zero is an artifact of the
+    system's removal, NOT a measurement that verification caught nothing. Retained
+    only so a PR merged before #90/#91 can still be inspected, and clearly labeled
+    so a reader never mistakes an absent old check-run for "0 gate catches" under
+    the CURRENT architecture. For the current architecture, see
+    `agent_verification_metrics()` below, which reads the single
+    `agent-verification` commit status `tools/agent-verify.sh` posts (#131) plus
+    the canonical per-gate evidence block it writes into the PR body (#136)."""
     if not slug:
         return {"available": False, "note": "no repo slug; skipped"}
     catches = {g: 0 for g in GATE_NAMES}
@@ -337,6 +345,133 @@ def _parse_ndjson_or_list(raw):
     if isinstance(raw, dict):
         return [raw]
     return None
+
+
+# --------------------------------------------------------------------------- #
+# CURRENT architecture: the single `agent-verification` commit status
+# (tools/agent-verify.sh, #131) plus the canonical per-gate evidence block it
+# writes into the PR body (#136). This is what actually gates merges today.
+# --------------------------------------------------------------------------- #
+EVIDENCE_BLOCK_RE = re.compile(
+    r"<!--\s*agent-verification:start\s*-->(.*?)<!--\s*agent-verification:end\s*-->", re.S)
+GATE_ROW_RE = re.compile(r"^\|\s*`([^`]+)`\s*\|\s*([a-z]+)\s*\|\s*$", re.M)
+ROUTE_IN_EVIDENCE_RE = re.compile(r"\[route:\s*([^\]]+)\]")
+
+
+def parse_evidence_block(body: str | None) -> dict | None:
+    """Parse the canonical per-gate evidence block agent-verify.sh --evidence
+    writes into the PR body (schema: docs/orchestration/agent-verification.md).
+    Returns {"gates": {name: state}, "route": str|None} or None if absent."""
+    m = EVIDENCE_BLOCK_RE.search(body or "")
+    if not m:
+        return None
+    block = m.group(1)
+    gates = {name: state for name, state in GATE_ROW_RE.findall(block)}
+    if not gates:
+        return None
+    rm = ROUTE_IN_EVIDENCE_RE.search(block)
+    return {"gates": gates, "route": rm.group(1) if rm else None}
+
+
+def agent_verification_metrics(prs: list[dict], slug: str | None) -> dict:
+    """The CURRENT enforcement architecture: read the `agent-verification` commit
+    status on each PR's head SHA (posted by tools/agent-verify.sh --post, #131),
+    and the canonical per-gate evidence block from the PR body (#136) where the
+    PR carries one. A PR with neither predates #131/#136, or never had
+    agent-verify.sh run on it — that is reported as "no evidence", never folded
+    into a "0 gate catches" claim the way the removed check-run system was."""
+    if not slug:
+        return {"available": False, "note": "no repo slug; skipped"}
+    inspected = 0
+    with_status = 0
+    with_evidence = 0
+    status_states: dict[str, int] = {}
+    route_counts: dict[str, int] = {}
+    gate_seen: dict[str, int] = {}
+    gate_pass: dict[str, int] = {}
+    rows = []
+    for p in prs:
+        inspected += 1
+        head = gh_json(["pr", "view", str(p["number"]), "--json", "headRefOid"])
+        sha = head.get("headRefOid") if isinstance(head, dict) else None
+        state = None
+        if sha:
+            status = gh_json(["api", f"repos/{slug}/commits/{sha}/status"])
+            if isinstance(status, dict):
+                for s in status.get("statuses", []):
+                    if s.get("context") == "agent-verification":
+                        state = s.get("state")
+                        break
+        if state:
+            with_status += 1
+            status_states[state] = status_states.get(state, 0) + 1
+        evidence = parse_evidence_block(p.get("body"))
+        route = None
+        if evidence:
+            with_evidence += 1
+            route = evidence.get("route")
+            if route:
+                route_counts[route] = route_counts.get(route, 0) + 1
+            for g, st in evidence["gates"].items():
+                gate_seen[g] = gate_seen.get(g, 0) + 1
+                if st == "pass":
+                    gate_pass[g] = gate_pass.get(g, 0) + 1
+        rows.append({
+            "number": p["number"], "head_sha": sha, "status_state": state,
+            "evidence_gates": evidence["gates"] if evidence else None,
+            "route": route,
+        })
+    return {
+        "available": True,
+        "prs_inspected": inspected,
+        "prs_with_status": with_status,
+        "prs_with_evidence": with_evidence,
+        "status_states": status_states,
+        "route_distribution": route_counts,
+        "gate_seen": gate_seen,
+        "gate_pass": gate_pass,
+        "per_pr": rows,
+        "note": ("reads the CURRENT architecture: the single `agent-verification` "
+                 "commit status (#131) and the canonical per-gate evidence block in "
+                 "the PR body (#136); a PR with neither predates that machinery — "
+                 "it is not evidence of a verification failure"),
+    }
+
+
+def review_scope_metrics(av: dict) -> dict:
+    """% of PRs needing semantic AI review (evidence's gate set includes at least
+    one gate beyond `ci`) vs % with zero AI verification beyond implementation
+    (evidence present but only `ci` was required), and the Codex invocation rate
+    (fraction of evidenced PRs whose required gates include codex-conformance).
+    Computed only over PRs that actually carry an evidence block — never guessed
+    for PRs that predate it."""
+    rows = [r for r in (av.get("per_pr") or []) if r.get("evidence_gates")]
+    if not rows:
+        return {"available": False, "note": "no inspected PR carries an agent-verification evidence block"}
+    needing_semantic = 0
+    zero_ai = 0
+    codex_required = 0
+    for r in rows:
+        gates = r["evidence_gates"]
+        non_ci = [g for g in gates if g != "ci"]
+        if non_ci:
+            needing_semantic += 1
+        else:
+            zero_ai += 1
+        if "codex-conformance" in gates:
+            codex_required += 1
+    n = len(rows)
+    return {
+        "available": True,
+        "n": n,
+        "pct_needing_semantic_review": needing_semantic / n * 100,
+        "pct_zero_ai_verification": zero_ai / n * 100,
+        "codex_invocation_rate": codex_required / n,
+        "note": ("gate set beyond `ci` in the evidence block = semantic AI review "
+                 "required (scope-warden/rules-conformance/codex-conformance/"
+                 "architecture-review); denominator is PRs with an evidence block, "
+                 "not all inspected PRs"),
+    }
 
 
 # --------------------------------------------------------------------------- #
@@ -399,23 +534,117 @@ def cost_metrics() -> dict:
     }
 
 
+def job_telemetry_metrics() -> dict:
+    """Briefing-efficiency and build/verify/rework telemetry from jobs.csv.
+
+    Computed only where real (non-NI) numbers exist — never fabricated. Skips
+    tokens_R/A/H and cost_usd entirely (still NI-driven, see the ledger README's
+    coverage-gap list); does not attempt to reconstruct them."""
+    jobs = _read_csv(JOBS_CSV)
+    if jobs is None:
+        return {"available": False, "note": f"{JOBS_CSV.relative_to(ROOT)} missing"}
+
+    PHASES = ("build", "verify", "rework")
+    phase_tokens = {p: 0 for p in PHASES}
+    phase_jobs = {p: 0 for p in PHASES}
+    tokens_by_issue: dict[str, int] = {}
+    tool_uses: list[int] = []
+    discovery_calls: list[int] = []
+    codex_jobs = 0
+    verify_tokens_total = 0
+    confirmed_defects_total = 0
+
+    for row in jobs:
+        issue = (row.get("issue") or "?").strip() or "?"
+        phase = (row.get("phase") or "").strip()
+        tok = _to_int(row.get("tokens_total"))
+        tu = _to_int(row.get("tool_uses"))
+        dc = _to_int(row.get("discovery_calls"))
+        role = (row.get("agent_role") or "").lower()
+        defects = _to_int(row.get("defects_found")) or 0
+        fps = _to_int(row.get("false_positives")) or 0
+
+        if tok is not None:
+            tokens_by_issue[issue] = tokens_by_issue.get(issue, 0) + tok
+            if phase in phase_tokens:
+                phase_tokens[phase] += tok
+            if phase == "verify":
+                verify_tokens_total += tok
+        if phase in phase_jobs:
+            phase_jobs[phase] += 1
+        if tu is not None:
+            tool_uses.append(tu)
+        if dc is not None:
+            discovery_calls.append(dc)
+        if "codex" in role:
+            codex_jobs += 1
+        confirmed_defects_total += max(defects - fps, 0)
+
+    total_phase_tokens = sum(phase_tokens.values())
+    proportions = {
+        p: (phase_tokens[p] / total_phase_tokens) if total_phase_tokens else None
+        for p in PHASES
+    }
+    return {
+        "available": True,
+        "total_jobs": len(jobs),
+        "tokens_per_merged_issue": summarize(list(tokens_by_issue.values())),
+        "phase_tokens": phase_tokens,
+        "phase_jobs": phase_jobs,
+        "phase_proportions": proportions,
+        "median_tool_uses": statistics.median(tool_uses) if tool_uses else None,
+        "tool_uses_n": len(tool_uses),
+        "median_discovery_calls": statistics.median(discovery_calls) if discovery_calls else None,
+        "discovery_calls_n": len(discovery_calls),
+        "codex_invocation_rate_ledger": (codex_jobs / len(jobs)) if jobs else None,
+        "verification_tokens_per_confirmed_defect": (
+            (verify_tokens_total / confirmed_defects_total) if confirmed_defects_total else None
+        ),
+        "note": ("tokens_R/A/H and cost_usd remain NI and are not fabricated here; "
+                 "median_tool_uses/median_discovery_calls only average rows with a "
+                 "real (non-NI) value — discovery_calls is NI for every job logged "
+                 "before #141"),
+    }
+
+
 def findings_metrics() -> dict:
     findings = _read_csv(FINDINGS_CSV)
     if findings is None:
         return {"available": False, "note": f"{FINDINGS_CSV.relative_to(ROOT)} missing"}
     by_stage: dict[str, int] = {}
+    false_pos_by_stage: dict[str, int] = {}
     false_pos = 0
+    codex_confirmed = 0
+    claude_confirmed = 0
     for row in findings:
         stage = row.get("detecting_stage") or "?"
         by_stage[stage] = by_stage.get(stage, 0) + 1
         disp = (row.get("final_disposition") or "").lower()
-        if "false positive" in disp or "false-positive" in disp:
+        is_fp = "false positive" in disp or "false-positive" in disp
+        if is_fp:
             false_pos += 1
+            false_pos_by_stage[stage] = false_pos_by_stage.get(stage, 0) + 1
+        else:
+            if "codex" in stage.lower():
+                codex_confirmed += 1
+            else:
+                claude_confirmed += 1
+    confirmed_by_stage = {
+        s: by_stage[s] - false_pos_by_stage.get(s, 0) for s in by_stage
+    }
     return {
         "available": True,
         "total_findings": len(findings),
         "by_stage": by_stage,
         "false_positives": false_pos,
+        "false_positives_by_stage": false_pos_by_stage,
+        "confirmed_by_stage": confirmed_by_stage,
+        "codex_confirmed_defects": codex_confirmed,
+        "claude_conformance_confirmed_defects": claude_confirmed,
+        "note": ("defect yield split by detecting_stage: any stage name containing "
+                 "'codex' counts toward codex_confirmed_defects, everything else "
+                 "toward claude_conformance_confirmed_defects; both read 0 rather "
+                 "than NI when findings.csv genuinely has no rows for that source"),
     }
 
 
@@ -487,8 +716,11 @@ def collect(limit: int, since: datetime | None) -> dict:
     data["ready_to_pr"] = ready_to_pr_metrics(prs, slug)
     data["ci"] = ci
     data["first_try"] = first_try_metrics(prs, ci)
-    data["gate_catches"] = gate_catch_metrics(prs, slug)
+    data["agent_verification"] = agent_verification_metrics(prs, slug)  # CURRENT architecture
+    data["review_scope"] = review_scope_metrics(data["agent_verification"])
+    data["gate_catches"] = gate_catch_metrics(prs, slug)  # HISTORICAL-COMPAT — see docstring
     data["cost"] = cost_metrics()
+    data["job_telemetry"] = job_telemetry_metrics()
     data["findings"] = findings_metrics()
     data["human_attention"] = human_attention_metrics(prs, data["cost"])
     return data
@@ -553,8 +785,42 @@ def render_markdown(d: dict) -> str:
         L.append(f"- **CI failure rate**: {NOT_TRACKED} — {ci.get('note')}")
     L.append("")
 
-    # 3. Verification effectiveness.
-    L.append("## Verification effectiveness (gate catches)")
+    # 3a. Verification effectiveness — CURRENT architecture.
+    L.append("## Verification effectiveness — current architecture (`agent-verification`)")
+    av = d["agent_verification"]
+    if av.get("available"):
+        L.append(f"- Inspected {av['prs_inspected']} PR heads: "
+                 f"{av['prs_with_status']} carry an `agent-verification` commit status, "
+                 f"{av['prs_with_evidence']} carry the canonical per-gate evidence block.")
+        if av["status_states"]:
+            L.append("- Status states: " + ", ".join(
+                f"`{k}`={v}" for k, v in sorted(av["status_states"].items())))
+        if av["route_distribution"]:
+            L.append("- Route distribution: " + ", ".join(
+                f"`{k}`={v}" for k, v in sorted(av["route_distribution"].items())))
+        if av["gate_seen"]:
+            L.append("- Per-gate pass rate (from evidence blocks):")
+            for g in sorted(av["gate_seen"]):
+                L.append(f"  - `{g}`: {av['gate_pass'].get(g, 0)}/{av['gate_seen'][g]} pass")
+        L.append(f"- _{av['note']}._")
+        rs = d["review_scope"]
+        if rs.get("available"):
+            L.append(f"- **% PRs needing semantic AI review:** {rs['pct_needing_semantic_review']:.1f}% "
+                     f"(n={rs['n']})")
+            L.append(f"- **% PRs with zero AI verification beyond implementation:** "
+                     f"{rs['pct_zero_ai_verification']:.1f}%")
+            L.append(f"- **Codex invocation rate (evidence-based):** {rs['codex_invocation_rate']:.2f}")
+        else:
+            L.append(f"- **% PRs needing semantic AI review / zero AI verification:** "
+                     f"{NOT_TRACKED} — {rs.get('note')}")
+    else:
+        L.append(f"- {NOT_TRACKED} — {av.get('note')}")
+    L.append("")
+
+    # 3b. Verification effectiveness — HISTORICAL, pre-#90/#91 check-runs.
+    L.append("## Verification effectiveness — HISTORICAL (pre-#90/#91 check-runs)")
+    L.append("_Not the current architecture — see the section above. Retained only for PRs "
+             "that predate #90/#91; do not read a 0 here as \"verification caught nothing\"._")
     gc = d["gate_catches"]
     if gc.get("available") and gc.get("gate_check_runs_present"):
         L.append(f"Gate `failure` conclusions across {gc['prs_inspected']} inspected PR heads:")
@@ -587,12 +853,37 @@ def render_markdown(d: dict) -> str:
     else:
         L.append(f"- {NOT_TRACKED} — {cost.get('note')}")
     L.append("")
+
+    # Job telemetry — briefing efficiency + build/verify/rework split.
+    L.append("## Job telemetry (briefing efficiency, build/verify/rework)")
+    jt = d["job_telemetry"]
+    if jt.get("available"):
+        tpi = jt["tokens_per_merged_issue"]
+        L.append(f"- **Agent tokens per Issue:** {_stat_line(tpi, lambda v: f'{v:,.0f}')}")
+        L.append("- **Build/verify/rework token proportions:** " + ", ".join(
+            f"{p}={jt['phase_proportions'][p] * 100:.1f}%" if jt['phase_proportions'][p] is not None
+            else f"{p}={NOT_TRACKED}" for p in ("build", "verify", "rework")))
+        mtu = jt["median_tool_uses"]
+        L.append(f"- **Median tool uses/job:** " + (f"{mtu:.0f} (n={jt['tool_uses_n']})" if mtu is not None else NOT_TRACKED))
+        mdc = jt["median_discovery_calls"]
+        L.append(f"- **Median discovery calls/job:** " + (f"{mdc:.0f} (n={jt['discovery_calls_n']})" if mdc is not None else NOT_TRACKED))
+        civr = jt["codex_invocation_rate_ledger"]
+        L.append(f"- **Codex invocation rate (ledger jobs):** " + (f"{civr:.2f}" if civr is not None else NOT_TRACKED))
+        vtpd = jt["verification_tokens_per_confirmed_defect"]
+        L.append(f"- **Verification tokens per confirmed defect:** " + (f"{vtpd:,.0f}" if vtpd is not None else NOT_TRACKED))
+        L.append(f"- _{jt['note']}._")
+    else:
+        L.append(f"- {NOT_TRACKED} — {jt.get('note')}")
+    L.append("")
+
     fnd = d["findings"]
     if fnd.get("available"):
         L.append(f"- **Findings logged:** {fnd['total_findings']} "
                  f"(false positives: {fnd['false_positives']})")
         for stage, n in sorted(fnd["by_stage"].items()):
-            L.append(f"  - `{stage}`: {n}")
+            L.append(f"  - `{stage}`: {n} (confirmed: {fnd['confirmed_by_stage'].get(stage, 0)})")
+        L.append(f"- **Codex-confirmed defects:** {fnd['codex_confirmed_defects']} · "
+                 f"**Claude-conformance-confirmed defects:** {fnd['claude_conformance_confirmed_defects']}")
     else:
         L.append(f"- **Findings:** {NOT_TRACKED} — {fnd.get('note')}")
     L.append("")

@@ -62,18 +62,37 @@ before its first CI run, or reworked purely in the working tree, reads as first-
 branch with no CI run inside the fetched window is reported as **undetermined**, not
 first-try, so an aged-out window can't inflate the success count.
 
-### Verification effectiveness (gate catches)
+### Verification effectiveness — current architecture (`agent-verification`)
 
 | Metric | Source | Status |
 |---|---|---|
-| Gate `failure` counts | `check_run` conclusions on each merged PR's head commit, for `scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review` | **exact when present** |
+| `agent-verification` commit-status state per PR head | `gh api repos/{slug}/commits/{sha}/status`, context `agent-verification` (posted by `tools/agent-verify.sh --post`, #131) | **exact when present** |
+| Per-gate pass/fail | the canonical evidence block `tools/agent-verify.sh --evidence` writes into the PR body (#136), parsed from its `<!-- agent-verification:start/end -->` markers | **exact when present** |
+| Route distribution | the `[route: ...]` tag inside that same evidence block | **exact when present** |
+| % PRs needing semantic AI review / % PRs with zero AI verification beyond `ci` | evidence block's gate set: any gate besides `ci` = semantic review required | **exact, over PRs carrying an evidence block** |
+| Codex invocation rate | fraction of evidenced PRs whose required gates include `codex-conformance` | **exact, over PRs carrying an evidence block** |
+
+This is what actually gates a merge today (see `docs/orchestration/agent-verification.md`).
+A PR with neither a status nor an evidence block predates #131/#136, or never had
+`agent-verify.sh` run against it — that is reported plainly, never folded into a
+count that implies verification failed.
+
+### Verification effectiveness — HISTORICAL (pre-#90/#91 check-runs)
+
+| Metric | Source | Status |
+|---|---|---|
+| Gate `failure` counts | `check_run` conclusions on each merged PR's head commit, for `scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review` | **HISTORICAL-COMPAT** |
 
 These check-runs were posted by the gate-poster App, which was **removed in #90/#91**
 along with the rest of the verification-gate system (it never posted a result). No gate
-check-runs are produced on PR heads, so this section reports **0 catches** — read it as
-*not instrumented*, never as a claim that verification caught nothing. The ledger's
-`findings.csv` records the catches the conformance stages actually made; see Cost below.
-`orchestration-metrics.py` still queries for these names and degrades to the same note.
+check-runs are produced on PR heads under the current architecture, so this section
+reports **0 catches on any current PR** — that zero is an artifact of the old system's
+removal, **not** a measurement that the current architecture's verification caught
+nothing. Read the section above for the current architecture instead. This one is kept
+only so a PR merged before #90/#91 can still be inspected; `orchestration-metrics.py`
+labels its function `gate_catch_metrics` as HISTORICAL-COMPAT and its markdown section
+header says so explicitly. The ledger's `findings.csv` records the catches the
+conformance stages actually made; see Cost / Job telemetry below.
 
 ### Cost (agent tokens)
 
@@ -86,6 +105,22 @@ Only **output-token totals** are available. The R/A/H decomposition (`tokens_R/A
 `cost_usd` are `NI` in the ledger — see the ledger
 [`README.md`](../agent-team-ledger/README.md) gap list. The tool reports the totals it has
 and repeats the `NI` caveat rather than implying a full cost accounting exists.
+
+### Job telemetry (briefing efficiency, build/verify/rework)
+
+| Metric | Source | Status |
+|---|---|---|
+| Agent tokens per merged Issue | `jobs.csv` `tokens_total` grouped by `issue` | **exact for logged jobs** |
+| Build/verify/rework token proportions | `jobs.csv` `phase` × `tokens_total` | **exact for logged jobs** |
+| Median tool uses / job | `jobs.csv` `tool_uses` | **exact for logged jobs** |
+| Median discovery calls / job | `jobs.csv` `discovery_calls` (added #141) | **exact where measured — `NI` for every job logged before #141** |
+| Codex invocation rate (ledger) | share of `jobs.csv` rows whose `agent_role` names Codex | **exact for logged jobs** |
+| Verification tokens per confirmed defect | verify-phase `tokens_total` ÷ Σ(`defects_found` − `false_positives`) | **exact for logged jobs** |
+
+`discovery_calls` counts only **broad** context-discovery actions (repo-wide grep/glob/
+history search) — not every read/test/tool call — and is never reconstructed
+retroactively; see the ledger README. `packet_type` and `prompt_hash` (also added #141)
+are dispatch metadata, not yet surfaced as a metric on their own.
 
 ### Human attention — the headline
 

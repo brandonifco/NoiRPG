@@ -20,6 +20,10 @@
 #   * `human` refuses an all-NI row: at least one of --human-minutes /
 #     --interventions must be a real measurement. Do NOT commit fabricated rows.
 #   * Values are CSV-escaped; the row is appended atomically after a header check.
+#   * --discovery-calls counts only BROAD context-discovery actions (repo-wide
+#     grep/glob/history search, or a Task-brief "BRIEF DEFICIENCY" scan) — never
+#     every read/test/tool call. Leave it `NI` rather than guessing; it is never
+#     reconstructed retroactively for a job that did not measure it live.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
@@ -30,10 +34,14 @@ HUMAN_CSV="$LEDGER/human-minutes.csv"
 die() { echo "ledger-log: $*" >&2; exit 2; }
 
 # The column order is the CONTRACT with jobs.csv / metrics.py — do not reorder.
+# packet_type/prompt_hash/discovery_calls were added in #141 (before `outcome`,
+# which stays last as the free-text tail); every pre-#141 row was migrated to
+# this column count with `NI` in the three new fields, never fabricated.
 JOB_COLS=(layer issue pr seq date phase agent_role model effort risk_class
   review_layer tokens_total tokens_R tokens_A tokens_H tool_uses duration_ms
   human_minutes cost_usd commit merge_sha defects_found false_positives
-  defects_fixed deterministic_controls_added repeated_error tests_after outcome)
+  defects_fixed deterministic_controls_added repeated_error tests_after
+  packet_type prompt_hash discovery_calls outcome)
 HUMAN_COLS=(issue pr merge_sha human_minutes interventions note)
 
 # --kebab-flag -> snake_case column name.
