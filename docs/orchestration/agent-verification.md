@@ -50,19 +50,23 @@ tools/agent-verify.sh <PR#> \
   path-only route (GitHub's changed-file list) and says so — the `rules → formulas`
   content-escalation can't be seen without the diff.
 
-## Making it required (a deliberate flip)
+## Making it required (burned in, then flipped)
 
-Posting the status is safe and additive. **Requiring** it is a separate decision with
-real blast radius: once `agent-verification` is a required check, every PR blocks
-until the orchestrator has run the gates and posted the status. Do it only once the
-orchestrator reliably posts on every PR (otherwise merges hang). To require it, add
-the context to the branch ruleset's `required_status_checks` alongside
-`build-and-test` / `pr-policy` / `orchestration-policy`:
+Posting the status is safe and additive; **requiring** it is a separate decision with
+real blast radius — once `agent-verification` is a required check, every PR blocks
+until the orchestrator has run the gates and posted the status for that exact head
+SHA. Before requiring it, the status was burned in on real, normally-scoped PRs to
+confirm the orchestrator posts reliably and the aggregate behaves correctly (pending
+on missing gates, failure on a failed gate, invalidated by new commits). See
+[`agent-verification-burn-in.md`](agent-verification-burn-in.md) for that evidence.
+
+`agent-verification` is now in the `main` ruleset's `required_status_checks`,
+alongside — not instead of — `build-and-test` / `pr-policy` / `orchestration-policy`:
 
 ```bash
 # contexts must match byte-for-byte; confirm on a live PR first
 gh api repos/:owner/:repo/rulesets/<id> --jq '.rules[]|select(.type=="required_status_checks")'
 ```
 
-Until then it is an informative, non-blocking status — the enforcement half of the
-route derivation, ready to be switched on.
+A PR now merges only when all four are green for its current head SHA — the route's
+model-driven gate set is enforced, not just computed.

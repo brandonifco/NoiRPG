@@ -161,17 +161,42 @@ asymmetric floor described above.
 
 ## Enforcement
 
-Merges into `main` are gated by three required status checks — `build-and-test`,
-`pr-policy`, and `orchestration-policy` (strict policy: the branch must be current
-with `main`). The model-driven per-route gates
+Merges into `main` are gated by **four** required status checks: `build-and-test`,
+`pr-policy`, `orchestration-policy` (strict policy: the branch must be current
+with `main`), and `agent-verification`. The model-driven per-route gates
 (`scope-warden`, `rules-conformance`, `codex-conformance`, `architecture-review`)
 and the `gates-satisfied` aggregate that once combined them were removed in #90/#91
-— they never posted a result on any PR. The route table above is retained as the
-map of which review a change *should* get.
+— they never posted a result on any PR directly. The route table above is retained
+as the map of which review a change *should* get; that map is now enforced through
+`agent-verification`, not bypassed.
 
-The enforcer is now [`tools/agent-verify.sh`](../../tools/agent-verify.sh): the local
+The enforcer is [`tools/agent-verify.sh`](../../tools/agent-verify.sh): the local
 orchestrator runs the route's gates for a PR head SHA and posts a single
-`agent-verification` commit status (success only if every required gate passed). It is
-an informative, non-blocking status until deliberately added to the required set — see
-[`agent-verification.md`](agent-verification.md) for how it works and how to require it.
+`agent-verification` commit status — success only if `ci` passed *and* every other
+gate the route requires was supplied as `pass`. It is a **required** check
+alongside, not instead of, `build-and-test` / `pr-policy` / `orchestration-policy`:
+a PR needs all four green on its current head SHA to merge. See
+[`agent-verification.md`](agent-verification.md) for how the status is produced and
+[`agent-verification-burn-in.md`](agent-verification-burn-in.md) for the evidence
+behind requiring it.
+
+### Merge contract
+
+A PR into `main` is mergeable only when all of the following hold on its current
+head SHA at once:
+
+1. `pr-policy` is green (a real `Closes #<n>` / `Fixes #<n>`, and the PR body meets
+   policy).
+2. `orchestration-policy` is green (branch is up to date with `main` under the
+   ruleset's strict-status policy).
+3. `build-and-test` is green (build, test, format CI).
+4. Review conversations are resolved.
+5. `agent-verification` is a success for the exact current head SHA — i.e. every
+   gate `tools/route.sh` derives for this change's route was supplied as `pass`
+   (see the route table above), not just CI.
+
+There is no separate, invented human-approval step in the contract — `pr-policy`,
+`orchestration-policy`, and `build-and-test` are unchanged and independently
+required; `agent-verification` adds the route's model-driven gate set as a fourth,
+SHA-bound requirement rather than replacing any of the first three.
 
