@@ -16,6 +16,14 @@ reports the range).
     tools/source-slice.py --pages 130-132 --layout
     tools/source-slice.py --pages 130 --bbox
     tools/source-slice.py --pages 5-9 --output /tmp/packet.txt
+    tools/source-slice.py --pages 130 --expect "Hit Points by Location"
+
+`--expect <regex>` (repeatable) is an opt-in sanity check on the already-chosen
+page range, not a search feature: it does not decide which pages to slice, it
+only asserts that a regex the caller already expects to be present actually
+appears in the sliced body text. If any given pattern is missing, the tool
+exits non-zero and names the missing anchor instead of silently handing back a
+packet that does not cover what it claims to. See `docs/source-handling.md`.
 
 The source file is hardcoded. This tool NEVER accepts an arbitrary --file — the
 superseded `BRP SRD 1.0.2.pdf` must never be reachable through this path. Before
@@ -149,6 +157,29 @@ def run_pdftotext(first: int, last: int, mode: str) -> str:
     return result.stdout
 
 
+def check_expected_anchors(body: str, patterns: list[str]) -> None:
+    """Raise SourceSliceError naming any --expect pattern absent from body.
+
+    This is a presence check on the already-sliced text, not a search: it does
+    not locate pages or sections, it only confirms the page range the caller
+    already chose actually contains what they expect it to.
+    """
+    missing = []
+    for pattern in patterns:
+        try:
+            found = re.search(pattern, body) is not None
+        except re.error as e:
+            raise SourceSliceError(f"invalid --expect regex {pattern!r}: {e}") from e
+        if not found:
+            missing.append(pattern)
+    if missing:
+        joined = "\n  - ".join(missing)
+        raise SourceSliceError(
+            "sliced text is missing expected anchor(s) — the page range may be "
+            f"wrong or truncated:\n  - {joined}"
+        )
+
+
 def build_packet(pages_spec: str, first: int, last: int, mode: str, pinned_hash: str, body: str) -> str:
     header = (
         "# BRP source packet\n"
@@ -172,6 +203,14 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--layout", action="store_true", help="preserve column/table layout (pdftotext -layout)")
     parser.add_argument("--bbox", action="store_true", help="emit bounding-box glyph data (pdftotext -bbox)")
     parser.add_argument("--output", metavar="FILE", help="write the packet to FILE instead of stdout")
+    parser.add_argument(
+        "--expect",
+        metavar="REGEX",
+        action="append",
+        default=[],
+        help="regex that must be present in the sliced text (repeatable); "
+        "fails loudly if any are absent (opt-in citation sanity check)",
+    )
     args = parser.parse_args(argv)
 
     try:
@@ -179,6 +218,8 @@ def main(argv: list[str] | None = None) -> int:
         pinned_hash = verify_source()
         mode = extract_mode(args.layout, args.bbox)
         body = run_pdftotext(first, last, mode)
+        if args.expect:
+            check_expected_anchors(body, args.expect)
         packet = build_packet(args.pages, first, last, mode, pinned_hash, body)
     except SourceSliceError as e:
         print(f"source-slice: {e}", file=sys.stderr)

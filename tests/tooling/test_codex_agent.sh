@@ -10,6 +10,9 @@
 #   - `review` includes the REVIEW packet content
 #   - `simcheck` takes --packet and includes its content
 #   - a prompt-sha256 is always printed
+#   - `--check` / `preflight` report Codex availability via CODEX_BIN (never
+#     `which codex`): exit 0 when present, non-zero with a clear message when
+#     absent, honoring a CODEX_BIN override
 #
 # Run directly:
 #   tests/tooling/test_codex_agent.sh
@@ -133,6 +136,38 @@ OUT="$(DRY_RUN=1 CODEX_BIN="$WORKDIR/no-such-codex-binary" "$SCRIPT" simcheck --
 set -e
 [ "$RC" -eq 0 ] && ok "DRY_RUN succeeds even with a nonexistent CODEX_BIN (never invoked)" || \
   fail "DRY_RUN should succeed without a real codex binary (rc=$RC): $OUT"
+
+# ---------------------------------------------------------------------------
+# 7. --check / preflight: reports availability via CODEX_BIN, never `which`.
+# ---------------------------------------------------------------------------
+STUB_CODEX="$WORKDIR/stub-codex"
+cat > "$STUB_CODEX" <<'EOF'
+#!/usr/bin/env bash
+echo "stub codex"
+EOF
+chmod +x "$STUB_CODEX"
+
+set +e
+OUT="$(CODEX_BIN="$STUB_CODEX" "$SCRIPT" --check 2>&1)"; RC=$?
+set -e
+[ "$RC" -eq 0 ] && ok "--check: present CODEX_BIN -> exit 0" || fail "--check: present CODEX_BIN should exit 0 (rc=$RC): $OUT"
+assert_contains "--check: present CODEX_BIN reports the path" "$OUT" "$STUB_CODEX"
+
+set +e
+OUT="$(CODEX_BIN="$STUB_CODEX" "$SCRIPT" preflight 2>&1)"; RC=$?
+set -e
+[ "$RC" -eq 0 ] && ok "preflight: present CODEX_BIN -> exit 0" || fail "preflight: present CODEX_BIN should exit 0 (rc=$RC): $OUT"
+
+set +e
+OUT="$(CODEX_BIN=/nonexistent "$SCRIPT" --check 2>&1)"; RC=$?
+set -e
+[ "$RC" -ne 0 ] && ok "--check: absent CODEX_BIN -> nonzero exit" || fail "--check: absent CODEX_BIN should fail (rc=$RC): $OUT"
+assert_contains "--check: absent CODEX_BIN reports a clear message" "$OUT" "/nonexistent"
+
+set +e
+OUT="$(CODEX_BIN=/nonexistent "$SCRIPT" preflight 2>&1)"; RC=$?
+set -e
+[ "$RC" -ne 0 ] && ok "preflight: absent CODEX_BIN -> nonzero exit" || fail "preflight: absent CODEX_BIN should fail (rc=$RC): $OUT"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
