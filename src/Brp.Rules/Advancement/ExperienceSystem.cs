@@ -67,7 +67,7 @@ public static class ExperienceSystem
     /// and raises the rating by a further die roll if the roll beats the success threshold.
     /// The experience check is cleared either way. Returns the points gained (0 if none).
     /// <para>
-    /// Ch 5 p.138, "Exceeding 100% in a Skill": once a skill is at or above 100%, an
+    /// Ch 5 p.139, "Exceeding 100% in a Skill": once a skill is at or above 100%, an
     /// unmodified d100 can never again roll "higher than your character's current skill
     /// rating" -- the printed rating has outrun the die. The book replaces the ordinary
     /// comparison with a fixed threshold at that point: "you must roll over 100 on D100 ...
@@ -88,7 +88,11 @@ public static class ExperienceSystem
     /// </para>
     /// </summary>
     public static int ImprovementRoll(
-        CharacterSkill skill, IEntropySource entropy, int gainDieSides = 6, int experienceBonus = 0)
+        CharacterSkill skill,
+        IEntropySource entropy,
+        int gainDieSides = 6,
+        int experienceBonus = 0,
+        bool useDefaultGain = false)
     {
         ArgumentNullException.ThrowIfNull(skill);
         ArgumentNullException.ThrowIfNull(entropy);
@@ -112,10 +116,32 @@ public static class ExperienceSystem
             return 0;
         }
 
-        var gain = entropy.NextDie(gainDieSides);
+        // Ch 5 p.138: "If you do not feel lucky rolling for a skill increase, you can
+        // choose to add a default of +3 to the skill rating instead of rolling. This must
+        // be announced before rolling." `useDefaultGain` is that announcement -- the
+        // caller decides before the roll above is even made, matching the book's
+        // ordering, even though the branch below only needs to know it after success is
+        // determined. No entropy draw happens for the gain when the default is taken, so a
+        // scripted <see cref="IEntropySource"/> with only the percentile roll queued still
+        // works (see the deterministic tests for this option).
+        var gain = useDefaultGain ? DefaultGain(gainDieSides) : entropy.NextDie(gainDieSides);
         skill.Improve(gain);
         return gain;
     }
+
+    /// <summary>
+    /// Ch 5 p.138: "If the die type for the skill increase is higher than 1D6, increase it
+    /// to half the dice maximum -- for 1D8 it's +4, and for 1D10 it's +5." The book's own
+    /// examples are exactly half of the die's maximum (1D6 to +3 is the un-quoted base
+    /// case implied by the same sentence), so this reads as a formula over
+    /// <paramref name="gainDieSides"/> rather than a lookup table over a fixed set of dice
+    /// -- the campaign-level dice already vary via <see cref="ImprovementRoll"/>'s own
+    /// <c>gainDieSides</c> parameter (p.138, "epic" 1D8 / "superhuman" 1D10), and this
+    /// default tracks whichever one a table is using. Only defined for the book's own even
+    /// gain dice (1D6/1D8/1D10) -- the book names no odd gain die, so an odd
+    /// <paramref name="gainDieSides"/> is not a case this formula needs to round for.
+    /// </summary>
+    public static int DefaultGain(int gainDieSides) => gainDieSides / 2;
 
     /// <summary>
     /// Resolves the improvement roll for every skill on <paramref name="character"/> that
@@ -132,7 +158,11 @@ public static class ExperienceSystem
     /// </para>
     /// </summary>
     public static IReadOnlyDictionary<SkillId, int> CloseCase(
-        Character character, IEntropySource entropy, int gainDieSides = 6, bool includeExperienceBonus = true)
+        Character character,
+        IEntropySource entropy,
+        int gainDieSides = 6,
+        bool includeExperienceBonus = true,
+        bool useDefaultGain = false)
     {
         ArgumentNullException.ThrowIfNull(character);
         ArgumentNullException.ThrowIfNull(entropy);
@@ -146,7 +176,7 @@ public static class ExperienceSystem
                 continue;
             }
 
-            results[id] = ImprovementRoll(skill, entropy, gainDieSides, bonus);
+            results[id] = ImprovementRoll(skill, entropy, gainDieSides, bonus, useDefaultGain);
         }
 
         return results;
@@ -207,5 +237,81 @@ public static class ExperienceSystem
         }
 
         return gain;
+    }
+
+    /// <summary>
+    /// Ch 5 pp.138-139, "Skill Training and Research" / "Researching": self-directed
+    /// study -- "self-help or self-tutoring: delving into ancient tomes, scouring
+    /// databases; disciplined exercise; holographic instructors" -- costs the same time as
+    /// <see cref="Teach"/> (p.139: "Dedicated research takes as much time as training but
+    /// does not incur the same cost"), which this engine does not model (no downtime clock
+    /// here); what differs mechanically is the roll. Research uses an ordinary experience
+    /// roll, not a teacher's skill roll: "After the required time is spent, make an
+    /// experience roll as normal" (p.139), i.e. the same d100-plus-experience-bonus test
+    /// against the current rating (or the at-or-above-100% threshold) as
+    /// <see cref="ImprovementRoll"/>, with no teacher and therefore no fumble branch.
+    /// <para>
+    /// On success, "increase the skill by 1D6-2 points, or choose to add 2 to the current
+    /// skill rating" (p.139) -- <paramref name="useDefaultGain"/> is that choice,
+    /// announced before rolling exactly as the general default-gain option is (see
+    /// <see cref="DefaultGain"/>), except research's flat alternative is a book-printed 2,
+    /// not half of a die maximum, and unlike <see cref="ImprovementRoll"/>'s gain die,
+    /// research's die is not scaled for epic/superhuman campaigns -- the book prints it as
+    /// a fixed "1D6-2" with no such clause. Both numbers therefore come from
+    /// <paramref name="ruleset"/> (<see cref="ExperienceRuleset.ResearchGainDieSides"/>,
+    /// <see cref="ExperienceRuleset.ResearchGainOffset"/>,
+    /// <see cref="ExperienceRuleset.ResearchDefaultGain"/> -- AGENTS.md invariant 7: rules
+    /// values are data, not caller-tunable parameters) rather than method parameters the
+    /// way <see cref="Teach"/>'s gain/fumble dice are: a caller must not be able to pass,
+    /// say, <c>defaultGain: 3</c> and get a result the book does not allow. Unlike
+    /// <see cref="Teach"/>, research has no training-cap ceiling: "Unlike training,
+    /// researching allows your character to improve more than 75% in a skill" (p.139), so
+    /// it never reads <see cref="ExperienceRuleset.TrainingCapPercent"/>.
+    /// </para>
+    /// <para>
+    /// House rule (owner-approved; the book is silent on this case): a negative roll
+    /// (1D6-2 on a natural 1) is passed through to <see cref="CharacterSkill.Improve(int)"/>
+    /// unchanged, which floors any negative amount to no change rather than lowering the
+    /// skill. The book prints "<em>increase</em> the skill by 1D6-2 points" -- an increase
+    /// cannot itself be negative -- and elsewhere, when it does mean a decrease, it says so
+    /// explicitly: a teaching fumble "reduc[es] the skill by -1D3" (p.139). The absence of
+    /// that "reducing" language for research is read here as deliberate: research can fail
+    /// to help (gain 0), but unlike a bad teacher, self-study is never worse than doing
+    /// nothing.
+    /// </para>
+    /// <para>
+    /// Returns the change actually applied to the skill's rating (0 on a failed experience
+    /// roll or a negative 1D6-2 draw).
+    /// </para>
+    /// </summary>
+    public static int Research(
+        CharacterSkill skill,
+        IEntropySource entropy,
+        ExperienceRuleset ruleset,
+        int experienceBonus = 0,
+        bool useDefaultGain = false)
+    {
+        ArgumentNullException.ThrowIfNull(skill);
+        ArgumentNullException.ThrowIfNull(entropy);
+        ArgumentNullException.ThrowIfNull(ruleset);
+
+        var roll = entropy.NextD100() + experienceBonus;
+
+        // Same threshold rule as ImprovementRoll (Ch 5, "Making an Experience Roll" (p.138)
+        // and "Exceeding 100% in a Skill" (p.139)) -- research says only "make an
+        // experience roll as normal," it does not restate the rule.
+        var cappedThreshold = Math.Min(skill.CurrentRating, 100);
+        var succeeded = cappedThreshold >= 100 ? roll >= 100 : roll > cappedThreshold;
+        if (!succeeded)
+        {
+            return 0;
+        }
+
+        var before = skill.CurrentRating;
+        var gain = useDefaultGain
+            ? ruleset.ResearchDefaultGain
+            : entropy.NextDie(ruleset.ResearchGainDieSides) + ruleset.ResearchGainOffset;
+        skill.Improve(gain);
+        return skill.CurrentRating - before;
     }
 }
