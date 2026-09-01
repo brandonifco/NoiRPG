@@ -35,9 +35,37 @@ silent error would be expensive and hard to catch:
 Do not use Codex for bulk implementation, transcription, or anything a Haiku agent
 handles. It is a verification instrument, not a second workhorse.
 
-Invoke via `tools/codex-agent.sh`. Sandbox is `read-only` for every role — the
-verification agents must not be able to "fix" what they are checking. `DRY_RUN=1`
-prints the command without running it.
+## Invoking Codex
+
+There is one documented Codex path, and it is packet-first: build the bounded
+packet(s) first, then hand the file(s) to `tools/codex-agent.sh`. Codex never
+assembles its own context — no whole-repo survey, no independent page-hunting when
+a source packet is supplied, and (for `conformance`) no exposure to any other
+verifier's notes or conclusions.
+
+```bash
+# conformance — independent second verification of rules tables
+tools/agent-brief.py review <pr> > /tmp/review.md
+tools/source-slice.py --pages 130-132 --output /tmp/source.txt
+tools/codex-agent.sh conformance --review-packet /tmp/review.md --source-packet /tmp/source.txt
+
+# review — fresh-context review of a core-rules diff (the review packet already
+# carries the diff, route, and required-gate checklist)
+tools/agent-brief.py review <pr> > /tmp/review.md
+tools/codex-agent.sh review --review-packet /tmp/review.md
+
+# simcheck — independently re-deriving simulation math from a bounded packet
+tools/codex-agent.sh simcheck --packet /tmp/some-packet.txt
+
+DRY_RUN=1 tools/codex-agent.sh conformance --review-packet /tmp/review.md --source-packet /tmp/source.txt
+```
+
+Sandbox is `read-only` for every role — the verification agents must not be able to
+"fix" what they are checking, and Codex never implements. `DRY_RUN=1` prints the
+composed command and prompt (including a `prompt-sha256` of the packet content fed
+in) without invoking the real Codex binary. Set `LEDGER_LOG=1` (plus whatever of
+`ISSUE`/`PR`/`SEQ`/`LAYER`/`PHASE` are actually known) to append one job-telemetry
+row via `tools/ledger-log.sh` on a real run.
 
 ## Routing rules
 
