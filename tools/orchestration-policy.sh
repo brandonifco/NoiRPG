@@ -71,6 +71,21 @@ else
   printf '%s\n' "$refs" "$usings" | sed '/^$/d;s/^/       /'
 fi
 
+# 5. Decision-index drift guard (burn-in F9): README.md and docs/decisions/*.md
+#    must agree — no duplicate ADR numbers, no gaps, 1:1 rows-to-files.
+section "decision-index consistency (ADR drift guard)"
+ADR_CHECK=tools/adr-index-check.sh
+if [ ! -x "$ADR_CHECK" ]; then
+  bad "missing or non-executable $ADR_CHECK"
+else
+  if adr_out="$("$ADR_CHECK" 2>&1)"; then
+    ok "docs/decisions/README.md matches docs/decisions/*.md (no duplicates/gaps/orphans)"
+  else
+    bad "decision index drift detected:"
+    printf '%s\n' "$adr_out" | sed 's/^/       /'
+  fi
+fi
+
 section "result"
 if [ "$fail" = 0 ]; then echo "orchestration-policy: PASS"; else echo "orchestration-policy: FAIL"; fi
 exit "$fail"
