@@ -7,6 +7,10 @@ aggregator, that derivation was *computed and then ignored*: the model-driven ga
 posted nothing on a PR, so GitHub could only gate on `build-and-test`, `pr-policy`,
 and `orchestration-policy`.
 
+Codex presence (needed for the `codex-conformance` gate) is checked via
+`CODEX_BIN` — run `tools/codex-agent.sh --check` (or `preflight`) — never via
+`which codex`, which does not find it (see burn-in finding F5(a)).
+
 [`tools/agent-verify.sh`](../../tools/agent-verify.sh) closes that loop without
 rebuilding the App fan-out. The **local orchestrator** runs the route's gates for the
 PR head SHA and posts a single `agent-verification` **commit status** — success only

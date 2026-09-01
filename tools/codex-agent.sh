@@ -19,6 +19,10 @@
 #   tools/codex-agent.sh conformance --review-packet FILE --source-packet FILE
 #   tools/codex-agent.sh review      --review-packet FILE
 #   tools/codex-agent.sh simcheck    --packet FILE
+#   tools/codex-agent.sh --check
+#   tools/codex-agent.sh preflight
+#     # report whether Codex is available at CODEX_BIN (never `which codex`);
+#     # exit 0 if present, non-zero with a clear message if absent
 #   DRY_RUN=1 tools/codex-agent.sh conformance --review-packet R --source-packet S
 #     # print the composed command + prompt, invoke nothing
 #
@@ -38,6 +42,21 @@ CODEX_BIN="${CODEX_BIN:-/usr/lib/chatgpt/resources/codex}"
 REPO_ROOT="$(git rev-parse --show-toplevel)"
 ROLE="${1:-}"
 shift || true
+
+# --check / preflight: report Codex availability by testing the CODEX_BIN
+# path directly. Do NOT use `which codex` or `command -v codex` — the binary
+# is not installed under that name on PATH; only CODEX_BIN is authoritative.
+case "$ROLE" in
+  --check|preflight)
+    if [[ -x "$CODEX_BIN" ]]; then
+      echo "codex-agent: codex available at $CODEX_BIN"
+      exit 0
+    else
+      echo "codex-agent: codex not found at $CODEX_BIN (set CODEX_BIN to override)" >&2
+      exit 1
+    fi
+    ;;
+esac
 
 REVIEW_PACKET=""
 SOURCE_PACKET=""
