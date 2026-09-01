@@ -1,0 +1,9 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 8: Equipment",
+    "notes": "Equipment Quality Modifiers (p.185): 'Quality Modifier Value and Ability | Inferior -20% Subtract one to three value levels | Average None As normal | Superior +20% Add one to three value levels.' The book names this a situational modifier ('as described in Situational Modifiers'), applied through the existing ModifierPipeline (ADR 0007)."
+  },
+  "inferiorDelta": -20,
+  "superiorDelta": 20
+}
