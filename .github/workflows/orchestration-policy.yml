@@ -3,6 +3,12 @@ name: orchestration-policy
 # The instant-policy tier (#61): fast, mechanical guardrails from AGENTS.md with
 # no build or restore. Complements build-and-test (BannedApiAnalyzers, tests) and
 # scope-warden. Runs in parallel with CI on every PR.
+#
+# This job ALSO runs the control-plane regression suite (tests/tooling/*), so the
+# tests OF the rails are a required check — not just "the orchestrator says it ran
+# them" (#209). A tooling change (route.sh, agent-verify.sh, gate-evidence.sh,
+# dispatch-agent.sh, pr_policy.py, …) routes to `ci` only, so without this a
+# regression in a rail could merge with GitHub never proving its tests passed.
 on:
   pull_request:
   push:
@@ -18,8 +24,52 @@ permissions:
 jobs:
   orchestration-policy:
     runs-on: ubuntu-latest
-    timeout-minutes: 3
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
-      - name: Run policy checks
+        with:
+          # Full history: several tooling regression tests reach real ancestor
+          # commits (HEAD~2/HEAD~3) and add linked worktrees, which a shallow
+          # (fetch-depth: 1) checkout cannot satisfy.
+          fetch-depth: 0
+
+      - name: Deterministic policy checks
         run: bash tools/orchestration-policy.sh
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install test dependencies
+        # poppler-utils gives test_source_slice.sh a real pdftotext so it runs
+        # its extraction cases instead of skipping them. Everything else the
+        # suite needs (bash, git, jq, python3) is already on the runner.
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq poppler-utils
+
+      - name: Configure git identity
+        # Several tests create fixture commits / linked worktrees.
+        run: |
+          git config --global user.email "ci@noirpg.invalid"
+          git config --global user.name "NoiRPG CI"
+
+      - name: Control-plane regression tests (the rails' own tests)
+        # Runs the whole tests/tooling suite; a single failure fails the required
+        # check. The tests stub `gh`, so this needs no network and no token.
+        run: |
+          set -uo pipefail
+          fail=0
+          shopt -s nullglob
+          for t in tests/tooling/test_*.sh; do
+            echo "::group::$t"
+            if bash "$t"; then echo "PASS $t"; else echo "FAIL $t"; fail=1; fi
+            echo "::endgroup::"
+          done
+          for t in tests/tooling/test_*.py; do
+            echo "::group::$t"
+            if python3 "$t"; then echo "PASS $t"; else echo "FAIL $t"; fail=1; fi
+            echo "::endgroup::"
+          done
+          exit "$fail"
