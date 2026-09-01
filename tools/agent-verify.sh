@@ -15,15 +15,23 @@
 # status binds to the SHA, any new push invalidates it automatically. Per-gate
 # evidence is written into the PR body for humans.
 #
+# This script is the ONE dynamic verification-evidence authority in the repo (see
+# #136). pr_policy.py emits static PR metadata (route, required gates, body
+# policy) and never claims a gate passed; the canonical {gates, aggregate} record
+# for a head SHA is built here, once, and both the machine (--json) and human
+# (--evidence) renderings come from that same in-memory object.
+#
 # Usage:
 #   tools/agent-verify.sh <PR#> [--gate NAME=pass|fail|skip ...] [--base REF]
-#                               [--post] [--evidence]
+#                               [--post] [--evidence] [--json] [--json-out FILE]
 #
 #   * `ci` is read from GitHub (the `build-and-test` check-run) — never supplied.
 #   * every OTHER required gate must be supplied via --gate; a missing one leaves
 #     the aggregate `pending` (success is never posted on incomplete evidence).
 #   * default is a DRY RUN that prints the plan; --post actually posts the status;
 #     --evidence additionally writes the per-gate block into the PR body.
+#   * --json prints the canonical evidence object to stdout as JSON (nothing else
+#     is written to stdout in that mode); --json-out FILE writes it to a file.
 #
 # Exit: 0 if the aggregate is success, 1 otherwise (so a caller can branch on it).
 set -euo pipefail
@@ -32,7 +40,7 @@ CONTEXT="agent-verification"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 die() { echo "agent-verify: $*" >&2; exit 2; }
 
-PR=""; BASE="origin/main"; POST=0; EVIDENCE=0
+PR=""; BASE="origin/main"; POST=0; EVIDENCE=0; JSON=0; JSON_OUT=""
 declare -A GATE=()
 while [ $# -gt 0 ]; do
   case "$1" in
@@ -43,11 +51,13 @@ while [ $# -gt 0 ]; do
     --base) BASE="${2:-}"; shift 2 ;;
     --post) POST=1; shift ;;
     --evidence) EVIDENCE=1; shift ;;
+    --json) JSON=1; shift ;;
+    --json-out) [ $# -ge 2 ] || die "--json-out needs FILE"; JSON_OUT="$2"; shift 2 ;;
     -*) die "unknown option: $1" ;;
     *)  [ -z "$PR" ] || die "unexpected argument: $1"; PR="$1"; shift ;;
   esac
 done
-[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--post] [--evidence]"
+[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--post] [--evidence] [--json] [--json-out FILE]"
 
 # --- resolve the PR ------------------------------------------------------- #
 read -r HEAD_SHA PR_URL PR_STATE < <(gh pr view "$PR" \
@@ -114,18 +124,86 @@ DESC="$passed/$total gates passed [route: $ROUTE_NAME]"
 # GitHub commit-status states are: success | failure | pending | error.
 STATE="$overall"
 
-# --- render the plan ------------------------------------------------------ #
-echo "PR #$PR  head=$HEAD_SHA  route=$ROUTE_NAME$ROUTE_CAVEAT"
-echo "status: $CONTEXT = $STATE  ($DESC)"
-for g in "${REQUIRED[@]}"; do printf '  %-20s %s\n' "$g" "${RESULT[$g]}"; done
+# --- resolve the linked issue (best-effort, for the evidence object) ------ #
+# Same "Closes/Fixes/Resolves #N" convention pr_policy.py enforces on the body;
+# this gh CLI version has no closingIssuesReferences JSON field to read instead.
+PR_BODY="$(gh pr view "$PR" --json body --jq '.body // ""' 2>/dev/null || true)"
+ISSUE_NUM="$(printf '%s' "$PR_BODY" | python3 -c '
+import re, sys
+m = re.search(r"(?i)\b(clos|fix|resolv)(e|es|ed)?\s+#(\d+)", sys.stdin.read())
+print(m.group(3) if m else "")
+')"
 
+# --- build the ONE canonical evidence object ------------------------------ #
+# Both --json/--json-out and the human --evidence PR-body block render from this
+# exact object — neither reconstructs gate state independently (see #136).
+GATES_KV=""
+for g in "${REQUIRED[@]}"; do GATES_KV+="$g=${RESULT[$g]};"; done
+EVIDENCE_JSON="$(python3 - "$PR" "$ISSUE_NUM" "$HEAD_SHA" "$ROUTE_NAME" "$STATE" "$GATES_KV" <<'PYEOF'
+import json
+import sys
+
+pr, issue, head_sha, route, aggregate, gates_kv = sys.argv[1:7]
+gates = {}
+required = []
+for pair in gates_kv.split(";"):
+    if not pair:
+        continue
+    name, state = pair.split("=", 1)
+    gates[name] = state
+    required.append(name)
+
+evidence = {
+    "schemaVersion": 1,
+    "pr": int(pr) if pr.isdigit() else pr,
+    "issue": int(issue) if issue.isdigit() else None,
+    "headSha": head_sha,
+    "route": route,
+    "requiredGates": required,
+    "gates": gates,
+    "aggregate": aggregate,
+}
+print(json.dumps(evidence, indent=2))
+PYEOF
+)"
+
+# --- render the plan (suppressed in --json mode so stdout is pure JSON) --- #
+if [ "$JSON" = 0 ]; then
+  echo "PR #$PR  head=$HEAD_SHA  route=$ROUTE_NAME$ROUTE_CAVEAT"
+  echo "status: $CONTEXT = $STATE  ($DESC)"
+  for g in "${REQUIRED[@]}"; do printf '  %-20s %s\n' "$g" "${RESULT[$g]}"; done
+fi
+
+# Renders the human PR-body block FROM $EVIDENCE_JSON (via stdin), not by
+# re-walking REQUIRED/RESULT a second time.
 evidence_block() {
-  printf '<!-- agent-verification:start -->\n'
-  printf '### agent-verification — `%s` for `%s`\n\n' "$STATE" "${HEAD_SHA:0:7}"
-  printf '| gate | result |\n|---|---|\n'
-  for g in "${REQUIRED[@]}"; do printf '| `%s` | %s |\n' "$g" "${RESULT[$g]}"; done
-  printf '\n_%s. Regenerated per head SHA by `tools/agent-verify.sh`._\n' "$DESC"
-  printf '<!-- agent-verification:end -->\n'
+  printf '%s' "$EVIDENCE_JSON" | python3 -c '
+import json
+import sys
+
+ev = json.load(sys.stdin)
+aggregate = ev["aggregate"]
+head7 = ev["headSha"][:7]
+route = ev["route"]
+required = ev["requiredGates"]
+gates = ev["gates"]
+passed = sum(1 for g in required if gates[g] == "pass")
+total = len(required)
+
+out = []
+out.append("<!-- agent-verification:start -->")
+out.append("### agent-verification — `%s` for `%s`" % (aggregate, head7))
+out.append("")
+out.append("| gate | result |")
+out.append("|---|---|")
+for g in required:
+    out.append("| `%s` | %s |" % (g, gates[g]))
+out.append("")
+out.append("_%d/%d gates passed [route: %s]. Regenerated per head SHA by "
+            "`tools/agent-verify.sh`._" % (passed, total, route))
+out.append("<!-- agent-verification:end -->")
+print("\n".join(out))
+'
 }
 
 if [ "$POST" = 1 ]; then
@@ -133,18 +211,20 @@ if [ "$POST" = 1 ]; then
     -f state="$STATE" -f context="$CONTEXT" -f description="$DESC" -f target_url="$PR_URL" \
     --jq '"posted: \(.context) = \(.state)"' || die "failed to post status"
   if [ "$EVIDENCE" = 1 ]; then
-    body="$(gh pr view "$PR" --json body --jq '.body // ""')"
     # Strip any prior block, then append the fresh one. Update the body via the
     # REST API rather than `gh pr edit`, which fails on repos still carrying a
     # projects-classic deprecation (it queries projectCards and errors out).
-    clean="$(printf '%s' "$body" | sed '/<!-- agent-verification:start -->/,/<!-- agent-verification:end -->/d')"
+    clean="$(printf '%s' "$PR_BODY" | sed '/<!-- agent-verification:start -->/,/<!-- agent-verification:end -->/d')"
     newbody="$(printf '%s\n\n%s' "$clean" "$(evidence_block)")"
     gh api -X PATCH "repos/{owner}/{repo}/pulls/$PR" -f body="$newbody" >/dev/null \
       && echo "evidence: PR #$PR body updated"
   fi
-else
+elif [ "$JSON" = 0 ]; then
   echo "(dry run — pass --post to post the commit status; --evidence to update the PR body)"
   [ "$EVIDENCE" = 1 ] && { echo "--- evidence block that would be written ---"; evidence_block; }
 fi
+
+[ -n "$JSON_OUT" ] && printf '%s\n' "$EVIDENCE_JSON" > "$JSON_OUT"
+[ "$JSON" = 1 ] && printf '%s\n' "$EVIDENCE_JSON"
 
 [ "$STATE" = success ] && exit 0 || exit 1
