@@ -34,7 +34,10 @@
 # Env overrides: CODEX_BIN, CODEX_MODEL, OUT.
 # LEDGER_LOG=1 additionally appends one job row via tools/ledger-log.sh (never
 # fabricated — set ISSUE/PR/SEQ/LAYER/PHASE to whatever is actually known; unset
-# fields land as NI). Off by default.
+# fields land as NI). Off by default. Logs after the run completes, and includes
+# --tokens-total whenever `codex exec --json`'s turn.completed usage was
+# parseable (Issue #190 spike) — otherwise that field lands NI like the rest.
+# cost_usd is never computed here; see the note beside its ledger row below.
 
 set -euo pipefail
 
@@ -162,12 +165,22 @@ PROMPT_HASH="$(printf '%s' "$HASH_INPUT" | sha256sum | cut -d' ' -f1)"
 
 OUT="${OUT:-$(mktemp -t codex-${ROLE}-XXXX.md)}"
 
+# --json (Issue #190 spike): the only per-run token/cost figure `codex exec`
+# actually exposes is the `usage` object on its final `turn.completed` JSONL
+# event (input_tokens/cached_input_tokens/output_tokens/reasoning_output_tokens).
+# The human-readable "tokens used" line printed without --json is NOT a
+# reliable substitute — spiking this showed it disagreeing with the structured
+# usage figure by ~3x on an equivalent prompt, with no documented definition of
+# what it counts, so it is not parsed. Using --json changes the terminal
+# transcript from prose to one JSON object per turn event; --output-last-message
+# still writes the plain-text final answer to $OUT for anyone reading the result.
 CMD=("$CODEX_BIN" exec
   -C "$REPO_ROOT"
   -s "$SANDBOX"
   -c "model_reasoning_effort=\"${EFFORT}\""
   --output-last-message "$OUT"
-  --skip-git-repo-check)
+  --skip-git-repo-check
+  --json)
 
 [[ -n "${CODEX_MODEL:-}" ]] && CMD+=(-m "$CODEX_MODEL")
 
@@ -189,17 +202,46 @@ fi
 
 echo "codex-agent: role=${ROLE} packet-type=${PACKET_TYPE} prompt-sha256=${PROMPT_HASH}"
 
+# Ledger logging moves to AFTER the run (was: before) so a real --tokens-total
+# can be attached when the run actually produced one (#190). The CSV is
+# append-only, so a pre-invocation row could never be back-filled with the
+# figure below; a failed invocation (non-zero exit under `set -e`) now simply
+# does not log a row rather than logging an all-NI placeholder for work that
+# never completed.
+EVENTS_LOG="$(mktemp -t codex-${ROLE}-events-XXXX.jsonl)"
+printf '%s\n\n%s\n' "$CONTEXT" "$TASK" | "${CMD[@]}" - | tee "$EVENTS_LOG"
+echo
+echo "=== last message written to: $OUT ==="
+echo "=== JSONL events written to: $EVENTS_LOG ==="
+
+# Parse the final turn's usage object, if present and parseable. Never fabricate
+# a figure: absent/malformed usage data leaves tokens_total as NI, exactly like
+# every other unmeasured ledger field.
+TOKENS_TOTAL=""
+USAGE_LINE="$(grep '"type":"turn.completed"' "$EVENTS_LOG" | tail -1 || true)"
+if [[ -n "$USAGE_LINE" ]] && command -v jq >/dev/null 2>&1; then
+  INPUT_TOK="$(printf '%s' "$USAGE_LINE" | jq -r '.usage.input_tokens // empty' 2>/dev/null || true)"
+  OUTPUT_TOK="$(printf '%s' "$USAGE_LINE" | jq -r '.usage.output_tokens // empty' 2>/dev/null || true)"
+  if [[ "$INPUT_TOK" =~ ^[0-9]+$ && "$OUTPUT_TOK" =~ ^[0-9]+$ ]]; then
+    TOKENS_TOTAL=$((INPUT_TOK + OUTPUT_TOK))
+    echo "codex-agent: usage input_tokens=${INPUT_TOK} output_tokens=${OUTPUT_TOK} tokens_total=${TOKENS_TOTAL}"
+  fi
+fi
+[[ -z "$TOKENS_TOTAL" ]] && echo "codex-agent: no parseable usage in turn.completed — tokens_total will log NI"
+
+# cost_usd is deliberately never computed here: codex exec reports no dollar
+# figure at any verbosity, and this repo has no authoritative per-model Codex
+# pricing table to multiply tokens by without guessing. It stays NI (see
+# docs/orchestration/metrics.md).
+
 if [[ "${LEDGER_LOG:-0}" == "1" ]]; then
   LARGS=(job --packet-type "$PACKET_TYPE" --prompt-hash "$PROMPT_HASH"
     --agent-role "codex-${ROLE}" --model "${CODEX_MODEL:-codex}" --effort "$EFFORT")
-  [ -n "${ISSUE:-}" ] && LARGS+=(--issue "$ISSUE")
-  [ -n "${PR:-}" ]    && LARGS+=(--pr "$PR")
-  [ -n "${SEQ:-}" ]   && LARGS+=(--seq "$SEQ")
-  [ -n "${LAYER:-}" ] && LARGS+=(--layer "$LAYER")
-  [ -n "${PHASE:-}" ] && LARGS+=(--phase "$PHASE")
+  [ -n "${ISSUE:-}" ]   && LARGS+=(--issue "$ISSUE")
+  [ -n "${PR:-}" ]      && LARGS+=(--pr "$PR")
+  [ -n "${SEQ:-}" ]     && LARGS+=(--seq "$SEQ")
+  [ -n "${LAYER:-}" ]   && LARGS+=(--layer "$LAYER")
+  [ -n "${PHASE:-}" ]   && LARGS+=(--phase "$PHASE")
+  [ -n "$TOKENS_TOTAL" ] && LARGS+=(--tokens-total "$TOKENS_TOTAL")
   "$REPO_ROOT/tools/ledger-log.sh" "${LARGS[@]}" || echo "codex-agent: ledger-log failed (non-fatal)" >&2
 fi
-
-printf '%s\n\n%s\n' "$CONTEXT" "$TASK" | "${CMD[@]}" -
-echo
-echo "=== last message written to: $OUT ==="
