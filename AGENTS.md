@@ -141,6 +141,8 @@ These are settled. Do not reopen them inside an implementation PR:
 - **The canonical skill list is the framework's 18 names** (Streetwise, Shadow,
   Intimidate, Locksmith, and so on), as hardcoded in `tools/case_validator.py`. Do not
   rename them to the source book's names — existing tooling depends on these.
+- **`agent-verification` trust root and semantic-gate triage** — see
+  `docs/decisions/0025-agent-verification-trust-root.md`.
 - **No new orchestration machinery for now.** GitHub-App gate posting and the
   agent-routing state machine were built, then deliberately removed in favor of the
   single `agent-verification` commit status (`tools/agent-verify.sh`; see #90/#91).
