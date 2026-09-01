@@ -4,6 +4,12 @@ description: Implements one GitHub Issue in the C#/.NET rules engine. Use for bo
 model: sonnet
 effort: medium
 tools: Read, Grep, Glob, Bash, Write, Edit
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "tools/dispatch-write-guard.sh"
 ---
 
 You implement exactly one Issue. Read `AGENTS.md` first, then the Issue and its task

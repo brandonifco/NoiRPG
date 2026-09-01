@@ -4,6 +4,12 @@ description: Extracts tables, values, and stat blocks from the ORC Content Docum
 model: haiku
 effort: medium
 tools: Read, Grep, Glob, Bash, Write, Edit
+hooks:
+  PreToolUse:
+    - matcher: "Write|Edit"
+      hooks:
+        - type: command
+          command: "tools/dispatch-write-guard.sh"
 ---
 
 You transcribe rules data from the source book into ruleset JSON. You are a careful
