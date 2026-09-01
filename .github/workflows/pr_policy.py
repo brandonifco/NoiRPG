@@ -25,6 +25,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 
+# pr-policy emits STATIC PR metadata only — the route, the required gate set, and
+# whether the body satisfies policy. It has no opinion on whether any gate actually
+# passed; that is tools/agent-verify.sh's job (its own --json is the one dynamic
+# verification-evidence object). Bump this when the shape of `evidence` changes.
+SCHEMA_VERSION = 1
+
 # Prompt text from .github/pull_request_template.md. A section whose only content
 # is (a paraphrase of) its prompt counts as empty.
 PROMPTS = {
@@ -164,15 +170,15 @@ def main() -> int:
 
     gates = route.get("gates", [])
     evidence = {
+        "schemaVersion": SCHEMA_VERSION,
         "issue": meta["issue"] or number,
-        "base": base,
-        "head": head,
+        "baseSha": base,
+        "headSha": head,
         "route": route.get("route"),
         "escalated": route.get("escalated", False),
+        "issueRoute": route.get("issueRoute"),
         "requiredGates": gates,
-        # Gate states start pending; the App (#65) / state machine (#62) fill these in.
-        "gateStates": {g: ("pass" if g == "ci" else "pending") for g in gates},
-        "tests": meta["tests"],
+        "testsReported": meta["tests"],
         "prPolicy": "pass" if not violations else "fail",
     }
     Path(args.out).write_text(json.dumps(evidence, indent=2) + "\n")
