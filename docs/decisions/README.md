@@ -55,3 +55,4 @@ supersedes it — the original is not edited or deleted.
 | [0030](0030-money-and-wealth-levels.md) | Money and Wealth levels: the modern-era Status table only, five ordinal levels, no economy sim | Accepted |
 | [0031](0031-equipment-quality-and-skills-and-equipment.md) | Equipment Quality Modifiers and the Skills-and-Equipment mapping | Accepted |
 | [0032](0032-vehicles-cars-only.md) | Vehicles — cars only: the hand-picked automobile subset and its armor semantics | Accepted |
+| [0033](0033-item-hit-points.md) | Item SIZ/hit points for breaking doors, windows, and locks | Accepted |

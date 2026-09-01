@@ -1,0 +1,36 @@
+{
+  "items": [
+    {
+      "id": "doorWoodInterior",
+      "name": "Door, Wood Interior",
+      "siz": 6,
+      "hitPoints": 6,
+      "armorValue": 3,
+      "source": "Ch 8: Equipment, \"SIZ of Common Objects\" (p.226): Door, Full/Segment SIZ 4-8 (midpoint 6 used, per p.225's 'use judgment when assigning SIZ'). \"Armor Value of Substances\" (p.224): '5 cm thick door', armor value 3. Hit points equal SIZ per p.225: 'a simple guideline for destroying objects is that an average object has hit points roughly equivalent to its SIZ'."
+    },
+    {
+      "id": "doorGlass",
+      "name": "Door, Glass",
+      "siz": 8,
+      "hitPoints": 8,
+      "armorValue": 1,
+      "source": "Ch 8: Equipment, \"SIZ of Common Objects\" (p.226): Glass door, Full/Segment SIZ 8. Armor value extrapolated from the '1 cm of glass' row of \"Armor Value of Substances\" (p.224, armor value 1) -- the book prints no separate glass-door armor row, and explicitly invites this: 'your gamemaster should be able to extrapolate additional armor values or estimate them based on rough equivalencies' (p.224). Hit points equal SIZ per p.225's guideline. House extrapolation for armor value only (see docs/decisions/0033-item-hit-points.md)."
+    },
+    {
+      "id": "windowGlass",
+      "name": "Window, Glass",
+      "siz": 3,
+      "hitPoints": 3,
+      "armorValue": 1,
+      "source": "Ch 8: Equipment, \"SIZ of Common Objects\" (p.226): Glass window, Full/Segment SIZ 3. \"Armor Value of Substances\" (p.224): '1 cm of glass', armor value 1. Hit points equal SIZ per p.225's guideline."
+    },
+    {
+      "id": "lockPadlock",
+      "name": "Lock, Padlock",
+      "siz": 1,
+      "hitPoints": 1,
+      "armorValue": 6,
+      "source": "House hand-pick: the book prints no sample SIZ or armor value for a lock. SIZ 1 follows the \"Comparative Sizes\" table (p.225: SIZ 1 spans 1-12 lb / 0.5-5.5 kg, which fits a padlock) and the table's own invitation to judgment ('This table is not precise or restrictive: you should use judgment when assigning SIZ and weight based on the makeup of the item', p.225). Armor value 6 is a house judgment call for a solid steel shackle, well below '3 cm of steel plate' (armor value 28, p.224) since a padlock's shackle is far thinner, per the same extrapolation invitation on p.224. Hit points equal SIZ per p.225's guideline. Entirely a house extrapolation (see docs/decisions/0033-item-hit-points.md)."
+    }
+  ]
+}
