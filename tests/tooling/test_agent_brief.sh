@@ -97,13 +97,29 @@ Make the widget reproducible.
 print(json.dumps(body))
 ')"
           emit "{\"title\":\"Widget packet test\",\"body\":$body_json,\"labels\":[],\"number\":5001,\"url\":\"https://example.invalid/issues/5001\"}" "$@"
+        elif [ "$num" = "5003" ]; then
+          # No "Likely files" / "Workspace" section at all (mirrors #112): the
+          # task packet's route prediction must still honor the issue's
+          # `route:formulas` floor via `--issue`, not fall back to "?" and not
+          # fall back to the local checkout's dirty-worktree diff.
+          body_json="$(python3 -c '
+import json
+body = """## Outcome
+Add a numeric table with no named files."""
+print(json.dumps(body))
+')"
+          emit "{\"title\":\"Floor packet test\",\"body\":$body_json,\"labels\":[{\"name\":\"route:formulas\"}],\"number\":5003,\"url\":\"https://example.invalid/issues/5003\"}" "$@"
         else
           echo "mock gh: unhandled issue view $num" >&2; exit 1
         fi ;;
       state,title)
         emit "{\"state\":\"OPEN\",\"title\":\"Dependency fixture issue\"}" "$@" ;;
       labels)
-        emit "{\"labels\":[]}" "$@" ;;
+        if [ "$num" = "5003" ]; then
+          emit "{\"labels\":[{\"name\":\"route:formulas\"}]}" "$@"
+        else
+          emit "{\"labels\":[]}" "$@"
+        fi ;;
       *) echo "mock gh: unhandled issue view --json $jsonf" >&2; exit 1 ;;
     esac ;;
   *) echo "mock gh: unhandled args: $*" >&2; exit 1 ;;
@@ -164,6 +180,19 @@ assert_contains "task packet: explicit exclusion carried through" "$content" "gi
 route_line="$(grep '^- route:' "$task1")"
 direct_route="$(bash "$ROOT/tools/route.sh" --json tools/agent-brief.py | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
 assert_contains "task packet: predicted route matches tools/route.sh" "$route_line" "**$direct_route**"
+
+# --- task packet honors the Issue's route:* floor (Issue #169) -------------- #
+# #5003 carries `route:formulas` and names no likely files at all — the
+# predicted route must still be raised to (at least) "formulas" by the
+# issue-intent floor, matching `tools/route.sh --issue 5003` directly, not
+# left at "?" and not derived from this checkout's local working-tree diff.
+task3="$WORKDIR/task3.md"
+python3 "$SCRIPT" task 5003 > "$task3"
+floor_route_line="$(grep '^- route:' "$task3")"
+direct_floor_route="$(bash "$ROOT/tools/route.sh" --json --issue 5003 | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
+assert_eq "task packet: issue route:* floor resolves to formulas" "formulas" "$direct_floor_route"
+assert_contains "task packet: predicted route honors issue route:* floor" "$floor_route_line" "**$direct_floor_route**"
+assert_contains "task packet: predicted gates honor issue route:* floor" "$floor_route_line" "codex-conformance"
 
 # === REVIEW PACKET =========================================================== #
 # Use two real commits from this checkout's own history so no `gh pr view` is
