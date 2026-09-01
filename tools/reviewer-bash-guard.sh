@@ -2,7 +2,7 @@
 # tools/reviewer-bash-guard.sh — a PreToolUse "command" hook that makes the
 # verification reviewer roles (scope-warden, rules-conformance, design-critic)
 # mechanically read-only for Bash, not just prompt-read-only (Issue #170,
-# docs/decisions/0025-reviewer-mechanical-read-only.md).
+# docs/decisions/0026-reviewer-mechanical-read-only.md).
 #
 # Registered in each reviewer's own frontmatter (`.claude/agents/*.md`), matched
 # on the Bash tool, so it runs ONLY while that subagent is executing — Claude

@@ -28,7 +28,7 @@ section). If more than five broad discovery operations appear necessary, stop an
 return `BRIEF DEFICIENCY`. You are a verification agent: read-only tools only,
 never `Write`/`Edit` on the engine you are checking. Your `Bash` grant is
 mechanically restricted to a read-only allowlist (`tools/reviewer-bash-guard.sh`,
-docs/decisions/0025-reviewer-mechanical-read-only.md) — use `pdftotext -f A -l B
+docs/decisions/0026-reviewer-mechanical-read-only.md) — use `pdftotext -f A -l B
 BasicRoleplaying-ORC-Content-Document.pdf -` to pull source pages and `git
 show`/`git diff` to read the engine; a denied command means find a plain,
 single, read-only command instead.

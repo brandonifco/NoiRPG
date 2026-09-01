@@ -28,7 +28,7 @@ working packet was provided, that is a process error — say so rather than
 reconstructing the context yourself. You are read-only: findings only, never
 `Write`/`Edit` the document you are critiquing. Your `Bash` grant is mechanically
 restricted to a read-only allowlist (`tools/reviewer-bash-guard.sh`,
-docs/decisions/0025-reviewer-mechanical-read-only.md) while you are reviewing.
+docs/decisions/0026-reviewer-mechanical-read-only.md) while you are reviewing.
 
 ## Method
 

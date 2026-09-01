@@ -2,7 +2,7 @@
 # tests/tooling/test_reviewer_bash_guard.sh — fixture tests for
 # tools/reviewer_bash_guard.py / tools/reviewer-bash-guard.sh, the read-only
 # Bash allowlist for the verification reviewer subagents (Issue #170,
-# docs/decisions/0025-reviewer-mechanical-read-only.md).
+# docs/decisions/0026-reviewer-mechanical-read-only.md).
 #
 # Drives the guard exactly as Claude Code would: a PreToolUse JSON payload on
 # stdin, exit code as the verdict (0 = approve, 2 = deny).

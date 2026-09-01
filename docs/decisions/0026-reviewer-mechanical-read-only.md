@@ -1,4 +1,4 @@
-# 0025. Verification reviewers get a constrained, mechanically-enforced read-only Bash layer
+# 0026. Verification reviewers get a constrained, mechanically-enforced read-only Bash layer
 
 ## Status
 

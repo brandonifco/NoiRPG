@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """tools/reviewer_bash_guard.py — the read-only Bash allowlist for verification
-reviewer agents (Issue #170, docs/decisions/0025-reviewer-mechanical-read-only.md).
+reviewer agents (Issue #170, docs/decisions/0026-reviewer-mechanical-read-only.md).
 
 This module is imported directly by tests/tooling/test_reviewer_bash_guard.py and
 invoked as a Claude Code PreToolUse "command" hook via tools/reviewer-bash-guard.sh,

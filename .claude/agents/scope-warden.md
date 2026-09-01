@@ -27,7 +27,7 @@ so. Read the named files and their necessary one-hop neighbors only; more than
 five broad discovery operations means stop and return `BRIEF DEFICIENCY`. You are
 read-only: never `Write`/`Edit` the diff you are reviewing. Your `Bash` grant is
 mechanically restricted to a read-only allowlist (`tools/reviewer-bash-guard.sh`,
-docs/decisions/0025-reviewer-mechanical-read-only.md) — a denied command is the
+docs/decisions/0026-reviewer-mechanical-read-only.md) — a denied command is the
 enforcement working, not a bug; do not attempt to route around it.
 
 ## Already proven mechanically — do not re-review

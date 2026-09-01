@@ -20,12 +20,14 @@ and what it did not (yet) prove.
 | #155 | tooling | success | none (ci only) |
 | #157 | tooling | success (status posted) | none (ci only) |
 | #158 | tooling | success | none (ci only) |
+| #179 | formulas + architecture | success (5/5) | scope-warden + rules-conformance + independent Codex conformance + architecture-review |
 
-Twelve real PRs (docs + tooling — normal remediation work, no manufactured dummy
+Twelve real docs/tooling PRs (normal remediation work, no manufactured dummy
 changes), all merged clean through: route derivation -> deterministic gates
 (`build-and-test`, `pr-policy`, `orchestration-policy`) -> route-required semantic
 gate (none demanded for docs/tooling post-#138) -> the `agent-verify` SHA-bound
-aggregate -> merge.
+aggregate -> merge. PR #179 (below) is the first real PR to exercise the full
+semantic chain — see "First formulas-route PR (#112 / PR #179)" further down.
 
 ## Route-class gate derivation
 
@@ -81,8 +83,126 @@ include a live merged **rules-engine** PR: `rules`, `formulas`, `gameplay`, and
 `architecture`, a natural end-to-end pending demonstration on #158 — but not by a
 live merged rules/formulas PR, because no rules-engine work was in this
 remediation's scope and manufacturing dummy changes to force one would defeat the
-point of a burn-in. The first real rules or formulas PR after `agent-verification`
-becomes required will be the first time `scope-warden` / `rules-conformance` /
-`codex-conformance` are exercised end-to-end under the required check, not merely
-derived and unit-tested. That is a known, accepted gap in this burn-in, not a
-hidden one.
+point of a burn-in. At the time this section was written, the first real rules or
+formulas PR after `agent-verification` becomes required had not yet run — that gap
+is now closed; see "First formulas-route PR (#112 / PR #179)" below, including its
+honest account of what still required a human and an orchestrator in the loop.
+
+## First formulas-route PR (#112 / PR #179)
+
+Date: 2026-09-01. Subject: Issue #112 (hit locations — Ch 6), PR #179, route
+`formulas` + `architecture` (the `Brp.Data.csproj` embed pulled in
+`architecture-review`). Squash-merged to `main` as commit `3440130`. This closes the
+gap named above: the first live `formulas`-route PR to run the **full** required
+gate set — `ci` + `scope-warden` + `rules-conformance` + independent
+`codex-conformance` + `architecture-review` — end to end under the enforcing
+ruleset, and merge on a `success` `agent-verification` status (5/5) bound to the
+final head SHA.
+
+### What ran, in order
+
+1. Task packet generated (`tools/agent-brief.py task 112`); engine-dev implemented
+   on branch `112-hit-locations` (2359 tests); the orchestrator opened PR #179 with
+   a formulas-route body.
+2. Round 1 gates: `scope-warden` PASS; `rules-conformance` FAIL; independent Codex
+   (`tools/codex-agent.sh conformance`) NOT-CONFIRMED.
+3. Rework 1 (engine-dev, real defects) -> round 2 gates: `rules-conformance` PASS;
+   `architecture-review` (design-critic) ran, pulled in by the `Brp.Data.csproj`
+   embed, PASS; Codex round 2 pass.
+4. Two more small reworks (a recorded design-contract packet block; an overflow
+   fix) resolving round-3 and round-4 Codex findings, each followed by a fresh
+   Codex pass.
+5. `agent-verification` posted `success` (5/5) on head `c4cf378`; PR squash-merged
+   as `3440130`.
+
+Ledger rows for every job in this sequence are in
+[`docs/agent-team-ledger/jobs.csv`](../agent-team-ledger/jobs.csv) (issue 112, PR
+179, seq 1–12) and [`human-minutes.csv`](../agent-team-ledger/human-minutes.csv).
+
+### Findings
+
+**F1 — Independent Codex earned its place.** Codex caught real defects the
+implementer's own 2359–2370 passing tests missed: (a) `ArmorCoverage` threw on the
+printed `"All"` / `"All but head"` coverage labels (a crash), and (b) layered armor
+used `max` instead of the printed *total* rule (p.209), justified in the first
+draft by a fabricated citation. `rules-conformance` independently corroborated (b).
+Model-family independence surfaced a class of error the same author's own tests did
+not.
+
+**F2 — Dual gates resolve each other's blind spots.** `rules-conformance` (full PDF
++ errata discipline) overruled Codex on the D20 `8–11` -> `9–11` misprint; Codex
+caught the armor-label crash that `rules-conformance` missed, because
+`rules-conformance` had only checked the *shipped* armor data, not the full printed
+label vocabulary. Neither gate alone was sufficient.
+
+**F3 — The Codex gate plus an adversarial "falsify" prompt produces
+diminishing-returns nitpicks every pass**, so a strict "Codex must say CONFIRMED"
+gate is effectively unsatisfiable on its own terms. Severity decayed across passes:
+round 1 = a real crash and a real layering bug; round 3 = a legitimate design-contract
+question (per-blow vs. cumulative damage banding); round 4 = an unreachable Int32
+overflow plus a data-boundary point (`x2`/`x3` band constants) that `scope-warden`
+had already ruled structural. This requires an explicit **triage policy**:
+value/behavior conformance defects block; unreachable-robustness findings and
+already-adjudicated points are logged, not blocking; the orchestrator (or a human)
+adjudicates. This is the single most important process finding from this run, and
+is direct input to #171.
+
+**F4 — Documented deviations and deferred scope need packet-level authority (the
+durable, reusable part of this finding).** A source-literal independent gate
+rejects *any* departure from printed text unless the authority for that departure
+is in its packet. Two patterns worked here and did not blunt independence — both
+are legitimate recorded authority, analogous in kind to `orc-scope-filter.md`, and
+both should be **reused on the next formulas PR rather than reinvented**:
+
+- **Errata-authority packet block.** Quote the ADR's recorded misprint correction
+  directly into the gate's source packet, so the independent gate verifies the
+  implementation against the *recorded* erratum rather than flagging every
+  deviation from the raw printed text as unsupported. (Used here for the D20
+  `8–11` -> `9–11` table misprint, per `docs/decisions/0024-hit-locations.md`.)
+- **Recorded-design-contract packet block.** State the component's contract
+  explicitly in the packet (here: `HitLocationDamageResolver` is a stateless
+  single-blow classifier; accumulation and downstream effects are the caller's
+  job), so the gate verifies conformance-to-contract instead of assuming a
+  different contract and flagging the difference as a defect.
+
+**F5 — Tooling/hygiene gaps.** (a) A naive `which codex` reports "not installed"
+because the binary lives at the hardcoded `CODEX_BIN` path, not on `PATH` —
+availability checks must probe `CODEX_BIN` directly. (b) A truncated source
+citation ("p.14") propagated into the first Codex source packet and caused a
+coverage gap (0/45 HP cells verifiable) until the packet was rebuilt with the
+correct pages — source-slice/citation hygiene matters, and the orchestrator must
+sanity-check that a packet actually contains the table it cites.
+
+**F6 — Branch-currency churn is real, at scale.** The strict
+`orchestration-policy` rule (a branch must be current with `main` to merge) meant
+every merge re-dated every other open PR, forcing an update-branch ->
+re-CI -> re-post-`agent-verification` cycle per PR. Observed concretely across the
+five PRs open in this session. This confirms the "one orchestrator, no merge queue"
+scale finding already on record.
+
+**F7 — Not hands-free.** The chain operated end to end and merged, but it was
+**not** hands-free. It required orchestrator-built source packets (including the
+errata and design-contract authority blocks in F4), triage of Codex findings
+against the F3 policy, adjudication between gates that disagreed (F2), and driving
+the branch-currency updates in F6. Three decisions were escalated to, and made by,
+the human: re-running Codex with the errata packet; running `architecture-review`;
+and the stateless-classifier design-contract scope call. Recorded honestly against
+the "operate without manual reconstruction" bar named in the #174 outcome: it did
+**not** — the chain requires informed orchestration, not unattended automation.
+
+### Telemetry and its gaps
+
+Per-job figures are in `docs/agent-team-ledger/jobs.csv` (issue 112, PR 179). Known
+gaps, left `NI` rather than guessed (consistent with `docs/orchestration/metrics.md`):
+
+- The engine-dev reworks' token counts were reported by subagent telemetry as
+  cumulative-per-resume totals (~178k, ~231k, ~272k, ~285k across implement +
+  three reworks), not as additive per-job deltas. Only the first (~178k, the
+  initial implementation) is a clean per-job figure; the other three are recorded
+  as `NI` in the ledger rather than mis-derived by subtraction.
+- Codex conformance ran four times across this PR; per-run token counts were not
+  captured by the completion telemetry the same way Claude subagent tokens are —
+  all four Codex ledger rows carry `tokens_total = NI`.
+- `cost_usd`, `human_minutes`, and the R/A/H token split remain uninstrumented for
+  every job in this run, matching the pre-existing gaps `docs/agent-team-ledger/README.md`
+  already documents.
