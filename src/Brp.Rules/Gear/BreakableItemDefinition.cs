@@ -27,9 +27,12 @@ namespace Brp.Rules.Gear;
 /// <param name="ArmorValue">
 /// The object's starting armor value, from the "Armor Value of Substances" table (p.224) for the
 /// material the object is made of, or a house extrapolation where the book prints no matching
-/// substance -- see <see cref="Source"/>. Degrades as the object takes damage (p.224: "that many
-/// damage points reduce its armor value") -- <see cref="Combat.BreakableItemResolver"/> applies
-/// that degradation; this is only the starting value.
+/// substance -- see <see cref="Source"/>. Degrades by exactly 1 for each landed hit as the object
+/// is deliberately broken through (p.224-225's substance-armor worked example: "reducing the
+/// armor value by 1 with each successful hit," not by that hit's penetrating damage --
+/// <c>docs/decisions/0033-item-hit-points.md</c>'s "Rules interpretation: armor degradation")
+/// -- <see cref="Combat.BreakableItemResolver"/> applies that degradation; this is only the
+/// starting value.
 /// </param>
 /// <param name="Source">The book table (and any house-extrapolation note) this entry was drawn from.</param>
 public sealed record BreakableItemDefinition(

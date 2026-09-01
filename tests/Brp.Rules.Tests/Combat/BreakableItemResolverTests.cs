@@ -82,31 +82,45 @@ public class BreakableItemResolverTests
     }
 
     [Fact]
-    public void Repeated_hits_steadily_reduce_armor_until_damage_overcomes_it_page_225()
+    public void Absorbed_hits_still_wear_the_armor_down_by_one_each_page_225()
     {
-        // Mirrors the book's own worked example shape: repeated hits at a fixed raw damage (6)
-        // against a substance armor (3) -- the first two hits are fully absorbed (armor still
-        // ahead of the raw damage), but each hit still wears the armor down by 1 until, on the
-        // fourth hit, the steadily reducing armor value is finally overcome.
+        // Mirrors the book's own worked example shape (p.225): a wood interior door (SIZ 6,
+        // armor 3 -- item-hit-points-ruleset.json's doorWoodInterior) takes two swings of a
+        // constant raw 2 damage. Raw damage never exceeds the armor value in effect for either
+        // swing, so DamageDealt is honestly 0 both times (Max(0, raw - armor)) -- but each landed
+        // hit still wears the armor down by 1, exactly as the sledgehammer-vs-bulletproof-glass
+        // example describes.
+        var hitPoints = 6;
         var armor = 3;
-        var hitPoints = 3; // Glass window, SIZ 3 -- item-hit-points-ruleset.json
 
-        for (var hitsSoFar = 1; hitsSoFar <= 3; hitsSoFar++)
-        {
-            var stillAbsorbed = MakeDamageRoll(LandedGrade.Normal, damageDealt: 0);
-            var step = BreakableItemResolver.ApplyDamage(hitPoints, armor, stillAbsorbed);
-            armor = step.ResultingArmorValue;
-            hitPoints = step.ResultingHitPoints;
-        }
+        var first = BreakableItemResolver.ApplyDamage(hitPoints, armor, MakeDamageRoll(LandedGrade.Normal, damageDealt: 0));
+        Assert.Equal(0, first.DamageDealt); // raw 2 vs armor 3: fully absorbed
+        Assert.Equal(6, first.ResultingHitPoints);
+        Assert.Equal(2, first.ResultingArmorValue);
+        hitPoints = first.ResultingHitPoints;
+        armor = first.ResultingArmorValue;
 
-        Assert.Equal(0, armor); // 3 - 1 - 1 - 1
-        Assert.Equal(3, hitPoints); // never dealt, since every rolled DamageDealt above was 0
+        var second = BreakableItemResolver.ApplyDamage(hitPoints, armor, MakeDamageRoll(LandedGrade.Normal, damageDealt: 0));
+        Assert.Equal(0, second.DamageDealt); // raw 2 vs armor 2: still fully absorbed
+        Assert.Equal(6, second.ResultingHitPoints);
+        Assert.Equal(1, second.ResultingArmorValue);
+    }
 
-        var overcomes = MakeDamageRoll(LandedGrade.Normal, damageDealt: 6); // now unmitigated by 0 armor
-        var final = BreakableItemResolver.ApplyDamage(hitPoints, armor, overcomes);
+    [Fact]
+    public void A_hit_that_finally_overcomes_the_reduced_armor_deals_damage_and_can_destroy_the_object_page_225()
+    {
+        // Continuing the same door: two prior swings (Absorbed_hits_still_wear_the_armor_down_by_
+        // one_each_page_225) have already worn its armor from 3 down to 1. A third, harder swing
+        // (raw damage 8) now exceeds that reduced armor value -- DamageDealt = Max(0, 8 - 1) = 7,
+        // matching the book's "when the damage roll overcomes the steadily reducing armor value,
+        // the window bursts" (p.225). A near-dead door (2 HP left) is destroyed by it.
+        var result = BreakableItemResolver.ApplyDamage(
+            currentHitPoints: 2, currentArmorValue: 1, MakeDamageRoll(LandedGrade.Normal, damageDealt: 7));
 
-        Assert.Equal(-3, final.ResultingHitPoints);
-        Assert.Equal(BreakableItemCondition.Destroyed, final.Condition);
+        Assert.Equal(7, result.DamageDealt);
+        Assert.Equal(-5, result.ResultingHitPoints);
+        Assert.Equal(0, result.ResultingArmorValue);
+        Assert.Equal(BreakableItemCondition.Destroyed, result.Condition);
     }
 
     [Fact]
