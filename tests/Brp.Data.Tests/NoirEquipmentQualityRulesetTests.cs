@@ -3,7 +3,7 @@ namespace Brp.Data.Tests;
 /// <summary>
 /// Confirms the shipped equipment-quality percentages load and match the book: Ch 8: Equipment,
 /// "Equipment Quality Modifiers" (p.185). See
-/// <c>docs/decisions/NNNN-equipment-quality-and-skills-and-equipment.md</c>.
+/// <c>docs/decisions/0031-equipment-quality-and-skills-and-equipment.md</c>.
 /// </summary>
 public class NoirEquipmentQualityRulesetTests
 {

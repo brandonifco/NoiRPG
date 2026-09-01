@@ -1,4 +1,4 @@
-# NNNN. Equipment Quality Modifiers and the Skills-and-Equipment mapping
+# 0031. Equipment Quality Modifiers and the Skills-and-Equipment mapping
 
 ## Status
 

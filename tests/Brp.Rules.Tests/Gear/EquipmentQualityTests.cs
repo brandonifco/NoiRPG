@@ -9,7 +9,7 @@ namespace Brp.Rules.Tests.Gear;
 /// Ch 8: Equipment, "Equipment Quality Modifiers" (p.185): reproduces the printed three-row
 /// table in full (Inferior/Average/Superior), and confirms the modifier flows through the
 /// existing <see cref="ModifierPipeline"/> as a situational source (ADR 0007), not a parallel
-/// path. See <c>docs/decisions/NNNN-equipment-quality-and-skills-and-equipment.md</c>.
+/// path. See <c>docs/decisions/0031-equipment-quality-and-skills-and-equipment.md</c>.
 /// </summary>
 public class EquipmentQualityTests
 {
