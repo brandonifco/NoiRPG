@@ -21,13 +21,30 @@
 # for a head SHA is built here, once, and both the machine (--json) and human
 # (--evidence) renderings come from that same in-memory object.
 #
+# Binding semantic verdicts to the head SHA + review packet (Issue #205): a gate
+# supplied as a naked `--gate NAME=pass` is an unverifiable assertion — nothing
+# proves that verdict was produced against THIS head and THIS review packet, so an
+# accidentally reused pass could ride onto a new SHA. `--gate-evidence FILE`
+# consumes a verdict file written by tools/gate-evidence.sh and REFUSES unless the
+# file's recorded head SHA still equals the current PR head AND a freshly
+# regenerated review packet (agent-brief.py review — deterministic) reproduces the
+# recorded packet hash. Bound gates are marked `bound:true` in the evidence object;
+# naked `--gate` gates are `bound:false`. `--post` will not mint `success` while any
+# required non-`ci` pass gate is unbound, unless `--allow-unbound-gates` is given
+# (recorded as `unboundGatesAllowed:true`). This is a tightening of the existing
+# authority, not new orchestration machinery — gate-evidence.sh only builds input.
+#
 # Usage:
-#   tools/agent-verify.sh <PR#> [--gate NAME=pass|fail|skip ...] [--base REF]
-#                               [--post] [--wait] [--evidence] [--json] [--json-out FILE]
+#   tools/agent-verify.sh <PR#> [--gate NAME=pass|fail|skip ...]
+#                               [--gate-evidence FILE ...] [--allow-unbound-gates]
+#                               [--base REF] [--post] [--wait] [--evidence]
+#                               [--json] [--json-out FILE]
 #
 #   * `ci` is read from GitHub (the `build-and-test` check-run) — never supplied.
-#   * every OTHER required gate must be supplied via --gate; a missing one leaves
-#     the aggregate `pending` (success is never posted on incomplete evidence).
+#   * every OTHER required gate must be supplied via --gate or --gate-evidence; a
+#     missing one leaves the aggregate `pending` (success is never posted on
+#     incomplete evidence). Prefer --gate-evidence: it binds the verdict to the
+#     head SHA + review packet; --gate stays for dry-runs / skip / fail / override.
 #   * default is a DRY RUN that prints the plan; --post actually posts the status;
 #     --evidence additionally writes the per-gate block into the PR body.
 #   * --json prints the canonical evidence object to stdout as JSON (nothing else
@@ -47,14 +64,18 @@ CONTEXT="agent-verification"
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 die() { echo "agent-verify: $*" >&2; exit 2; }
 
-PR=""; BASE="origin/main"; POST=0; EVIDENCE=0; JSON=0; JSON_OUT=""; WAIT=0
+PR=""; BASE="origin/main"; POST=0; EVIDENCE=0; JSON=0; JSON_OUT=""; WAIT=0; ALLOW_UNBOUND=0
 declare -A GATE=()
+declare -a GATE_EVIDENCE_FILES=()
 while [ $# -gt 0 ]; do
   case "$1" in
     --gate) [ $# -ge 2 ] || die "--gate needs NAME=STATE"
             n="${2%%=*}"; s="${2#*=}"
             case "$s" in pass|fail|skip) ;; *) die "gate state must be pass|fail|skip: $2" ;; esac
             GATE["$n"]="$s"; shift 2 ;;
+    --gate-evidence) [ $# -ge 2 ] || die "--gate-evidence needs FILE"
+            GATE_EVIDENCE_FILES+=("$2"); shift 2 ;;
+    --allow-unbound-gates) ALLOW_UNBOUND=1; shift ;;
     --base) BASE="${2:-}"; shift 2 ;;
     --post) POST=1; shift ;;
     --wait) WAIT=1; shift ;;
@@ -65,7 +86,15 @@ while [ $# -gt 0 ]; do
     *)  [ -z "$PR" ] || die "unexpected argument: $1"; PR="$1"; shift ;;
   esac
 done
-[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--post] [--wait] [--evidence] [--json] [--json-out FILE]"
+[ -n "$PR" ] || die "usage: agent-verify.sh <PR#> [--gate NAME=STATE ...] [--gate-evidence FILE ...] [--allow-unbound-gates] [--post] [--wait] [--evidence] [--json] [--json-out FILE]"
+
+# agent-brief.py, used to regenerate the review packet hash for --gate-evidence
+# freshness checks. Overridable (tests stub it) but defaults to the repo tool.
+AGENT_BRIEF="${AGENT_VERIFY_AGENT_BRIEF:-$ROOT/tools/agent-brief.py}"
+
+# Per-gate binding provenance (parallel to GATE/RESULT), populated from
+# --gate-evidence files below. BOUND defaults to 0 for any gate not bound.
+declare -A BOUND=() EV_HEADSHA=() EV_RPS=() EV_SPS=() EV_REVIEWER=() EV_MODEL=()
 
 # --- resolve the PR ------------------------------------------------------- #
 read_pr_head() {
@@ -162,6 +191,64 @@ for n in "${!GATE[@]}"; do
   [ "$n" = ci ] && die "ci is read from GitHub, not supplied via --gate"
 done
 
+# --- consume --gate-evidence files and bind them to head + review packet --- #
+# A gate-evidence file (tools/gate-evidence.sh) carries a verdict plus the head
+# SHA and review-packet hash it was produced against. We accept its verdict ONLY
+# if both still hold for the current PR: the recorded head equals the PR head,
+# and a freshly regenerated review packet reproduces the recorded packet hash.
+# This is the mechanical freshness the naked `--gate` path lacks (Issue #205).
+CURRENT_RPS=""; CURRENT_RPS_COMPUTED=0
+current_review_packet_sha() {
+  # Regenerate the review packet for this PR and return its packet-sha256 footer.
+  # agent-brief.py is deterministic (no timestamp), so the same repo/PR state
+  # reproduces the same hash the reviewer's packet carried. Computed once.
+  if [ "$CURRENT_RPS_COMPUTED" = 0 ]; then
+    CURRENT_RPS="$("$AGENT_BRIEF" review "$PR" 2>/dev/null \
+      | grep -E '^packet-sha256:[[:space:]]*[0-9a-f]+' | tail -1 | awk '{print $2}')" || true
+    CURRENT_RPS_COMPUTED=1
+  fi
+  printf '%s' "$CURRENT_RPS"
+}
+
+for f in ${GATE_EVIDENCE_FILES[@]+"${GATE_EVIDENCE_FILES[@]}"}; do
+  [ -n "$f" ] || continue
+  [ -f "$f" ] || die "--gate-evidence file not found: $f"
+  # Parse the file into TSV: gate, verdict, headSha, rps, sps, reviewer, model.
+  IFS=$'\t' read -r eg ev eh erps esps erev emod < <(python3 - "$f" <<'PYEOF'
+import json, sys
+with open(sys.argv[1]) as fh:
+    d = json.load(fh)
+def g(k):
+    v = d.get(k)
+    return "" if v is None else str(v)
+print("\t".join([g("gate"), g("verdict"), g("headSha"), g("reviewPacketSha256"),
+                 g("sourcePacketSha256"), g("reviewer"), g("model")]))
+PYEOF
+  ) || die "cannot parse gate-evidence file (not valid JSON?): $f"
+
+  [ -n "$eg" ] || die "gate-evidence $f: missing 'gate'"
+  case "$ev" in pass|fail|skip) ;; *) die "gate-evidence $f: verdict must be pass|fail|skip (got '${ev:-<empty>}')" ;; esac
+  printf '%s\n' "${REQUIRED[@]}" | grep -qx "$eg" || die "gate-evidence $f: gate '$eg' is not required by route '$ROUTE_NAME'"
+  [ "$eg" = ci ] && die "gate-evidence $f: ci is read from GitHub, not supplied as evidence"
+  [ -n "${GATE[$eg]+x}" ] && die "gate '$eg' supplied both as --gate and --gate-evidence — use one"
+  [ -n "${BOUND[$eg]+x}" ] && die "gate '$eg' supplied by more than one --gate-evidence file"
+
+  # Freshness 1: the head the verdict was bound to must still be the PR head.
+  [ "$eh" = "$HEAD_SHA" ] || die "gate-evidence $f: recorded headSha ${eh:0:7} != current PR head ${HEAD_SHA:0:7} — this verdict is STALE (produced against a superseded commit). Re-run gate '$eg' on the current head and rebuild its evidence."
+  # Freshness 2: the review packet the reviewer saw must still regenerate.
+  cur="$(current_review_packet_sha)"
+  [ -n "$cur" ] || die "cannot regenerate the review packet for PR #$PR (agent-brief.py review) to verify gate-evidence freshness"
+  [ "$erps" = "$cur" ] || die "gate-evidence $f: recorded reviewPacketSha256 ${erps:0:12} != freshly regenerated ${cur:0:12} — the review packet gate '$eg' saw no longer matches this PR (diff/claim/issue changed). Re-run the gate on the current packet."
+
+  GATE["$eg"]="$ev"
+  BOUND["$eg"]=1
+  EV_HEADSHA["$eg"]="$eh"; EV_RPS["$eg"]="$erps"; EV_SPS["$eg"]="$esps"
+  EV_REVIEWER["$eg"]="$erev"; EV_MODEL["$eg"]="$emod"
+done
+
+# Any gate supplied via naked --gate (not evidence) is unbound.
+for n in "${!GATE[@]}"; do [ -n "${BOUND[$n]+x}" ] || BOUND["$n"]=0; done
+
 # --- ci: read the build-and-test check-run on the head SHA ---------------- #
 ci_conclusion() {
   gh api "repos/{owner}/{repo}/commits/$HEAD_SHA/check-runs" \
@@ -198,11 +285,22 @@ STATE="$overall"
 # exact object — neither reconstructs gate state independently (see #136).
 GATES_KV=""
 for g in "${REQUIRED[@]}"; do GATES_KV+="$g=${RESULT[$g]};"; done
-EVIDENCE_JSON="$(python3 - "$PR" "$ISSUE_NUM" "$HEAD_SHA" "$ROUTE_NAME" "$STATE" "$GATES_KV" <<'PYEOF'
+
+# Per-gate binding provenance, one TSV record per non-ci required gate, passed to
+# the builder via the environment so tabs survive intact:
+#   gate \t bound(0|1) \t headSha \t reviewPacketSha256 \t sourcePacketSha256 \t reviewer \t model
+PROV_TSV=""
+for g in "${REQUIRED[@]}"; do
+  [ "$g" = ci ] && continue
+  PROV_TSV+="$g"$'\t'"${BOUND[$g]:-0}"$'\t'"${EV_HEADSHA[$g]:-}"$'\t'"${EV_RPS[$g]:-}"$'\t'"${EV_SPS[$g]:-}"$'\t'"${EV_REVIEWER[$g]:-}"$'\t'"${EV_MODEL[$g]:-}"$'\n'
+done
+
+EVIDENCE_JSON="$(PROV_TSV="$PROV_TSV" python3 - "$PR" "$ISSUE_NUM" "$HEAD_SHA" "$ROUTE_NAME" "$STATE" "$GATES_KV" "$ALLOW_UNBOUND" <<'PYEOF'
 import json
+import os
 import sys
 
-pr, issue, head_sha, route, aggregate, gates_kv = sys.argv[1:7]
+pr, issue, head_sha, route, aggregate, gates_kv, allow_unbound = sys.argv[1:8]
 gates = {}
 required = []
 for pair in gates_kv.split(";"):
@@ -212,25 +310,62 @@ for pair in gates_kv.split(";"):
     gates[name] = state
     required.append(name)
 
+gate_evidence = {}
+for line in os.environ.get("PROV_TSV", "").splitlines():
+    if not line:
+        continue
+    parts = line.split("\t")
+    while len(parts) < 7:
+        parts.append("")
+    name, bound, hsha, rps, sps, reviewer, model = parts[:7]
+    gate_evidence[name] = {
+        "bound": bound == "1",
+        "headSha": hsha or None,
+        "reviewPacketSha256": rps or None,
+        "sourcePacketSha256": sps or None,
+        "reviewer": reviewer or None,
+        "model": model or None,
+    }
+
 evidence = {
-    "schemaVersion": 1,
+    "schemaVersion": 2,
     "pr": int(pr) if pr.isdigit() else pr,
     "issue": int(issue) if issue.isdigit() else None,
     "headSha": head_sha,
     "route": route,
     "requiredGates": required,
     "gates": gates,
+    "gateEvidence": gate_evidence,
+    "unboundGatesAllowed": allow_unbound == "1",
     "aggregate": aggregate,
 }
 print(json.dumps(evidence, indent=2))
 PYEOF
 )"
 
+# Required non-ci gates that PASSED but are unbound (naked --gate). These are the
+# accidental-error hole from Issue #205: a success that isn't tied to head+packet.
+UNBOUND_PASS=()
+for g in "${REQUIRED[@]}"; do
+  [ "$g" = ci ] && continue
+  [ "${RESULT[$g]}" = pass ] && [ "${BOUND[$g]:-0}" = 0 ] && UNBOUND_PASS+=("$g")
+done
+
 # --- render the plan (suppressed in --json mode so stdout is pure JSON) --- #
 if [ "$JSON" = 0 ]; then
   echo "PR #$PR  head=$HEAD_SHA  route=$ROUTE_NAME"
   echo "status: $CONTEXT = $STATE  ($DESC)"
-  for g in "${REQUIRED[@]}"; do printf '  %-20s %s\n' "$g" "${RESULT[$g]}"; done
+  for g in "${REQUIRED[@]}"; do
+    b=""
+    if [ "$g" != ci ]; then
+      case "${BOUND[$g]:-0}" in 1) b="  [bound]" ;; *) [ -n "${GATE[$g]+x}" ] && b="  [unbound]" ;; esac
+    fi
+    printf '  %-20s %s%s\n' "$g" "${RESULT[$g]}" "$b"
+  done
+  if [ "${#UNBOUND_PASS[@]}" -gt 0 ] && [ "$ALLOW_UNBOUND" = 0 ]; then
+    echo "WARNING: unbound pass gate(s): ${UNBOUND_PASS[*]} — --post will refuse to mint success"
+    echo "         (bind them via tools/gate-evidence.sh + --gate-evidence, or pass --allow-unbound-gates)"
+  fi
 fi
 
 # Renders the human PR-body block FROM $EVIDENCE_JSON (via stdin), not by
@@ -246,27 +381,52 @@ head7 = ev["headSha"][:7]
 route = ev["route"]
 required = ev["requiredGates"]
 gates = ev["gates"]
+gate_ev = ev.get("gateEvidence", {})
 passed = sum(1 for g in required if gates[g] == "pass")
 total = len(required)
+
+
+def binding(g):
+    if g == "ci":
+        return "GitHub `build-and-test` @ this SHA"
+    ge = gate_ev.get(g)
+    if ge and ge.get("bound"):
+        rps = (ge.get("reviewPacketSha256") or "")[:12]
+        who = ge.get("reviewer") or g
+        return "bound — %s, packet `%s`" % (who, rps)
+    return "unbound (`--gate` assertion)"
+
 
 out = []
 out.append("<!-- agent-verification:start -->")
 out.append("### agent-verification — `%s` for `%s`" % (aggregate, head7))
 out.append("")
-out.append("| gate | result |")
-out.append("|---|---|")
+out.append("| gate | result | evidence |")
+out.append("|---|---|---|")
 for g in required:
-    out.append("| `%s` | %s |" % (g, gates[g]))
+    out.append("| `%s` | %s | %s |" % (g, gates[g], binding(g)))
 out.append("")
 out.append("_%d/%d gates passed [route: %s]. Regenerated per head SHA by "
-            "`tools/agent-verify.sh`._" % (passed, total, route))
+            "`tools/agent-verify.sh`; semantic verdicts bound to head + review "
+            "packet via `tools/gate-evidence.sh`._" % (passed, total, route))
+if ev.get("unboundGatesAllowed"):
+    out.append("")
+    out.append("> ⚠️ `--allow-unbound-gates` was used: one or more semantic "
+               "verdicts were accepted without head/packet binding.")
 out.append("<!-- agent-verification:end -->")
 print("\n".join(out))
 '
 }
 
 if [ "$POST" = 1 ]; then
+  # F10 first: is the head we would post onto even the real branch tip?
   converged || die "refusing to post: gh reports head $HEAD_SHA for branch $HEAD_REF_NAME but git's actual tip is ${GIT_HEAD_SHA:-<unknown>} — the gh API is lagging behind git (burn-in F10); acting now would post onto a stale/superseded head. Re-run (optionally with --wait) once they converge."
+  # #205 next: even on the real head, a success must be tied to {head SHA + review
+  # packet} for every semantic gate, unless the operator explicitly overrides
+  # (recorded as unboundGatesAllowed in the object).
+  if [ "$STATE" = success ] && [ "${#UNBOUND_PASS[@]}" -gt 0 ] && [ "$ALLOW_UNBOUND" = 0 ]; then
+    die "refusing to post success: gate(s) [${UNBOUND_PASS[*]}] passed but are UNBOUND — supplied via --gate, so their verdict is not mechanically tied to head ${HEAD_SHA:0:7} + the review packet (Issue #205). Re-run each gate on the current head and supply tools/gate-evidence.sh output via --gate-evidence, or pass --allow-unbound-gates to override (the override is recorded in the evidence)."
+  fi
   gh api -X POST "repos/{owner}/{repo}/statuses/$HEAD_SHA" \
     -f state="$STATE" -f context="$CONTEXT" -f description="$DESC" -f target_url="$PR_URL" \
     --jq '"posted: \(.context) = \(.state)"' || die "failed to post status"
