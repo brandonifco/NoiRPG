@@ -18,6 +18,10 @@ TestResults/
 __pycache__/
 *.py[cod]
 
+# Dispatched-agent worktrees (tools/dispatch-agent.sh). Each is a full linked
+# checkout under the primary tree; it must never show up as untracked here.
+.worktrees/
+
 # Editors
 .vs/
 .vscode/

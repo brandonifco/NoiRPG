@@ -117,14 +117,32 @@ that implements an already-settled one, and `case-author` is a content-producing
 **Verification agents get read-only tools.** An agent that can edit what it is checking
 will eventually make the check pass instead of making the code right.
 
-**Dispatch implementer and writeup agents with worktree isolation.** Burn-in finding
-F12 (`docs/orchestration/agent-verification-burn-in.md`): the #174 writeup agent was
+**Dispatch implementer and writeup agents through `tools/dispatch-agent.sh` — worktree
+isolation is a rail, not a reminder.** Burn-in finding F12
+(`docs/orchestration/agent-verification-burn-in.md`): the #174 writeup agent was
 dispatched without worktree isolation, created its feature branch in the primary
 checkout, and left it there — the primary tree had to be manually restored
-(`git checkout main` plus a fast-forward) during cleanup. Give a dispatched
-implementer or writeup agent its own worktree so the primary checkout is never left
-stranded on a feature branch. If a non-isolated agent is used deliberately, expect to
-restore the primary tree afterward the same way.
+(`git checkout main` plus a fast-forward) during cleanup. Rather than remembering to
+"give the agent a worktree", stand its workspace up mechanically:
+
+```bash
+tools/dispatch-agent.sh <issue#>     # prints  path=<abs worktree>  branch=<issue-n-slug>
+```
+
+Dispatch the implementer/writeup agent with that `path` as its working directory, and
+`--cleanup <issue#>` the worktree after merge. The two implementer-facing rails:
+
+- `tools/dispatch-agent.sh <issue#>` never checks the feature branch out into the
+  primary tree, so using it cannot reproduce F12.
+- Every implementer role (`engine-dev`, `orchestration-dev`, `case-author`,
+  `rules-extractor`) runs `tools/dispatch-agent.sh --assert-isolated` as its first
+  action and **stops with a dispatch error** if it finds itself in the primary
+  checkout — a mechanical self-check (git's own worktree metadata), so a forgotten
+  option fails fast instead of stranding the primary tree.
+
+A shell tool cannot intercept the harness's Agent dispatch itself; this is a preflight
+plus a self-check, which is what F12 needs. Reviewer (read-only) roles do not write and
+need no worktree.
 
 ## Authoring a design-decision record (ADR) — the `NNNN` placeholder
 
