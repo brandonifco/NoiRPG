@@ -52,3 +52,4 @@ supersedes it — the original is not edited or deleted.
 | [0027](0027-adr-number-allocation.md) | ADR-number allocation is serialized at merge time, not authoring time | Accepted |
 | [0028](0028-complementary-skills-and-augments.md) | Complementary Skills and Augments are two mechanics, not one | Accepted |
 | [0029](0029-special-damage-effects.md) | Special-damage effects (Crushing stun, Impaling lodged weapon, Knockback, Bleeding, Entangling) and Fighting Defensively | Accepted |
+| [0030](0030-money-and-wealth-levels.md) | Money and Wealth levels: the modern-era Status table only, five ordinal levels, no economy sim | Accepted |

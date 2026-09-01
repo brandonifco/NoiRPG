@@ -1,0 +1,15 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 3: Skills",
+    "notes": "Money & Wealth levels (Issue #229, sub-issue of #116): Ch 3, 'Status Skill, Social Status, & Character Wealth' (p.51) prints three era tables (Prehistoric, Ancient/Dark Age/Medieval/Imperial, Victorian/Western/Pulp/Modern) that assign a Social Rank, a typical Wealth Rating, and a Wealth Cap by Status rating. NoiRPG always uses the modern-era baseline (AGENTS.md invariant 4), so only the 'Victorian/Western/Pulp/Modern Status' table is shipped -- see docs/decisions/0030-money-and-wealth-levels.md. The five Wealth levels themselves (Destitute, Poor, Average, Affluent, Wealthy) are described in Ch 2: Characters, 'Wealth' (p.19)."
+  },
+  "wealthTable": [
+    { "minimum": 1, "maximum": 14, "socialRank": "Lower Class", "wealthRating": "Destitute", "maximumWealth": "Poor" },
+    { "minimum": 15, "maximum": 29, "socialRank": "Lower Class", "wealthRating": "Poor", "maximumWealth": "Average" },
+    { "minimum": 30, "maximum": 39, "socialRank": "Lower Middle Class", "wealthRating": "Average", "maximumWealth": "Affluent" },
+    { "minimum": 40, "maximum": 75, "socialRank": "Middle Class", "wealthRating": "Average", "maximumWealth": "Affluent" },
+    { "minimum": 76, "maximum": 95, "socialRank": "Upper Middle Class", "wealthRating": "Affluent", "maximumWealth": "Wealthy" },
+    { "minimum": 96, "maximum": 100, "socialRank": "Upper Class", "wealthRating": "Wealthy", "maximumWealth": "Wealthy" }
+  ]
+}
