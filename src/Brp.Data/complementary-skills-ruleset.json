@@ -1,0 +1,9 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 3: Skills",
+    "notes": "Complementary Skills / Augment optional rule (#114): Ch 3, 'Augments and Complementary skills' (p.34): 'your character may temporarily add 1/5 of your rating in a complementary skill to your rating in another skill for skill rolls.' Not to be confused with the unrelated 1/5 special-success ratio (Ch 5) or the unrelated 1/5 long-range ratio (Ch 6/7)."
+  },
+  "bonusNumerator": 1,
+  "bonusDenominator": 5
+}

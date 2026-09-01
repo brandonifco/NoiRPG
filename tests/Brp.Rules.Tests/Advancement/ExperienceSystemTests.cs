@@ -106,6 +106,83 @@ public class ExperienceSystemTests
         Assert.True(tickedAgain);
     }
 
+    // Ch 3: Skills, "Augments and Complementary skills" (p.34) (Issue #114): "If successful
+    // with the augmenting skill roll, you may check it for experience as normal, as well as
+    // with the primary skill. If the primary roll fails, the augmenting skill does not receive
+    // an experience check." See docs/decisions/NNNN-complementary-skills-and-augments.md.
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void Augmenting_skill_never_ticks_when_the_primary_roll_fails_regardless_of_augment_outcome(
+        bool augmentSucceeded)
+    {
+        var ledger = new CaseExperienceLedger();
+        var augmentingSkill = MakeSkill();
+
+        var ticked = ExperienceSystem.RecordAugmentUse(
+            ledger, augmentingSkill, CheckStakes.RealStakes, augmentSucceeded, primarySucceeded: false, ExperiencePolicy.TickOnUse);
+
+        Assert.False(ticked);
+        Assert.False(augmentingSkill.HasExperienceCheck);
+    }
+
+    [Fact]
+    public void Augmenting_skill_ticks_under_tick_on_use_when_primary_succeeds_even_if_the_augment_failed()
+    {
+        // Tick-on-use is this project's house generalization (AGENTS.md, "Advancement:
+        // tick-on-use") applied consistently: once the primary-failure veto above is cleared,
+        // the augmenting skill was still genuinely exercised under real stakes.
+        var ledger = new CaseExperienceLedger();
+        var augmentingSkill = MakeSkill();
+
+        var ticked = ExperienceSystem.RecordAugmentUse(
+            ledger, augmentingSkill, CheckStakes.RealStakes, augmentSucceeded: false, primarySucceeded: true, ExperiencePolicy.TickOnUse);
+
+        Assert.True(ticked);
+        Assert.True(augmentingSkill.HasExperienceCheck);
+    }
+
+    [Fact]
+    public void Augmenting_skill_ticks_under_raw_policy_only_when_both_the_augment_and_primary_succeed()
+    {
+        // Read literally, "if successful with the augmenting skill roll" additionally requires
+        // the augment itself to have succeeded -- exactly what RawTickOnSuccess already means
+        // for any other skill, reused here rather than re-implemented.
+        var ledger = new CaseExperienceLedger();
+        var failedAugmentSkill = MakeSkill();
+        var succeededAugmentSkill = MakeSkill();
+
+        var tickedOnFailedAugment = ExperienceSystem.RecordAugmentUse(
+            ledger, failedAugmentSkill, CheckStakes.RealStakes, augmentSucceeded: false, primarySucceeded: true, ExperiencePolicy.RawTickOnSuccess);
+        var tickedOnSucceededAugment = ExperienceSystem.RecordAugmentUse(
+            ledger, succeededAugmentSkill, CheckStakes.RealStakes, augmentSucceeded: true, primarySucceeded: true, ExperiencePolicy.RawTickOnSuccess);
+
+        Assert.False(tickedOnFailedAugment);
+        Assert.True(tickedOnSucceededAugment);
+    }
+
+    [Fact]
+    public void Augmenting_skill_still_respects_the_no_stakes_and_once_per_case_gates()
+    {
+        // RecordAugmentUse defers to RecordUse once the primary-failure veto is cleared, so it
+        // inherits every other gate (CheckStakes, once-per-case) without re-implementing them.
+        var ledger = new CaseExperienceLedger();
+        var augmentingSkill = MakeSkill();
+
+        var tickedUnderEasy = ExperienceSystem.RecordAugmentUse(
+            ledger, augmentingSkill, CheckStakes.Easy, augmentSucceeded: true, primarySucceeded: true, ExperiencePolicy.TickOnUse);
+        Assert.False(tickedUnderEasy);
+
+        var firstTick = ExperienceSystem.RecordAugmentUse(
+            ledger, augmentingSkill, CheckStakes.RealStakes, augmentSucceeded: true, primarySucceeded: true, ExperiencePolicy.TickOnUse);
+        var secondTick = ExperienceSystem.RecordAugmentUse(
+            ledger, augmentingSkill, CheckStakes.RealStakes, augmentSucceeded: true, primarySucceeded: true, ExperiencePolicy.TickOnUse);
+
+        Assert.True(firstTick);
+        Assert.False(secondTick);
+    }
+
     [Fact]
     public void Improvement_roll_gains_when_the_roll_exceeds_the_current_rating()
     {

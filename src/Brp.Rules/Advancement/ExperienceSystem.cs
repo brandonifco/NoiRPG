@@ -60,6 +60,49 @@ public static class ExperienceSystem
     }
 
     /// <summary>
+    /// Records one <em>augmenting</em> skill's use in support of a primary skill roll -- Ch 3:
+    /// Skills, "Augments and Complementary skills" (p.34) (Issue #114): "If successful with the
+    /// augmenting skill roll, you may check it for experience as normal, as well as with the
+    /// primary skill. If the primary roll fails, the augmenting skill does not receive an
+    /// experience check." That second sentence is unconditional -- an augmenting skill never
+    /// ticks when the primary roll it supported failed, regardless of whether the augment itself
+    /// succeeded -- so it is enforced here before <paramref name="augmentingSkill"/> ever reaches
+    /// the ordinary <see cref="RecordUse"/> gate.
+    /// <para>
+    /// When the primary succeeded, this defers entirely to <see cref="RecordUse"/> with
+    /// <paramref name="augmentSucceeded"/> as its <c>succeeded</c> argument, so the two
+    /// <see cref="ExperiencePolicy"/> values still mean what they mean everywhere else:
+    /// <see cref="ExperiencePolicy.RawTickOnSuccess"/> additionally requires the augmenting roll
+    /// itself to have succeeded (matching "if successful with the augmenting skill roll" read
+    /// literally), while the project's <see cref="ExperiencePolicy.TickOnUse"/> default ticks the
+    /// augmenting skill whenever it was genuinely exercised under real stakes, win or lose --
+    /// the same house-rule generalization already applied to every other skill (`AGENTS.md`,
+    /// "Advancement: tick-on-use").
+    /// </para>
+    /// </summary>
+    public static bool RecordAugmentUse(
+        CaseExperienceLedger ledger,
+        CharacterSkill augmentingSkill,
+        CheckStakes stakes,
+        bool augmentSucceeded,
+        bool primarySucceeded,
+        ExperiencePolicy policy = ExperiencePolicy.TickOnUse)
+    {
+        ArgumentNullException.ThrowIfNull(ledger);
+        ArgumentNullException.ThrowIfNull(augmentingSkill);
+
+        // "If the primary roll fails, the augmenting skill does not receive an experience
+        // check" -- unconditional, so it is checked before the ordinary gate rather than folded
+        // into it.
+        if (!primarySucceeded)
+        {
+            return false;
+        }
+
+        return RecordUse(ledger, augmentingSkill, stakes, augmentSucceeded, policy);
+    }
+
+    /// <summary>
     /// Resolves one skill's improvement roll at case close (Ch 5 p.138, "Making an
     /// Experience Roll"): a no-op if the skill carries no experience check; otherwise draws a
     /// d100, adds <paramref name="experienceBonus"/> to the roll (never to the gain -- "The
