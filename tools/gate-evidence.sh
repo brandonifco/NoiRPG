@@ -69,14 +69,45 @@ case "$VERDICT" in pass|fail|skip) ;; *) die "--verdict must be pass|fail|skip: 
 HEAD_SHA="$(gh pr view "$PR" --json headRefOid --jq '.headRefOid' 2>/dev/null || true)"
 [ -n "$HEAD_SHA" ] || die "cannot read head SHA for PR #$PR (is gh authenticated?)"
 
-# The review packet's own content hash, from its deterministic footer.
-packet_footer_sha() {
-  # `|| true` so a footer-less packet yields "" (caught below) rather than
-  # aborting under `set -o pipefail` when grep finds no match.
-  { grep -E '^packet-sha256:[[:space:]]*[0-9a-f]+' "$1" | tail -1 | awk '{print $2}'; } || true
+# The review packet's own content hash — but do NOT merely read the footer:
+# recompute sha256(body) and refuse unless it reproduces the declared footer
+# hash, so a packet whose body was edited/truncated after generation (leaving a
+# stale-but-matching footer) cannot be bound as if it were the reviewed bytes
+# (Issue #211). The body/footer split mirrors tools/agent-brief.py render():
+# body = everything up to the "\n---\npacket-schema:" footer, and the digest is
+# sha256 of exactly that substring (which ends in the body's own trailing \n).
+verify_packet_and_get_sha() {
+  python3 - "$1" <<'PY'
+import hashlib
+import re
+import sys
+
+path = sys.argv[1]
+text = open(path, encoding="utf-8").read()
+marker = "\n---\npacket-schema:"
+idx = text.rfind(marker)
+if idx == -1:
+    sys.stderr.write("no 'packet-schema/packet-sha256' footer (was it built by "
+                     "tools/agent-brief.py?)\n")
+    sys.exit(1)
+m = re.search(r"packet-sha256:\s*([0-9a-f]+)", text[idx:])
+if not m:
+    sys.stderr.write("footer has no 'packet-sha256:' line\n")
+    sys.exit(1)
+declared = m.group(1)
+computed = hashlib.sha256(text[:idx].encode("utf-8")).hexdigest()
+if computed != declared:
+    sys.stderr.write(
+        "packet body does not match its footer hash (declared %s…, recomputed "
+        "%s…) — the packet was edited/truncated after generation; refusing to "
+        "bind a verdict to a packet whose footer is untruthful\n"
+        % (declared[:12], computed[:12]))
+    sys.exit(1)
+print(declared)
+PY
 }
-REVIEW_PACKET_SHA="$(packet_footer_sha "$REVIEW_PACKET")"
-[ -n "$REVIEW_PACKET_SHA" ] || die "review packet has no 'packet-sha256:' footer: $REVIEW_PACKET (was it built by tools/agent-brief.py review?)"
+REVIEW_PACKET_SHA="$(verify_packet_and_get_sha "$REVIEW_PACKET")" \
+  || die "review packet failed integrity verification: $REVIEW_PACKET"
 
 SOURCE_PACKET_SHA=""
 if [ -n "$SOURCE_PACKET" ]; then
