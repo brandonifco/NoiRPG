@@ -22,7 +22,12 @@ ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 SCRIPT="$ROOT/tools/agent-verify.sh"
 
 WORKDIR="$(mktemp -d)"
-trap 'rm -rf "$WORKDIR"' EXIT
+# Issue #191's converged-head-guard cases stash a throwaway remote-tracking
+# ref under the real repo's refs/remotes/origin/ namespace (no network, no
+# effect on any real branch) so the guard's `git rev-parse origin/<ref>` has
+# something deterministic to compare against; clean it up unconditionally.
+FIXTURE_REF="refs/remotes/origin/agent-verify-test-fixture-branch"
+trap 'rm -rf "$WORKDIR"; git -C "$ROOT" update-ref -d "$FIXTURE_REF" >/dev/null 2>&1 || true' EXIT
 
 FAILURES=0
 ok()   { printf 'ok   - %s\n' "$1"; }
@@ -67,6 +72,7 @@ emit() {
 }
 
 HEAD_SHA="${MOCK_HEAD_SHA:-deadbeef1234567890deadbeef1234567890dead}"
+HEAD_REF_NAME="${MOCK_HEAD_REF_NAME:-agent-verify-test-branch}"
 PR_BODY="${MOCK_PR_BODY:-Closes #136}"
 CI_CONCLUSION="${MOCK_CI_CONCLUSION:-success}"
 
@@ -74,8 +80,8 @@ case "$1 $2" in
   "pr view")
     jsonf="$(find_flag_value --json "$@" || true)"
     case "$jsonf" in
-      headRefOid,url,state)
-        emit "{\"headRefOid\":\"$HEAD_SHA\",\"url\":\"https://example.invalid/pull/999\",\"state\":\"OPEN\"}" "$@" ;;
+      headRefOid,headRefName,url,state)
+        emit "{\"headRefOid\":\"$HEAD_SHA\",\"headRefName\":\"$HEAD_REF_NAME\",\"url\":\"https://example.invalid/pull/999\",\"state\":\"OPEN\"}" "$@" ;;
       body)
         emit "{\"body\":\"$PR_BODY\"}" "$@" ;;
       *) echo "mock gh: unhandled pr view --json $jsonf" >&2; exit 1 ;;
@@ -222,6 +228,37 @@ DIFFFILE="$WORKDIR/numeric.diff"
 printf '%s\n' "$NUMERIC_DIFF" > "$DIFFFILE"
 route8_direct="$("$ROOT/tools/route.sh" --json --diff-file "$DIFFFILE" | python3 -c 'import json,sys; print(json.load(sys.stdin)["route"])')"
 assert_eq "case8: agrees with tools/route.sh --diff-file on the identical patch" "$route8_direct" "$route8"
+
+# --- case 9: converged-head guard refuses --post on a gh/git head mismatch
+# (Issue #191, burn-in F10) ------------------------------------------------- #
+# Seed the fixture remote-tracking ref with a real ancestor commit (so `git
+# rev-parse` succeeds), but tell the gh stub to report a DIFFERENT ancestor as
+# the PR's head — simulating gh lagging behind git after a push. Both are
+# deliberately NOT the checked-out HEAD, so agent-verify.sh still takes the
+# `gh pr diff` route-derivation path like every other case here, rather than
+# the on-PR-head `route.sh --base` path (whose required-gate set would depend
+# on this branch's own uncommitted diff).
+PR_HEAD_SHA="$(git -C "$ROOT" rev-parse HEAD~2)"
+STALE_SHA="$(git -C "$ROOT" rev-parse HEAD~3)"
+git -C "$ROOT" update-ref "$FIXTURE_REF" "$PR_HEAD_SHA"
+
+rc9=0
+err9="$(MOCK_HEAD_SHA="$STALE_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post 2>&1 1>/dev/null)" || rc9=$?
+assert_eq "case9: --post refuses on gh/git head mismatch" "2" "$rc9"
+assert_contains "case9: refusal message names the mismatch" "$err9" "refusing to post"
+assert_contains "case9: refusal message cites F10" "$err9" "F10"
+
+# --- case 10: converged-head guard is a no-op when gh and git agree -------- #
+git -C "$ROOT" update-ref "$FIXTURE_REF" "$PR_HEAD_SHA"
+out10="$(MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post)"
+assert_contains "case10: --post proceeds and posts when heads converge" "$out10" "posted: agent-verification = success"
+
+rc10=0
+MOCK_HEAD_SHA="$PR_HEAD_SHA" MOCK_HEAD_REF_NAME="agent-verify-test-fixture-branch" MOCK_CI_CONCLUSION=success \
+  run_verify 999 --gate scope-warden=pass --gate rules-conformance=pass --post >/dev/null || rc10=$?
+assert_eq "case10: exit 0 when converged heads and gates all pass" "0" "$rc10"
 
 echo
 if [ "$FAILURES" -eq 0 ]; then
