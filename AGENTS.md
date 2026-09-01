@@ -79,7 +79,12 @@ One concern, one Issue, one branch, one pull request.
 4. Open a PR with `Closes #<n>` — a real issue number, never a blank `#`. This holds
    for every PR, docs and tooling and orchestration included; `pr-policy` rejects a
    body with no `Closes #<n>` / `Fixes #<n>`.
-5. Automated checks and review.
+5. Automated checks and review. Merging into `main` requires `pr-policy`,
+   `orchestration-policy`, and `build-and-test` all green, review conversations
+   resolved, and a successful `agent-verification` status on the exact current head
+   SHA (the route's required gate set, aggregated — see
+   [`docs/orchestration/routing.md`](docs/orchestration/routing.md#enforcement)).
+   No separate human-approval step is invented on top of this.
 6. Merge; the Issue closes automatically.
 
 If you discover unrelated work, file a separate Issue. Do not enlarge the current one.
