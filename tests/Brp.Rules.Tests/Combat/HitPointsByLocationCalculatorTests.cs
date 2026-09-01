@@ -85,4 +85,19 @@ public class HitPointsByLocationCalculatorTests
         Assert.Throws<ArgumentOutOfRangeException>(() => HitPointsByLocationCalculator.Compute(0, Ruleset));
         Assert.Throws<ArgumentOutOfRangeException>(() => HitPointsByLocationCalculator.Compute(-1, Ruleset));
     }
+
+    [Fact]
+    public void Chest_does_not_overflow_int32_at_a_total_beyond_the_printed_range()
+    {
+        // totalHitPoints * chestNumerator (4) would overflow Int32.MaxValue at this total if
+        // computed in 32-bit arithmetic (536_870_912 * 4 = 2_147_483_648, one past
+        // Int32.MaxValue). Pins the 64-bit-widened chest computation against the same
+        // ceiling-division formula used everywhere else: ceil(536_870_912 * 4 / 10) = 214_748_365.
+        const int totalHitPoints = 536_870_912;
+        const int expectedChest = 214_748_365;
+
+        var result = HitPointsByLocationCalculator.Compute(totalHitPoints, Ruleset);
+
+        Assert.Equal(expectedChest, result.Chest);
+    }
 }

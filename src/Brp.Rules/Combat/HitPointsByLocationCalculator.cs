@@ -35,7 +35,15 @@ public static class HitPointsByLocationCalculator
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(totalHitPoints);
 
         var legAbdomenHead = Rounding.Divide(totalHitPoints, ruleset.LimbHeadAbdomenDivisor, RoundingMode.Up);
-        var chest = Rounding.Divide(totalHitPoints * ruleset.ChestNumerator, ruleset.ChestDenominator, RoundingMode.Up);
+
+        // Chest pre-multiplies by the numerator (4) before dividing, unlike the other two
+        // locations -- done in 64-bit arithmetic so that multiplication cannot overflow Int32
+        // for totals beyond the printed 1-21 range (Rounding.Divide takes Int32 operands, so the
+        // multiply-then-divide has to happen here, not inside it). Same ceiling-division formula
+        // Rounding.Divide uses internally: (numerator + denominator - 1) / denominator.
+        var chestNumeratorTotal = (long)totalHitPoints * ruleset.ChestNumerator;
+        var chest = (int)((chestNumeratorTotal + ruleset.ChestDenominator - 1) / ruleset.ChestDenominator);
+
         var arm = Rounding.Divide(totalHitPoints, ruleset.ArmDivisor, RoundingMode.Up);
 
         return new HitPointsByLocation(
