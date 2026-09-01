@@ -293,7 +293,7 @@ review_docs="$WORKDIR/review_docs.md"
 python3 "$WT/tools/agent-brief.py" review --base "$base_common" --head "$head_docs" --issue 6001 > "$review_docs"
 docs_content="$(cat "$review_docs")"
 assert_contains "case (a): checklist is decision-scoped, not layering boilerplate" "$docs_content" \
-  "no project/boundary change is actually in this diff"
+  "No project/boundary change is actually in this diff"
 assert_contains "case (a): checklist tells the reviewer to check decision/boundary soundness" "$docs_content" \
   "SOUNDNESS of the recorded decision"
 if [[ "$docs_content" == *"architecture-review"*"Brp.Core/Brp.Rules take no game-engine dependency"* ]]; then
