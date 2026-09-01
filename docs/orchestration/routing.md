@@ -12,6 +12,14 @@ this — the `gates-satisfied` aggregator and the gate-poster App — was remove
 #90/#91; the "required gates" below are the reviewers a change *conceptually* needs,
 no longer an automated check.
 
+`tools/route.sh` is the **one route authority** (#137): it is the only place that
+parses a diff for content escalation, composes architecture, and applies the
+issue-intent floor. Every consumer that needs to classify a change it did not
+generate locally — `agent-verify.sh` when the working tree isn't the PR head,
+`pr_policy.py` once it knows the linked Issue, `agent-brief.py`'s review packet —
+calls this script (via `--diff-file` for an externally captured patch) rather than
+approximating any of this itself.
+
 ## How a route is derived
 
 1. **Path baseline (simple, deterministic).** [`.github/route-map`](../../.github/route-map)
@@ -78,6 +86,12 @@ tools/route.sh src/Brp.Data/damage-ruleset.json
 # Raise the route to a linked issue's declared intent (never lowers it)
 tools/route.sh --base origin/main --issue 112
 tools/route.sh --issue-route formulas src/SomeLoader.cs
+
+# Classify a patch that wasn't generated in this checkout — e.g. a PR's actual
+# diff, fetched with `gh pr diff` while HEAD is somewhere else entirely. Content
+# escalation, architecture composition, and --issue all work exactly as above.
+gh pr diff 137 > /tmp/pr137.diff
+tools/route.sh --diff-file /tmp/pr137.diff --issue 137
 
 # Machine-readable, for the orchestrator / state machine
 tools/route.sh --json --base origin/main
