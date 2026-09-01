@@ -17,3 +17,4 @@ orch,141,154,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,104688,NI,
 orch,142,155,1,2026-08-31,build,orchestration-dev,sonnet,medium,NI,NI,80571,NI,NI,NI,42,241143,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,task,NI,NI,codex packet-first (review+source packets); removed unused .codex/agents; read-only preserved
 orch,143,158,1,2026-09-01,build,orchestration-dev,sonnet,medium,NI,NI,57171,NI,NI,NI,33,160636,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,task,NI,NI,Layer 5 route taxonomy: gameplay/scenario/presentation routes + labels + docs
 orch,144,159,1,2026-09-01,build,orchestration-dev,sonnet,medium,NI,NI,27806,NI,NI,NI,17,81563,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,task,NI,NI,agent-verification burn-in report + four-check merge contract docs
+orch,162,165,1,2026-09-01,rework,orchestration-dev,sonnet,medium,NI,NI,33917,NI,NI,NI,14,84964,NI,NI,NI,NI,NI,NI,NI,NI,NI,NI,task,NI,NI,audit fix: escalation catches plain-assign/return/arith numeric changes; fail-closed on malformed diff
