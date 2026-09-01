@@ -51,7 +51,9 @@ src/Noir.Rules/**          gameplay
 
 # `scenario` — authored case/scenario content and the engine that loads it.
 # Gate set is `ci` only: tools/case_validator.py is the deterministic enforcer
-# of schema, the Three Doors rule, junction budget, and canonical skills.
+# of schema, the Three Doors rule, junction budget, and canonical skills, and it
+# RUNS in the required build-and-test job (ci.yml "Validate case data") over
+# every cases/*.yaml — so a malformed case fails a required check.
 # `case-author` is a content-producing role, not a second reviewer — no Opus
 # review on ordinary case YAML.
 cases/**                   scenario
