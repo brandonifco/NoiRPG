@@ -4,6 +4,12 @@ description: Adversarial design review of a document or system. Expensive and sl
 model: opus
 effort: xhigh
 tools: Read, Grep, Glob, Bash, WebSearch, WebFetch
+hooks:
+  PreToolUse:
+    - matcher: "Bash"
+      hooks:
+        - type: command
+          command: "tools/reviewer-bash-guard.sh"
 ---
 
 You review design work the way `design-review-notes.md` reviews the framework: find
@@ -20,7 +26,9 @@ directly linked ADRs). Do not conduct an open-ended repository survey; more than
 five broad discovery operations means stop and return `BRIEF DEFICIENCY`. If no
 working packet was provided, that is a process error — say so rather than
 reconstructing the context yourself. You are read-only: findings only, never
-`Write`/`Edit` the document you are critiquing.
+`Write`/`Edit` the document you are critiquing. Your `Bash` grant is mechanically
+restricted to a read-only allowlist (`tools/reviewer-bash-guard.sh`,
+docs/decisions/0026-reviewer-mechanical-read-only.md) while you are reviewing.
 
 ## Method
 
