@@ -69,6 +69,9 @@ telemetry (`subagent_tokens`, `tool_uses`, `duration_ms`) — actuals, not estim
 | `deterministic_controls_added` | reviewer's "deterministic rule created"; paper P5 | count of tests/schemas/analyzers promoted from findings |
 | `repeated_error` | reviewer's "repeated-error occurrence"; paper P8 | did a previously-seen error class recur? |
 | `tests_after` | full suite passing count after the job | |
+| `packet_type` | §8 dispatch metadata (added #141) | e.g. `task-packet/1` — the packet schema/version the job was dispatched with, from `tools/agent-brief.py`'s frontmatter |
+| `prompt_hash` | §8 reproducibility (added #141) | hash of the exact dispatch prompt text, so a job's input is reproducible/comparable; `NI` until prompts are archived+hashed at dispatch time |
+| `discovery_calls` | briefing-efficiency signal (added #141) | count of **broad** context-discovery actions only (repo-wide grep/glob/history search) — not every read/test/tool call. Never fabricated or reconstructed retroactively; a job that did not measure this live logs `NI` |
 
 ## Coverage vs. instrumentation gaps (read before analysing)
 
@@ -89,6 +92,10 @@ candor in §4.7/§8 — and pins exactly what to build before the 30–100-task 
   to reproduce the routing, short of the exact provider version §8 ultimately wants.
 - **Dispatch prompts are not yet hashed/archived.** For full §8 reproducibility, each job's dispatch
   prompt should be stored and hashed; presently they live only in the session transcript.
+- **`packet_type` / `prompt_hash` / `discovery_calls` (added #141) are `NI` for every row logged
+  before #141**, including all 14 rows that predate this schema change — none were reconstructed
+  retroactively. Log them going forward with `--packet-type`, `--prompt-hash`, `--discovery-calls`;
+  omit a flag rather than guess a value.
 
 Analysts: treat `NI` as *not measured*, never as zero. Cross-layer comparisons are agent-job
 output-token spend only until the R/A/H and cost instruments land.
