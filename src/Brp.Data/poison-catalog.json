@@ -1,0 +1,90 @@
+{
+  "source": {
+    "book": "BasicRoleplaying-ORC-Content-Document.pdf",
+    "chapter": "Chapter 8: Equipment",
+    "notes": "Other Equipment, 'Poisons', the Sample Poisons Table (p.221): 'The rules for handling poison are discussed in Poisons [Ch 7, p.176], and the Sample Poisons Table provides a variety of sample poisons.' Every entry's potency (POT) plugs into the existing Ch 7 poison mechanic (PoisonRuleset/PoisonResolver, injury-ruleset.json, docs/decisions/0019-injury-spot-rules.md) -- no new mechanic. Sleeping Pills is the table's one manufactured/modern-drug entry (Issue #231); the rest are natural toxins and venoms, included because they are the book's only printed data for this table and the table is small enough to transcribe in full rather than hand-picked, per docs/source-handling.md ('where the book prints a table, reproduce the whole table').",
+    "errata": "Two rows (Arsenic, Rattlesnake venom) are column-misaligned in the printed table: each has an empty Symptoms cell in the source book, and the table's own typesetting drops the following column into that empty slot rather than leaving it blank. Confirmed by pdftotext -bbox glyph coordinates plus a 300 dpi render of p.221: for Arsenic, '½ to 24 hours' prints at the POT column's x-position and '16' prints at the Symptoms column's x-position, with nothing under the real Speed of Effect column; for Rattlesnake venom, the correctly-placed Speed of Effect text is followed by an empty POT column and '10' printed at the Symptoms column's x-position. Both are reconstructed here by value type (a time range is Speed of Effect; a bare number is POT), matching every other row's column shapes, with no Symptoms text (the book prints none for either row)."
+  },
+  "poisons": [
+    {
+      "id": "arsenic",
+      "name": "Arsenic",
+      "speedOfEffect": "½ to 24 hours",
+      "potency": 16,
+      "symptoms": null,
+      "source": "Ch 8, Sample Poisons Table (p.221) -- column-misalignment errata corrected; see this file's top-level 'source.errata'."
+    },
+    {
+      "id": "belladonna",
+      "name": "Belladonna",
+      "speedOfEffect": "2 hours to 2 days",
+      "potency": 16,
+      "symptoms": "Rapid heartbeat, impaired vision, convulsions.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "blackWidowVenom",
+      "name": "Black Widow venom",
+      "speedOfEffect": "2–8 days",
+      "potency": 7,
+      "symptoms": "Chills, sweating, nausea.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "cobraVenom",
+      "name": "Cobra venom",
+      "speedOfEffect": "15–60 minutes",
+      "potency": 16,
+      "symptoms": "Convulsions, respiratory failure.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "curare",
+      "name": "Curare",
+      "speedOfEffect": "1 combat round",
+      "potency": 25,
+      "symptoms": "Muscular paralysis, respiratory failure.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "cyanide",
+      "name": "Cyanide",
+      "speedOfEffect": "1–15 minutes",
+      "potency": 20,
+      "symptoms": "Dizziness, convulsions, fainting.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "rattlesnakeVenom",
+      "name": "Rattlesnake venom",
+      "speedOfEffect": "15–60 minutes",
+      "potency": 10,
+      "symptoms": null,
+      "source": "Ch 8, Sample Poisons Table (p.221) -- column-misalignment errata corrected; see this file's top-level 'source.errata'."
+    },
+    {
+      "id": "scorpionVenom",
+      "name": "Scorpion venom",
+      "speedOfEffect": "24–48 hours",
+      "potency": 9,
+      "symptoms": "Intense pain, weakness, hemorrhaging.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    },
+    {
+      "id": "sleepingPills",
+      "name": "Sleeping pills",
+      "speedOfEffect": "10–30 minutes",
+      "potency": 6,
+      "symptoms": "Normal sleep; each additional dose increases chance of respiratory failure by +5%.",
+      "source": "Ch 8, Sample Poisons Table (p.221). The table's one manufactured/modern-drug entry (Issue #231); the per-additional-dose +5% respiratory-failure escalation is recorded as flavor text and is not mechanized here -- no per-poison escalation seam exists yet (out of scope for this issue)."
+    },
+    {
+      "id": "strychnine",
+      "name": "Strychnine",
+      "speedOfEffect": "10–20 minutes",
+      "potency": 20,
+      "symptoms": "Violent muscle contractions, asphyxiation.",
+      "source": "Ch 8, Sample Poisons Table (p.221)."
+    }
+  ]
+}
